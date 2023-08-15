@@ -71,14 +71,14 @@ module Defs = struct
     let f' def = Blist.iter f (Preddef.rules def) in
     Blist.iter f' defs
 
-  let relevant_defs all_defs (_, hs) =
+  (*let relevant_defs all_defs (_, hs) =
     let ident_set ids = Predsym.Set.of_list (Predsym.MSet.to_list ids) in
     let iterate preds =
       let add_preds pred preds =
         let rules = get_def pred all_defs in
         let add_preds_from_rule preds rule =
           let body, _ = Indrule.dest rule in
-          let new_preds = ident_set (Heap.idents body) in
+          let new_preds = ident_set (Heapsum.idents body) in
           Predsym.Set.union preds new_preds
         in
         Blist.foldl add_preds_from_rule preds rules
@@ -88,7 +88,7 @@ module Defs = struct
     let init_ids =
       let ident_mset =
         Blist.fold_right
-          (fun h -> Predsym.MSet.union (Heap.idents h))
+          (fun h -> Predsym.MSet.union (Heapsum.idents h))
           hs Predsym.MSet.empty
       in
       ident_set ident_mset
@@ -96,9 +96,9 @@ module Defs = struct
     let relevant_preds = Predsym.Set.fixpoint iterate init_ids in
     Predsym.Set.fold
       (fun pred defs -> add (Preddef.mk (get_def pred all_defs, pred)) defs)
-      relevant_preds empty
+      relevant_preds empty*)
 
-  let check_form_wf defs (_, hs) =
+  let check_form_wf defs (_, f) =
     let check_pred p =
       let predsym = Tpred.predsym p in
       let pname = Predsym.to_string predsym in
@@ -116,10 +116,11 @@ module Defs = struct
               ^ Int.to_string expected ^ "!" )
     in
     Blist.iter
-      (fun h ->
-        let _, _, _, inds = Heap.dest h in
-        Tpreds.iter check_pred inds )
-      hs
+      (fun hs ->
+        Blist.iter (fun h ->
+        let _, _, _, inds, _ = Heap.dest h in
+        Tpreds.iter check_pred inds ) hs)
+      f
 
   let check_consistency defs =
     rule_iter
@@ -158,12 +159,6 @@ module Defs = struct
 
   let of_channel c = handle_reply (MParser.parse_channel parse c ())
 
-  let memory_consuming defs = Blist.for_all Preddef.memory_consuming defs
-
-  let constructively_valued defs =
-    Blist.for_all Preddef.constructively_valued defs
-
-  let deterministic defs = Blist.for_all Preddef.deterministic defs
 end
 
 include Defs

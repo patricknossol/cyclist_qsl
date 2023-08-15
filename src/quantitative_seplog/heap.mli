@@ -12,6 +12,7 @@ type symheap = private
   ; deqs: Deqs.t
   ; ptos: Ptos.t
   ; inds: Tpreds.t
+  ; num: Num.t
   ; mutable _terms: abstract1
   ; mutable _vars: abstract1
   ; mutable _tags: abstract2 }
@@ -84,6 +85,10 @@ val equal : t -> t -> bool
 val equal_upto_tags : t -> t -> bool
 (** Like [equal] but ignoring tag assignment. *)
 
+val equal_upto_num : t -> t -> bool
+
+val equal_upto_num_and_tags : t -> t -> bool
+
 val is_empty : t -> bool
 (** [is_empty h] tests whether [h] is equal to the empty heap. *)
 
@@ -101,9 +106,11 @@ val mk_deq : Tpair.t -> t
 
 val mk_ind : Tpred.t -> t
 
-val mk : Uf.t -> Deqs.t -> Ptos.t -> Tpreds.t -> t
+val mk_num : float -> t
 
-val dest : t -> Uf.t * Deqs.t * Ptos.t * Tpreds.t
+val mk : Uf.t -> Deqs.t -> Ptos.t -> Tpreds.t -> Num.t -> t
+
+val dest : t -> Uf.t * Deqs.t * Ptos.t * Tpreds.t * Num.t
 
 (** Functions [with_*] accept a heap [h] and a heap component [c] and
     return the heap that results by replacing [h]'s appropriate component
@@ -117,11 +124,15 @@ val with_ptos : t -> Ptos.t -> t
 
 val with_inds : t -> Tpreds.t -> t
 
+val with_num : t -> Num.t -> t
+
 val del_deq : t -> Tpair.t -> t
 
 val del_pto : t -> Pto.t -> t
 
 val del_ind : t -> Tpred.t -> t
+
+val del_num : t -> float -> t
 
 val add_eq : t -> Tpair.t -> t
 
@@ -131,29 +142,25 @@ val add_pto : t -> Pto.t -> t
 
 val add_ind : t -> Tpred.t -> t
 
-val proj_sp : t -> t
+val add_num : t -> Num.t -> t
 
-val proj_pure : t -> t
+val sub_num : t -> Num.t -> t
+
+val mul_num : t -> Num.t -> t
 
 val explode_deqs : t -> t
 
 val star : ?augment_deqs:bool -> t -> t -> t
-
-val diff : t -> t -> t
 
 val fixpoint : (t -> t) -> t -> t
 
 val subst : Subst.t -> t -> t
 
 val univ : Term.Set.t -> t -> t
-(** Replace all existential variables with fresh universal variables. *)
+(** univ(avoid, repl) Replace all existential variables with fresh universal variables. *)
 
 val subst_existentials : t -> t
 (** For all equalities x'=t, remove the equality and do the substitution [t/x'] *)
-
-val project : t -> Term.t list -> t
-(** See CSL-LICS paper for explanation.  Intuitively, do existential
-    quantifier elimination for all variables not in parameter list. *)
 
 val freshen_tags : t -> t -> t
 (** [freshen_tags f g] will rename all tags in [g] such that they are disjoint
@@ -203,15 +210,3 @@ val all_subheaps : t -> t list
         done by using [Uf.remove] to remove subsets of variables from
         [h.eqs];
     and forming all possible combinations *)
-
-val memory_consuming : t -> bool
-(** [memory_consuming h] returns [true] iff whenever there is an inductive
-    predicate in [h] there is also a points-to. **)
-
-val constructively_valued : t -> bool
-(** [constructively_valued h] returns true if all variables in [h] are
-    c.valued.  A variable [v] in [h] is c.valued iff (recursively)
-    - it is free, or,
-    - there is a c.valued variable [v'] such that
-      - [v=v'] is in [h], or,
-      - [v' |-> ys] is in [h] and [v] appears in [ys]. **)

@@ -21,7 +21,7 @@ val get_def : Predsym.t -> t -> Indrule.t list
 
 val fixpoint : (t -> t) -> t -> t
 
-val relevant_defs : t -> Form.t -> t
+(*val relevant_defs : t -> Form.t -> t*)
 
 val check_form_wf : t -> Form.t -> unit
 
@@ -38,7 +38,7 @@ val of_channel : in_channel -> t
 val of_string : string -> t
 
 val unfold :
-  ?gen_tags:bool -> Term.Set.t * Tags.t -> Tpred.t -> t -> Heap.t list
+  ?gen_tags:bool -> Term.Set.t * Tags.t -> Tpred.t -> t -> Heapsum.t list
 (** [unfold (vs, ts) p defs] returns a list containing the bodies of all the
     inductive rules for [p] in [defs] where, for each rule body:
       the formal parameters have been replaced by the arguments of [p];
@@ -51,9 +51,3 @@ val unfold :
 val of_formula : t -> Form.t -> t
 (** Convert a formula to a set of rules and add it to the provided set of
     definitions.  The head of the return definition list contains these rules. *)
-
-val memory_consuming : t -> bool
-
-val constructively_valued : t -> bool
-
-val deterministic : t -> bool

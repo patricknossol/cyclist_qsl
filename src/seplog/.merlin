@@ -1,0 +1,25 @@
+EXCLUDE_QUERY_DIR
+B /home/user/.opam/4.02.3/lib/hashcons
+B /home/user/.opam/4.02.3/lib/hashset
+B /home/user/.opam/4.02.3/lib/mparser
+B /home/user/.opam/4.02.3/lib/mparser-re
+B /home/user/.opam/4.02.3/lib/ocaml
+B /home/user/.opam/4.02.3/lib/re
+B /home/user/.opam/4.02.3/lib/re/perl
+B /home/user/.opam/4.02.3/lib/seq
+B ../../_build/default/src/generic/.generic.objs/byte
+B ../../_build/default/src/lib/.lib.objs/byte
+B ../../_build/default/src/seplog/.prove.eobjs/byte
+B ../../_build/default/src/seplog/.seplog.objs/byte
+S /home/user/.opam/4.02.3/lib/hashcons
+S /home/user/.opam/4.02.3/lib/hashset
+S /home/user/.opam/4.02.3/lib/mparser
+S /home/user/.opam/4.02.3/lib/mparser-re
+S /home/user/.opam/4.02.3/lib/ocaml
+S /home/user/.opam/4.02.3/lib/re
+S /home/user/.opam/4.02.3/lib/re/perl
+S /home/user/.opam/4.02.3/lib/seq
+S ../generic
+S ../lib
+S .
+FLG -open Seplog -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -warn-error -4-6-7-9-27-29-32..42-44-45-48-50-60 -w -4-6-7-9-27-29-32..42-44-45-48-50-60 -open Dune__exe -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -warn-error -4-6-7-9-27-29-32..42-44-45-48-50-60 -w -4-6-7-9-27-29-32..42-44-45-48-50-60

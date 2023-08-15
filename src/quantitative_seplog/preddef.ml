@@ -40,29 +40,3 @@ let parse st =
         >>= fun cases -> return (mk (cases, name)) )
   <?> "preddef" )
     st
-
-let memory_consuming (rules, _) =
-  Blist.for_all Indrule.memory_consuming rules
-
-let constructively_valued (rules, _) =
-  Blist.for_all Indrule.constructively_valued rules
-
-let deterministic (rules, _) =
-  let arity = Indrule.arity (Blist.hd rules) in
-  let allvars = Term.Set.union_of_list (Blist.map Indrule.vars rules) in
-  let newformals = Term.fresh_fvars allvars arity in
-  let freshen_rule r =
-    let formals = Indrule.formals r in
-    let theta = Term.Map.of_list (Blist.combine formals newformals) in
-    Indrule.subst theta r
-  in
-  let freshrules = Blist.map freshen_rule rules in
-  let bodies = Blist.map (fun r -> Indrule.body r) freshrules in
-  let projbodies = Blist.map (fun b -> Heap.project b newformals) bodies in
-  let rec aux = function
-    | [] -> true
-    | b :: bs ->
-        Blist.for_all (fun b' -> Heap.inconsistent (Heap.star b b')) bs
-        && aux bs
-  in
-  aux projbodies

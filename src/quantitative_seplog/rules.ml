@@ -4,6 +4,8 @@ open Generic
 module SH = Heap
 
 exception Not_symheap = Form.Not_symheap
+exception Not_symheap_sum = Form.Not_symheap_sum
+
 
 module Proof = Proof.Make (Seq)
 module Rule = Proofrule.Make (Seq)
@@ -48,8 +50,31 @@ let lemma_option_descr_str ?(line_prefix = "\t") () =
 (*       some alpha-renaming, existential introduction or splitting of        *)
 (*       existentials (i.e. when the right-hand side is not simply subsumed   *)
 (*       the left-hand side). *)
+
+let rec id_helper hs hs' theta =
+  match hs with
+    | [] -> true
+    | h::hs -> (
+      let subs = 
+          let res = Blist.foldr
+              (fun h' list ->
+                let r = Heap.classical_unify
+                  ~update_check:
+                    Unify.Unidirectional.modulo_entl h' h
+                  Unification.trivial_continuation theta in
+                if Option.is_some r then 
+                  let dif = (Heap.sub_num h' h.num) in
+                  let hs'_wo_dif = Blist.del_first (fun h2 -> h2 = h') hs' in
+                  if dif.num > 0. then (dif :: hs'_wo_dif) :: list else hs'_wo_dif :: list      
+                else list)
+              hs' [] in
+          res
+      in
+      Blist.exists (fun sub -> id_helper hs sub theta) subs
+    )
+    
 let id_axiom =
-  Rule.mk_axiom (fun ((cs, f), (cs', f')) ->
+  Rule.mk_axiom (fun ((cs, hss), (cs', hss')) ->
       let cs = Ord_constraints.close cs in
       Option.map
         (fun _ -> "Id")
@@ -57,18 +82,13 @@ let id_axiom =
            (Unify.Unidirectional.unify_tag_constraints
               ~update_check:Unify.Unidirectional.modulo_entl cs' cs
               (Unify.Unidirectional.mk_verifier (fun theta ->
-                   (not (Blist.is_empty f'))
+                   (not (Blist.is_empty hss'))
                    && Blist.for_all
-                        (fun h ->
-                          Option.is_some
-                            (Blist.find_map
-                               (fun h' ->
-                                 Heap.classical_unify
-                                   ~update_check:
-                                     Unify.Unidirectional.modulo_entl h' h
-                                   Unification.trivial_continuation theta )
-                               f') )
-                        f )))) )
+                        (fun hs -> 
+                          (Blist.exists
+                            (fun hs' -> id_helper hs hs' theta)
+                            hss'))
+                        hss)))))
 
 let preddefs = ref Defs.empty
 
@@ -80,27 +100,27 @@ let ex_falso_axiom =
 
 (* break LHS disjunctions *)
 let lhs_disj_to_symheaps =
-  Rule.mk_infrule (fun ((cs, hs), r) ->
-      match hs with
+  Rule.mk_infrule (fun ((cs, hss), r) ->
+      match hss with
       | [] | [_] -> []
       | _ ->
           [ ( Blist.map
-                (fun h -> (((cs, [h]), r), Heap.tag_pairs h, Tagpairs.empty))
-                hs
+                (fun hs -> (((cs, [hs]), r), Heapsum.tag_pairs hs, Tagpairs.empty))
+                hss
             , "L. Or" ) ] )
 
 (* break RHS disjunctions *)
-let rhs_disj_to_symheaps_rl (((_, hs) as l), ((_, hs') as r)) =
-  match (hs', hs) with
+let rhs_disj_to_symheaps_rl (((_, hss) as l), ((_, hss') as r)) =
+  match (hss', hss) with
   | [], _ | [_], _ | _, [] | _, _ :: _ :: _ -> []
   | _ ->
       Blist.map
-        (fun h ->
-          ( [ ( (l, Form.with_heaps r [h])
+        (fun hs ->
+          ( [ ( (l, Form.with_heapsums r [hs])
               , Form.tag_pairs l
               , Tagpairs.empty ) ]
           , "R. Or" ) )
-        hs'
+        hss'
 
 let rhs_disj_to_symheaps = Rule.mk_infrule rhs_disj_to_symheaps_rl
 
@@ -120,15 +140,15 @@ let lhs_instantiate_ex_tags (l, r) =
 
 let lhs_instantiate_ex_vars ((l, r) as seq) =
   try
-    let (_, h), (_, h') = Seq.dest seq in
-    let ex_vars = Term.Set.filter Term.is_exist_var (Heap.vars h) in
+    let (_, hs), (_, hs') = Seq.dest_sum seq in
+    let ex_vars = Term.Set.filter Term.is_exist_var (Heapsum.vars hs) in
     if Term.Set.is_empty ex_vars then []
     else
-      [ ( [ ( (Form.with_heaps l [Heap.univ (Heap.vars h') h], r)
+      [ ( [ ( (Form.with_heapsums l [Heapsum.univ (Heapsum.vars hs') hs], r)
             , Form.tag_pairs l
             , Tagpairs.empty ) ]
         , "Inst. LHS Vars" ) ]
-  with Not_symheap -> []
+  with Not_symheap_sum -> []
 
 let lhs_instantiation_rules = [lhs_instantiate_ex_tags; lhs_instantiate_ex_vars]
 
@@ -141,96 +161,123 @@ let lhs_instantiate = Rule.mk_infrule lhs_instantiate_seq
 (* simplification rules *)
 
 (* substitute one equality from LHS into sequent *)
+(* this equality must appear in all summands in LHS*)
 (* for (x,y) substitute y over x as x<y *)
 (* this means representatives of eq classes are the max elems *)
 let eq_subst_rule ((lhs, rhs) as seq) =
   try
-    let (_, l), (_, r) = Seq.dest seq in
-    let leqs = Uf.bindings l.SH.eqs in
-    let ((x, y) as p) =
-      Blist.find
-        (fun p' -> not (Pair.either (Pair.map Term.is_exist_var p')))
-        leqs
-    in
-    let leqs = Blist.filter (fun q -> q != p) leqs in
-    let l = SH.with_eqs l (Uf.of_list leqs) in
-    let x, y = if Term.is_var x then p else (y, x) in
-    let theta = Subst.singleton x y in
-    let l', r' = Pair.map (Heap.subst theta) (l, r) in
-    [ ( [ ( (Form.with_heaps lhs [l'], Form.with_heaps rhs [r'])
-          , Form.tag_pairs lhs
-          , (* OK since we didn't modify any tags *)
-            Tagpairs.empty ) ]
-      , "" ) ]
+    let (_, ls), (_, rs) = Seq.dest_sum seq in
+    match ls with
+      | [] -> []
+      | l1 :: _ -> 
+        let leqs1 = Uf.bindings l1.SH.eqs in (*searching only first summand suffices*)
+        let ((x, y) as p) =
+          Blist.find
+            (fun p' -> not (Pair.either (Pair.map Term.is_exist_var p')))
+            leqs1
+        in
+        let ls = Blist.foldr (
+          fun l list ->
+            let leqs = Uf.bindings l.SH.eqs in
+            let leqs = Blist.filter (fun q -> q != p && Pair.swap q != p) leqs in
+            let l = SH.with_eqs l (Uf.of_list leqs) in
+            l :: list)
+          ls [] in
+        let x, y = if Term.is_var x then p else (y, x) in
+        let theta = Subst.singleton x y in
+        let ls', rs' = Pair.map (Heapsum.subst theta) (ls, rs) in
+        [ ( [ ( (Form.with_heapsums lhs [ls'], Form.with_heapsums rhs [rs'])
+              , Form.tag_pairs lhs
+              , (* OK since we didn't modify any tags *)
+                Tagpairs.empty ) ]
+          , "" ) ]
   with
-  | Not_symheap | Not_found -> []
+  | Not_symheap_sum | Not_found -> []
 
 (* substitute one equality in RHS involving an existential var *)
 let eq_ex_subst_rule ((lhs, rhs) as seq) =
   try
-    let _, (_, r) = Seq.dest seq in
-    let reqs = Uf.bindings r.SH.eqs in
-    let ((x, y) as p) =
-      Blist.find
-        (fun vs -> Pair.either (Pair.map Term.is_exist_var vs))
-        reqs
+    let _, (_, rs) = Seq.dest_sum seq in
+    let rs' =
+      Blist.find_map
+        (fun h -> 
+          let reqs = Uf.bindings h.SH.eqs in
+          let p =
+            Blist.find_opt
+              (fun vs -> Pair.either (Pair.map Term.is_exist_var vs))
+              reqs
+          in
+          match p with
+            | None -> None
+            | Some ((x,y) as p) ->
+              let reqs = Blist.filter (fun q -> q != p) reqs in
+              let r = SH.with_eqs h (Uf.of_list reqs) in
+              let theta =
+                if Term.is_exist_var x then Subst.singleton x y
+                else Subst.singleton y x
+              in
+              let r' = Heap.subst theta r in
+              Some (Blist.map (fun r -> if r = h then r' else h) rs)
+        )
+        rs
     in
-    let reqs = Blist.filter (fun q -> q != p) reqs in
-    let r = SH.with_eqs r (Uf.of_list reqs) in
-    let theta =
-      if Term.is_exist_var x then Subst.singleton x y
-      else Subst.singleton y x
-    in
-    let r' = Heap.subst theta r in
-    [ ( [ ( (lhs, Form.with_heaps rhs [r'])
-          , Form.tag_pairs lhs
-          , Tagpairs.empty ) ]
-      , "" ) ]
-  with
-  | Not_symheap | Not_found -> []
+    match rs' with
+      | None -> []
+      | Some rs' ->
+        [ ( [ ( (lhs, Form.with_heapsums rhs [rs'])
+              , Form.tag_pairs lhs
+              , Tagpairs.empty ) ]
+          , "" ) ]
+  with Not_symheap_sum -> []
 
 (* remove all RHS eqs that can be discharged *)
 let eq_simplify ((lhs, rhs) as seq) =
   try
-    let (_, l), (_, r) = Seq.dest seq in
-    let disch, reqs =
-      Blist.partition
-        (fun (x, y) ->
-          (not (Pair.either (Pair.map Term.is_exist_var (x, y))))
-          && Heap.equates l x y )
-        (Uf.bindings r.SH.eqs)
-    in
-    if Blist.is_empty disch then []
+    let (_, ls), (_, rs) = Seq.dest_sum seq in
+    let rs' = Blist.map (fun r ->
+      let disch, reqs =
+        Blist.partition
+          (fun (x, y) ->
+            (not (Pair.either (Pair.map Term.is_exist_var (x, y))))
+            && Heapsum.equates ls x y )
+          (Uf.bindings r.SH.eqs) in
+      if Blist.is_empty disch then r
+      else SH.with_eqs r (Uf.of_list reqs)
+    ) rs in
+    if rs' = rs then []
     else
-      [ ( [ ( (lhs, Form.with_heaps rhs [SH.with_eqs r (Uf.of_list reqs)])
+      [ ( [ ( (lhs, Form.with_heapsums rhs [rs'])
             , Form.tag_pairs lhs
             , Tagpairs.empty ) ]
         , "" ) ]
-  with Not_symheap -> []
+  with Not_symheap_sum -> []
 
 (* remove all RHS deqs that can be discharged *)
 let deq_simplify ((lhs, rhs) as seq) =
   try
-    let (_, l), (_, r) = Seq.dest seq in
-    let disch, rdeqs =
-      Deqs.partition
-        (fun (x, y) ->
-          (not (Pair.either (Pair.map Term.is_exist_var (x, y))))
-          && Heap.disequates l x y )
-        r.SH.deqs
-    in
-    if Deqs.is_empty disch then []
+    let (_, ls), (_, rs) = Seq.dest_sum seq in
+    let rs' = Blist.map (fun r ->
+      let disch, rdeqs =
+        Deqs.partition
+          (fun (x, y) ->
+            (not (Pair.either (Pair.map Term.is_exist_var (x, y))))
+            && Heapsum.disequates ls x y )
+          r.SH.deqs in
+      if Deqs.is_empty disch then r
+      else SH.with_deqs r rdeqs
+    ) rs in
+    if rs' = rs then []
     else
-      [ ( [ ( (lhs, Form.with_heaps rhs [SH.with_deqs r rdeqs])
+      [ ( [ ( (lhs, Form.with_heapsums rhs [rs'])
             , Form.tag_pairs lhs
             , Tagpairs.empty ) ]
         , "" ) ]
-  with Not_symheap -> []
+  with Not_symheap_sum -> []
 
 (* Remove all RHS constraints that can be discharged *)
 let constraint_simplify ((lhs, rhs) as seq) =
   try
-    let (cs, _), (cs', _) = Seq.dest seq in
+    let (cs, _), (cs', _) = Seq.dest_sum seq in
     let cs = Ord_constraints.close cs in
     let discharged, remaining =
       Ord_constraints.partition
@@ -247,7 +294,7 @@ let constraint_simplify ((lhs, rhs) as seq) =
             , Form.tag_pairs lhs
             , Tagpairs.empty ) ]
         , "" ) ]
-  with Not_symheap -> []
+  with Not_symheap_sum -> []
 
 let norm seq =
   let seq' = Seq.norm seq in
@@ -293,7 +340,7 @@ let pto_intro_rule =
           SH.with_eqs r'
             (Uf.union r'.SH.eqs (Uf.of_list (Blist.combine rys lys)))
         in
-        [ ( [(((cs, [l']), (cs', [r'])), Heap.tag_pairs l, Tagpairs.empty)]
+        [ ( [(((cs, [[l']]), (cs', [[r']])), Heap.tag_pairs l, Tagpairs.empty)]
           , "Pto Intro" ) ]
     with
     | Not_symheap | Not_found | Invalid_argument _ -> []
@@ -344,8 +391,8 @@ let pred_intro_rule =
       let rl_name =
         if Tags.Elt.equal t t' then "Pred Intro" else "Tag.Inst+Pred.Intro"
       in
-      [ ( [ ( ( Form.with_heaps l [h]
-              , Form.subst_tags subst (Form.with_heaps r [h']) )
+      [ ( [ ( ( Form.with_heapsums l [[h]]
+              , Form.subst_tags subst (Form.with_heapsums r [[h']]) )
             , Heap.tag_pairs h
             , Tagpairs.empty ) ]
         , rl_name ) ]
@@ -380,7 +427,7 @@ let instantiate_pto =
             (Uf.union r'.SH.eqs
                (Uf.of_list ((x, w) :: Blist.combine ys zs)))
         in
-        ( [(((cs, [l']), (cs', [r'])), Heap.tag_pairs l, Tagpairs.empty)]
+        ( [(((cs, [[l']]), (cs', [[r']])), Heap.tag_pairs l, Tagpairs.empty)]
         , "Inst Pto" )
       in
       Blist.map do_instantiation cp
@@ -493,13 +540,13 @@ let ruf_rl defs seq =
         let do_case f =
           let cs' =
             Ord_constraints.union cs'
-              (Ord_constraints.generate ~augment:false tag (Heap.tags f))
+              (Ord_constraints.generate ~augment:false tag (Heapsum.tags f))
           in
-          let r' = Heap.star r' f in
+          let r' = Heapsum.star [r'] f in
           let tps =
             Tagpairs.union (Heap.tag_pairs l) (Ord_constraints.tag_pairs cs)
           in
-          ( [(((cs, [l]), (cs', [r'])), tps, Tagpairs.empty)]
+          ( [(((cs, [[l]]), (cs', [r'])), tps, Tagpairs.empty)]
           , Predsym.to_string ident ^ " R.Unf." )
         in
         Blist.map do_case cases
@@ -523,7 +570,7 @@ let luf defs =
           let do_case f =
             let new_cs =
               Ord_constraints.union cs
-                (Ord_constraints.generate ~avoid:seq_tags tag (Heap.tags f))
+                (Ord_constraints.generate ~avoid:seq_tags tag (Heapsum.tags f))
             in
             let cclosure = Ord_constraints.close new_cs in
             let vts, pts =
@@ -536,7 +583,7 @@ let luf defs =
                 , Ord_constraints.prog_pairs cclosure )
             in
             let vts = Tagpairs.union vts (Tagpairs.mk (Heap.tags l)) in
-            (((new_cs, [Heap.star l f]), (cs', [r])), vts, pts)
+            (((new_cs, [Heapsum.star [l] f]), (cs', [[r]])), vts, pts)
           in
           Some (Blist.map do_case cases, Predsym.to_string ident ^ " L.Unf.")
       in
@@ -847,12 +894,12 @@ let mk_backlink_rule_seq (trm_subst, tag_subst) ((src_lhs, src_rhs) as src_seq)
   let (src_lhs_cs, src_lhs_h), (src_rhs_cs, src_rhs_h) = Seq.dest src_seq in
   let src_lhs_cs = Ord_constraints.close src_lhs_cs in
   let subst_rhs_cs = Ord_constraints.close subst_rhs_cs in
-  let lhs_transform =
+  let lhs_transform = 
     Unify.Unidirectional.realize
       ((Heap.classical_unify
           ~update_check:Unify.Unidirectional.modulo_entl subst_lhs_h
           src_lhs_h)
-         (Unify.Unidirectional.unify_tag_constraints
+         (Unify.Unidirectional.unify_tag_constraints (*Left: theta(Backlink target node) subset of leaf node*)
             ~update_check:Unify.Unidirectional.modulo_entl subst_lhs_cs
             src_lhs_cs Unification.trivial_continuation))
   in
@@ -861,7 +908,7 @@ let mk_backlink_rule_seq (trm_subst, tag_subst) ((src_lhs, src_rhs) as src_seq)
       ((Heap.classical_unify
           ~update_check:Unify.Unidirectional.modulo_entl src_rhs_h
           subst_rhs_h)
-         (Unify.Unidirectional.unify_tag_constraints
+         (Unify.Unidirectional.unify_tag_constraints (*Right: Leaf node subset of theta(Backlink target node)*)
             ~update_check:Unify.Unidirectional.modulo_entl src_rhs_cs
             subst_rhs_cs Unification.trivial_continuation))
   in
@@ -949,10 +996,10 @@ let mk_lemma_rule_seq (trm_subst, tag_subst) (src_lhs, src_rhs)
     let subst_h =
       Heap.with_eqs (Heap.with_deqs subst_h h.SH.deqs) h.SH.eqs
     in
-    ((cs, [subst_h]), subst_rhs)
+    ((cs, [[subst_h]]), subst_rhs)
   in
   (* let () = debug (fun _ -> (Heap.to_string subst_h') ^ " * " ^ (Heap.to_string frame) ^ " = " ^ (Heap.to_string (Heap.star subst_h' frame))) in *)
-  let cont_seq = (Form.star (cs, [frame]) subst_rhs, src_rhs) in
+  let cont_seq = (Form.star (cs, [[frame]]) subst_rhs, src_rhs) in
   (* Construct the rule sequence *)
   Rule.compose_pairwise
     (Rule.mk_infrule (apply_lemma (lemma_seq, cont_seq)))
@@ -1058,5 +1105,5 @@ let setup defs =
           ; luf defs ] ] ;
   let axioms = Rule.first [id_axiom; ex_falso_axiom] in
   rules := Rule.combine_axioms axioms !rules ;
-  if !use_invalidity_heuristic then
-    rules := Rule.conditional (fun s -> not (Invalid.check defs s)) !rules
+  (*if !use_invalidity_heuristic then
+    rules := Rule.conditional (fun s -> not (Invalid.check defs s)) !rules*)

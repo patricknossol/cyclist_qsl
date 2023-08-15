@@ -12,6 +12,11 @@ val dest :
 (** If both LHS and RHS are symbolic heaps then return them else raise
     [Form.Not_symheap]. *)
 
+val dest_sum :
+  t -> (Ord_constraints.t * Heapsum.t) * (Ord_constraints.t * Heapsum.t)
+(** If both LHS and RHS are symbolic heap sums then return them else raise
+    [Form.Not_symheap_sum]. *)
+
 val parse : ?null_is_emp:bool -> (t, 'a) MParser.t
 
 val of_string : ?null_is_emp:bool -> string -> t
