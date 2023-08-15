@@ -27,7 +27,8 @@ TARGETS := \
 	src/slsat/slsat_expgen \
 	src/while/while_prove  \
 	src/while/while_abduce \
-	src/procedure/procedure_prove
+	src/procedure/procedure_prove \
+	src/quantitative_seplog/qsl_prove
 
 NATIVE_TARGETS := $(addsuffix .native,$(TARGETS)) 
 

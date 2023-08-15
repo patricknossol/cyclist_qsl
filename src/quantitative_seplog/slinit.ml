@@ -1,4 +1,5 @@
 #use "topfind";;
+#directory "_build/src/quantitative_seplog";;
 #directory "_build/src/seplog";;
 #directory "_build/src/generic";;
 #directory "_build/src/util";;
@@ -29,12 +30,11 @@
 #install_printer Pto.pp ;;
 #install_printer Ptos.pp ;;
 #install_printer Heap.pp;;
+#install_printer Heapsum.pp;;
 #install_printer Form.pp;;
 #install_printer Seq.pp;;
 #install_printer Defs.pp;;
 #install_printer Indrule.pp;;
-#install_printer Basepair.pp;;
-#install_printer Basepair.Set.pp;;
 
 Format.set_margin (Sys.command "exit $(tput cols)") ;;
 

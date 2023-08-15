@@ -16,6 +16,7 @@ type symheap =
   ; deqs: Deqs.t
   ; ptos: Ptos.t
   ; inds: Tpreds.t
+  ; num: Num.t
   ; mutable _terms: Term.Set.t option
   ; mutable _vars: Term.Set.t option
   ; mutable _tags: Tags.t option }
@@ -30,6 +31,7 @@ let equal h h' =
      && Deqs.equal h.deqs h'.deqs
      && Ptos.equal h.ptos h'.ptos
      && Tpreds.equal h.inds h'.inds
+     && Num.equal h.num h'.num
 
 let equal_upto_tags h h' =
   h == h'
@@ -37,6 +39,21 @@ let equal_upto_tags h h' =
      && Deqs.equal h.deqs h'.deqs
      && Ptos.equal h.ptos h'.ptos
      && Tpreds.equal_upto_tags h.inds h'.inds
+     && Num.equal h.num h'.num
+
+let equal_upto_num h h' =
+  h == h'
+  || Uf.equal h.eqs h'.eqs
+      && Deqs.equal h.deqs h'.deqs
+      && Ptos.equal h.ptos h'.ptos
+      && Tpreds.equal h.inds h'.inds
+
+let equal_upto_num_and_tags h h' =
+  h == h'
+  || Uf.equal h.eqs h'.eqs
+      && Deqs.equal h.deqs h'.deqs
+      && Ptos.equal h.ptos h'.ptos
+      && Tpreds.equal_upto_tags h.inds h'.inds
 
 include Fixpoint.Make (struct
   type t = symheap
@@ -55,7 +72,12 @@ let compare f g =
       | _ -> (
         match Ptos.compare f.ptos g.ptos with
         | n when not (Int.equal n 0) -> n
-        | _ -> Tpreds.compare f.inds g.inds ) )
+        | _ -> (
+          match Tpreds.compare f.inds g.inds with
+        | n when not (Int.equal n 0) -> n
+        | _ -> (
+          Num.compare f.num g.num
+      ) ) ) )
 
 (* custom hash function so that memoization fields are ignored when hashing *)
 (* so that the hash invariant is preserved [a = b => hash(a) = hash(b)] *)
@@ -63,7 +85,9 @@ let compare f g =
 let hash h =
   genhash
     (genhash
-       (genhash (Tpreds.hash h.inds) (Ptos.hash h.ptos))
+       (genhash 
+          (genhash (Tpreds.hash h.inds) (Ptos.hash h.ptos))
+          (Num.hash h.num))
        (Deqs.hash h.deqs))
     (Uf.hash h.eqs)
 
@@ -107,7 +131,8 @@ let to_string f =
       ( Uf.to_string_list f.eqs
       @ Deqs.to_string_list f.deqs
       @ Ptos.to_string_list f.ptos
-      @ Tpreds.to_string_list f.inds )
+      @ Tpreds.to_string_list f.inds
+      @ [Num.to_string f.num] )
   in
   if String.equal res "" then keyw_emp.str else res
 
@@ -117,6 +142,7 @@ let pp fmt h =
     @ Deqs.to_string_list h.deqs
     @ Ptos.to_string_list h.ptos
     @ Tpreds.to_string_list h.inds
+    @ [Num.to_string h.num]
   in
   Format.fprintf fmt "@[%a@]"
     (Blist.pp pp_star Format.pp_print_string)
@@ -143,21 +169,28 @@ let subsumed_upto_tags ?(total = true) h h' =
   && Deqs.subsumed h'.eqs h.deqs h'.deqs
   && Ptos.subsumed ~total h'.eqs h.ptos h'.ptos
   && Tpreds.subsumed_upto_tags ~total h'.eqs h.inds h'.inds
+  && Num.subsumed h.num h'.num
 
 let subsumed ?(total = true) h h' =
   Uf.subsumed h.eqs h'.eqs
   && Deqs.subsumed h'.eqs h.deqs h'.deqs
   && Ptos.subsumed ~total h'.eqs h.ptos h'.ptos
   && Tpreds.subsumed ~total h'.eqs h.inds h'.inds
+  && Num.subsumed h.num h'.num
 
 (* Constructors *)
 
-let mk eqs deqs ptos inds =
-  {eqs; deqs; ptos; inds; _terms= None; _vars= None; _tags= None}
+let empty = {eqs=Uf.empty; deqs=Deqs.empty; ptos=Ptos.empty; inds=Tpreds.empty; num=Num.empty; _terms= None; _vars= None; _tags= None}
 
-let dest h = (h.eqs, h.deqs, h.ptos, h.inds)
+let fix_empty_num h =
+  if not (equal h empty) && Num.is_empty h.num then
+    {eqs=h.eqs; deqs=h.deqs; ptos=h.ptos; inds=h.inds; num=1.; _terms=h._terms; _vars=h._vars; _tags=h._tags}
+  else h
 
-let empty = mk Uf.empty Deqs.empty Ptos.empty Tpreds.empty
+let mk eqs deqs ptos inds num =
+  fix_empty_num {eqs; deqs; ptos; inds; num; _terms= None; _vars= None; _tags= None}
+
+let dest h = (h.eqs, h.deqs, h.ptos, h.inds, h.num)
 
 let is_empty h = equal h empty
 
@@ -166,21 +199,26 @@ let subst theta h =
   ; deqs= Deqs.subst theta h.deqs
   ; ptos= Ptos.subst theta h.ptos
   ; inds= Tpreds.subst theta h.inds
+  ; num= h.num
   ; _terms= None
   ; _vars= None
   ; _tags= None }
 
-let with_eqs h eqs = {h with eqs; _terms= None; _vars= None; _tags= None}
+let with_eqs h eqs = fix_empty_num {h with eqs; _terms= None; _vars= None; _tags= None}
 
-let with_deqs h deqs = {h with deqs; _terms= None; _vars= None; _tags= None}
+let with_deqs h deqs = fix_empty_num {h with deqs; _terms= None; _vars= None; _tags= None}
 
-let with_ptos h ptos = {h with ptos; _terms= None; _vars= None; _tags= None}
+let with_ptos h ptos = fix_empty_num {h with ptos; _terms= None; _vars= None; _tags= None}
 
-let with_inds h inds = mk h.eqs h.deqs h.ptos inds
+let with_inds h inds = fix_empty_num (mk h.eqs h.deqs h.ptos inds h.num)
+
+let with_num h num = fix_empty_num (mk h.eqs h.deqs h.ptos h.inds num)
 
 let del_deq h deq = with_deqs h (Deqs.remove deq h.deqs)
 
 let del_pto h pto = with_ptos h (Ptos.remove pto h.ptos)
+
+let del_num h num = with_num h Num.empty
 
 let del_ind h ind =
   { h with
@@ -188,23 +226,23 @@ let del_ind h ind =
   }
 
 let mk_pto pto =
-  { empty with
+  fix_empty_num { empty with
     ptos= Ptos.singleton pto; _terms= None; _vars= None; _tags= None }
 
 let mk_eq p =
-  { empty with
+  fix_empty_num { empty with
     eqs= Uf.add p Uf.empty; _terms= None; _vars= None; _tags= None }
 
 let mk_deq p =
-  {empty with deqs= Deqs.singleton p; _terms= None; _vars= None; _tags= None}
+  fix_empty_num {empty with deqs= Deqs.singleton p; _terms= None; _vars= None; _tags= None}
 
 let mk_ind pred =
-  { empty with
+  fix_empty_num { empty with
     inds= Tpreds.singleton pred; _terms= None; _vars= None; _tags= None }
 
-let proj_sp h = mk Uf.empty Deqs.empty h.ptos h.inds
-
-let proj_pure h = mk h.eqs h.deqs Ptos.empty Tpreds.empty
+let mk_num num =
+  {empty with
+  num = num;  _terms= None; _vars= None; _tags= None}
 
 let complete_tags avoid h =
   if Tpreds.for_all Tpred.is_tagged h.inds then h
@@ -245,28 +283,17 @@ let star ?(augment_deqs = true) f g =
       (Deqs.union f.deqs g.deqs)
       (Ptos.union f.ptos g.ptos)
       (Tpreds.union f.inds g.inds)
+      (Num.mul f.num g.num)
   in
   if augment_deqs then explode_deqs h else h
-
-let diff h h' =
-  mk
-    (* FIXME hacky stuff in SH.eqs : in reality a proper way to diff *)
-    (* two union-find structures is required *)
-    (Uf.of_list
-       (Deqs.to_list
-          (Deqs.diff
-             (Deqs.of_list (Uf.bindings h.eqs))
-             (Deqs.of_list (Uf.bindings h'.eqs)))))
-    (Deqs.diff h.deqs h'.deqs)
-    (Ptos.diff h.ptos h'.ptos)
-    (Tpreds.diff h.inds h'.inds)
 
 let parse_atom ?(allow_tags = true) st =
   ( attempt (parse_symb keyw_emp >>$ empty)
   <|> attempt (Tpred.parse ~allow_tags |>> mk_ind)
   <|> attempt (Uf.parse |>> mk_eq)
   <|> attempt (Deqs.parse |>> mk_deq)
-  <|> (Pto.parse |>> mk_pto) <?> "atom" )
+  <|> (Pto.parse |>> mk_pto) 
+  <|> (Num.parse |>> mk_num) <?> "atom" )
     st
 
 let parse ?(allow_tags = true) ?(augment_deqs = true) st =
@@ -279,14 +306,20 @@ let of_string ?(allow_tags = true) ?(augment_deqs = true) s =
   handle_reply (MParser.parse_string (parse ~allow_tags ~augment_deqs) s ())
 
 let add_eq h eq =
-  {h with eqs= Uf.add eq h.eqs; _terms= None; _vars= None; _tags= None}
+  fix_empty_num {h with eqs= Uf.add eq h.eqs; _terms= None; _vars= None; _tags= None}
 
 let add_deq h deq =
-  {h with deqs= Deqs.add deq h.deqs; _terms= None; _vars= None; _tags= None}
+  fix_empty_num {h with deqs= Deqs.add deq h.deqs; _terms= None; _vars= None; _tags= None}
 
 let add_pto h pto = star h (mk_pto pto)
 
 let add_ind h ind = with_inds h (Tpreds.add ind h.inds)
+
+let add_num h num = with_num h (Num.add h.num num)
+
+let sub_num h num = with_num h (Num.sub h.num num)
+
+let mul_num h num = with_num h (Num.mul h.num num)
 
 let univ s f =
   let vs = vars f in
@@ -318,38 +351,10 @@ let norm h =
     deqs= Deqs.norm h.eqs h.deqs
   ; ptos= Ptos.norm h.eqs h.ptos
   ; inds= Tpreds.norm h.eqs h.inds
+  ; num= h.num
   ; _terms= None
   ; _vars= None
   ; _tags= None }
-
-(* FIXME review *)
-let project f xs =
-  (* let () = assert (Tpreds.is_empty f.inds && Ptos.is_empty f.ptos) in *)
-  let trm_nin_lst x =
-    (not (Term.is_nil x))
-    && not (Blist.exists (fun y -> Term.equal x y) xs)
-  in
-  let pair_nin_lst (x, y) = trm_nin_lst x || trm_nin_lst y in
-  let rec proj_eqs h =
-    let do_eq x y h' =
-      let x_nin_lst = trm_nin_lst x in
-      let y_nin_lst = trm_nin_lst y in
-      if not (x_nin_lst || y_nin_lst) then h'
-      else
-        let x', y' = if x_nin_lst then (y, x) else (x, y) in
-        let theta = Subst.singleton y' x' in
-        subst theta h'
-    in
-    Uf.fold do_eq h.eqs h
-  in
-  let proj_deqs g =
-    { g with
-      deqs= Deqs.filter (fun p -> not (pair_nin_lst p)) g.deqs
-    ; _terms= None
-    ; _vars= None
-    ; _tags= None }
-  in
-  proj_deqs (proj_eqs f)
 
 (* tags and unification *)
 
@@ -359,38 +364,46 @@ let subst_tags tagpairs h = with_inds h (Tpreds.subst_tags tagpairs h.inds)
 
 let unify_partial ?(tagpairs = true) ?(update_check = Fun._true) h h' cont
     init_state =
-  (Tpreds.unify ~total:false ~tagpairs ~update_check h.inds h'.inds
-     (Ptos.unify ~total:false ~update_check h.ptos h'.ptos
+  if Num.subsumed h.num h'.num then
+    (Tpreds.unify ~total:false ~tagpairs ~update_check h.inds h'.inds
+      (Ptos.unify ~total:false ~update_check h.ptos h'.ptos
         (Deqs.unify_partial ~update_check h.deqs h'.deqs
-           (Uf.unify_partial ~update_check h.eqs h'.eqs cont))))
+            (Uf.unify_partial ~update_check h.eqs h'.eqs cont))))
     init_state
+  else None (*TODO test biunify, unify?*)
 
 let biunify_partial ?(tagpairs = true) ?(update_check = Fun._true) h h' cont
-    init_state =
-  (Tpreds.biunify ~total:false ~tagpairs ~update_check h.inds h'.inds
-     (Ptos.biunify ~total:false ~update_check h.ptos h'.ptos
+  init_state =
+  if Num.subsumed h.num h'.num then
+    (Tpreds.biunify ~total:false ~tagpairs ~update_check h.inds h'.inds
+      (Ptos.biunify ~total:false ~update_check h.ptos h'.ptos
         (Deqs.biunify_partial ~update_check h.deqs h'.deqs
-           (Uf.biunify_partial ~update_check h.eqs h'.eqs cont))))
+          (Uf.biunify_partial ~update_check h.eqs h'.eqs cont))))
     init_state
+  else None
 
 let classical_unify ?(inverse = false) ?(tagpairs = true)
-    ?(update_check = Fun._true) h h' cont init_state =
-  let h_inv, h'_inv = Fun.direct inverse Pair.mk h h' in
-  (* NB how we don't need an "inverse" version for ptos and inds, since *)
-  (* we unify the whole multiset, not a subformula *)
-  (Tpreds.unify ~tagpairs ~update_check h_inv.inds h'_inv.inds
-     (Ptos.unify ~update_check h_inv.ptos h'_inv.ptos
-        (Deqs.unify_partial ~inverse ~update_check h.deqs h'.deqs
-           (Uf.unify_partial ~inverse ~update_check h.eqs h'.eqs cont))))
+  ?(update_check = Fun._true) h h' cont init_state =  
+  if Num.subsumed h.num h'.num then
+    let h_inv, h'_inv = Fun.direct inverse Pair.mk h h' in
+(* NB how we don't need an "inverse" version for ptos and inds, since *)
+(* we unify the whole multiset, not a subformula *)
+    (Tpreds.unify ~tagpairs ~update_check h_inv.inds h'_inv.inds
+      (Ptos.unify ~update_check h_inv.ptos h'_inv.ptos
+          (Deqs.unify_partial ~inverse ~update_check h.deqs h'.deqs
+            (Uf.unify_partial ~inverse ~update_check h.eqs h'.eqs cont))))
     init_state
+  else None
 
 let classical_biunify ?(tagpairs = true) ?(update_check = Fun._true) h h' cont
-    init_state =
-  (Tpreds.biunify ~tagpairs ~update_check h.inds h'.inds
-     (Ptos.biunify ~update_check h.ptos h'.ptos
-        (Deqs.biunify_partial ~update_check h.deqs h'.deqs
-           (Uf.biunify_partial ~update_check h.eqs h'.eqs cont))))
+  init_state =
+  if Num.subsumed h.num h'.num then
+    (Tpreds.biunify ~tagpairs ~update_check h.inds h'.inds
+      (Ptos.biunify ~update_check h.ptos h'.ptos
+          (Deqs.biunify_partial ~update_check h.deqs h'.deqs
+            (Uf.biunify_partial ~update_check h.eqs h'.eqs cont))))
     init_state
+  else None
 
 let all_subheaps h =
   let all_ptos = Ptos.subsets h.ptos in
@@ -403,37 +416,14 @@ let all_subheaps h =
   in
   Blist.flatten
     (Blist.map
-       (fun ptos ->
-         Blist.flatten
-           (Blist.map
+        (fun ptos ->
+          Blist.flatten
+            (Blist.map
               (fun preds ->
                 Blist.flatten
                   (Blist.map
-                     (fun deqs ->
-                       Blist.map (fun eqs -> mk eqs deqs ptos preds) all_ufs )
-                     all_deqs) )
+                      (fun deqs ->
+                        Blist.map (fun eqs -> mk eqs deqs ptos preds h.num) all_ufs )
+                      all_deqs) )
               all_preds) )
-       all_ptos)
-
-let memory_consuming h =
-  Tpreds.is_empty h.inds || not (Ptos.is_empty h.ptos)
-
-let constructively_valued h =
-  let freevars = Term.Set.filter Term.is_free_var (vars h) in
-  let existvars = Term.Set.filter Term.is_exist_var (vars h) in
-  let is_cvalued cvalued v =
-    Term.Set.exists (equates h v) cvalued
-    || Ptos.exists
-         (fun (y, zs) ->
-           Term.Set.mem y cvalued && Blist.exists (Term.equal v) zs )
-         h.ptos
-  in
-  let rec aux cvalued rest =
-    let new_cvalued = Term.Set.filter (is_cvalued cvalued) rest in
-    if Term.Set.is_empty new_cvalued then Term.Set.is_empty rest
-    else
-      aux
-        (Term.Set.union cvalued new_cvalued)
-        (Term.Set.diff rest new_cvalued)
-  in
-  aux freevars existvars
+        all_ptos)

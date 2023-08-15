@@ -1,28 +1,24 @@
 (library 
- (name seplog)
- (public_name cyclist.seplog)
+ (name quantitative_seplog)
+ (public_name cyclist.quantitative_seplog)
  (libraries lib generic mparser-re)
  (modules
    (:standard 
       \ slinit
-        disprove
-        modelcheck
-        prove
-        satcheck
-        satexpgen)))
+        prove)))
 
 (executables
  (names
-   prove disprove modelcheck satcheck satexpgen)
+   prove)
  (public_names
-   sl_prove sl_disprove sl_modelcheck sl_satcheck sl_satexpgen)
+   qsl_prove)
  (modules
-   prove disprove modelcheck satcheck satexpgen)
- (libraries lib generic seplog))
+   prove)
+ (libraries lib generic quantitative_seplog))
 
 (toplevel
  (name sltop)
- (libraries lib generic seplog))
+ (libraries lib generic quantitative_seplog))
 
 ; (executable
 ;  (name        sltop)

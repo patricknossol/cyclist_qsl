@@ -14,6 +14,8 @@ let equal_upto_tags (l, r) (l', r') =
 
 let dest seq = Pair.map Form.dest seq
 
+let dest_sum seq = Pair.map Form.dest_sum seq
+
 let to_string (l, r) =
   Form.to_string l ^ symb_turnstile.sep ^ Form.to_string r
 
