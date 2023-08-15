@@ -1,0 +1,1 @@
+N(x) & N(y) & ADD(x,y,z) |- ADD(y,x,z)

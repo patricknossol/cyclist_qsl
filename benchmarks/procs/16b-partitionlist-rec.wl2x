@@ -1,0 +1,37 @@
+fields: next;
+
+proc partition(x, y, z)
+precondition: x -> x' * ls[a](x',nil) * y -> y' * z -> z';
+postcondition: [b'] <= [a], [c'] <= [a] : x -> nil * y -> v' * ls[b'](v',nil) * z -> w' * ls[c'](w',nil);
+{
+	list := x.next;
+	
+	if list != nil then
+
+		tail := list.next;
+		x.next := tail;	
+		
+		partition(x, y, z);
+		
+		if * then
+		
+			newlist := y.next;
+			list.next := newlist;
+			y.next := list
+			
+		else
+		
+			newlist := z.next;
+			list.next := newlist;
+			z.next := list
+		
+		fi	
+	else
+	
+	  y.next := nil;
+	  z.next := nil
+	
+	fi;
+
+	assert([b'] <= [a], [c'] <= [a] : x -> nil * y -> v' * ls[b'](v',nil) * z -> w' * ls[c'](w',nil))
+}

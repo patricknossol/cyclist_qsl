@@ -1,0 +1,97 @@
+N { 
+	true => N(0) | 
+	N(x) => N(s(x)) 
+} ;
+
+E {
+	true => E(0) |
+	O(x) => E(s(x))
+} ;
+
+O {
+	E(x) => O(s(x))
+} ;
+
+P {
+	true => P(0) |
+	P(x) & Q(x, s(x)) => P(s(x)) 
+} ;
+
+Q {
+	true => Q(x,0) |
+	Q(x,y) & P(x) => Q(x,s(y))
+} ;
+
+LIST {
+  true => LIST(0) |
+  LIST(x) => LIST(cons(y,x))
+} ;
+
+APP {
+  true => APP(0,x,x) |
+  APP(x,y,z) => APP(cons(w,x), y, cons(w,z))
+} ;
+
+TAKE {
+  true => TAKE(x, 0, 0) |
+  true => TAKE(0, x, 0) |
+  TAKE(x,y,z) => TAKE(s(x), cons(w,y), cons(w,z))
+} ;
+
+DROP {
+  true => DROP(x, 0, 0) |
+  true => DROP(0, x, x) |
+  DROP(x,y,z) => DROP(s(x), cons(w,y), z)
+} ;
+
+MINUS {
+  true => MINUS(0,x,0) |
+  true => MINUS(x,0,x) |
+  MINUS(x,y,z) => MINUS(s(x),s(y),z)
+} ;
+
+LEN {
+	true => LEN(0,0) |
+	LEN(x,y) => LEN(cons(z,x),s(y))
+} ;
+
+PLUS {
+	true => PLUS(0,x,x) |
+	PLUS(x,y,z) => PLUS(s(x),y,s(z))
+} ;
+
+COUNT {
+	true => COUNT(x,0,0) |
+	COUNT(x,y,z) => COUNT(x, cons(x,y), s(z)) |
+  x!=w & COUNT(x,y,z) => COUNT(x, cons(w,y), z)
+} ; 
+
+ADD {
+  N(x) => ADD(0,x,x) |
+  ADD(x,y,z) => ADD(s(x), y, s(z))
+} ;
+
+MUL {
+  N(x) => MUL(0,x,0) |
+  MUL(x,y,z) & ADD_2(x,z,w) => MUL(s(x),y,w)
+} ;
+
+LEQ {
+	true => LEQ(0,x) |
+	LEQ(x,y) => LEQ(s(x),s(y))
+} ;
+
+R {
+	true => R(0,x) |
+	R(x,0) => R(s(x),0) |
+	R(s(s(x)),y) => R(s(x),s(y))
+} ;
+
+H {
+	true => H(0,0) |
+	true => H(s(0),0) |
+	true => H(x,s(0)) |
+	H(x,y) => H(s(x),s(s(y))) |
+	H(s(y),y) => H(0,s(s(y))) |
+	H(s(x),x) => H(s(s(x)),0) 
+}

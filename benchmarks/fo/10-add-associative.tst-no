@@ -1,0 +1,1 @@
+N(x) & N(y) & N(z) & ADD(x,y,w) & ADD(y,z,a) & ADD(w,z,b) |- ADD(x,a,b)
