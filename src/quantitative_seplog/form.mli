@@ -112,3 +112,11 @@ val get_tracepairs : t -> t -> Tagpairs.t * Tagpairs.t
 (** [get_tracepairs f f'] will return the valid and progressing trace pairs
     (t, t') specified by the constraints of [f'] such that [t] occurs in [f]
 *)
+
+val is_domain_exact : ?covered:Predsym.t list -> (Predsym.t * t) list -> t -> bool
+(** [is_domain_exact covered defs f] calculates if f is domain_exact considering
+    that the predicate symbols in covered have already been analyzed*)
+
+val mk_heap : Heap.t -> t
+
+val mk_heapsums : Heapsum.t list -> t

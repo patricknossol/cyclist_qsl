@@ -96,6 +96,20 @@ let () =
   (*-----------TESTING------------*)
   else
 
+    let list = [1;2;3;4] in
+    let dofold (r, r2) =
+      Blist.foldr
+        (fun element res -> 
+          if element == r then true else res
+        ) list false
+    in
+    let heap_preds = 
+      Blist.foldr ( fun r list ->
+        list @ [(r, r)]
+      ) list [] in
+    let res = Blist.for_all dofold heap_preds in
+    print_endline ("Equality: " ^ string_of_bool res);
+
     let res =
       F.gather_stats (fun () ->
           (*if !invalidity_check && Invalid.check defs seq then None

@@ -153,3 +153,25 @@ let get_tracepairs f ((cs, _) as f') =
       , Ord_constraints.prog_pairs cs )
   in
   (allpairs, progressing)
+
+let rec is_domain_exact ?(covered = []) defs hss = 
+  match hss with
+    | (cs, hs :: []) -> 
+      (match hs with
+        | h :: [] ->
+          (Tpreds.for_all (fun (_, (ident, _)) -> 
+            if Blist.mem ident covered then true else
+              let cases = Blist.filter_map (fun (sym, form) -> if sym = ident then Some(form) else None) defs in
+              let covered = covered @ [ident] in
+              Blist.for_all (fun case ->
+                is_domain_exact ~covered:covered defs case
+              ) cases
+          ) h.Heap.inds)
+        | _  -> false)
+    | _ -> false
+  
+let mk_heap h =
+  (Ord_constraints.empty, [[h]])
+
+let mk_heapsums hss =
+  (Ord_constraints.empty, hss)

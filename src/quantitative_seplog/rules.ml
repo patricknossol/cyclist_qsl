@@ -176,16 +176,18 @@ let eq_subst_rule ((lhs, rhs) as seq) =
             (fun p' -> not (Pair.either (Pair.map Term.is_exist_var p')))
             leqs1
         in
-        let ls = Blist.foldr (
+        let ls' = Blist.foldr (
           fun l list ->
             let leqs = Uf.bindings l.SH.eqs in
-            let leqs = Blist.filter (fun q -> q != p && Pair.swap q != p) leqs in
-            let l = SH.with_eqs l (Uf.of_list leqs) in
-            l :: list)
+            let leqs = Blist.filter (fun q -> q <> p && Pair.swap q <> p) leqs in
+            let l' = SH.with_eqs l (Uf.of_list leqs) in
+            if l' = l then list
+            else l :: list)
           ls [] in
+        if Blist.length ls' != Blist.length ls then [] else
         let x, y = if Term.is_var x then p else (y, x) in
         let theta = Subst.singleton x y in
-        let ls', rs' = Pair.map (Heapsum.subst theta) (ls, rs) in
+        let ls', rs' = Pair.map (Heapsum.subst theta) (ls', rs) in
         [ ( [ ( (Form.with_heapsums lhs [ls'], Form.with_heapsums rhs [rs'])
               , Form.tag_pairs lhs
               , (* OK since we didn't modify any tags *)
@@ -210,7 +212,7 @@ let eq_ex_subst_rule ((lhs, rhs) as seq) =
           match p with
             | None -> None
             | Some ((x,y) as p) ->
-              let reqs = Blist.filter (fun q -> q != p) reqs in
+              let reqs = Blist.filter (fun q -> q <> p) reqs in
               let r = SH.with_eqs h (Uf.of_list reqs) in
               let theta =
                 if Term.is_exist_var x then Subst.singleton x y
@@ -320,119 +322,152 @@ let wrap r =
 
 (* do the following transformation for the first x such that *)
 (* x->y * A |- x->z * B     if     A |- y=z * B *)
+(*When x->y/x->z occurs in every summand*)
 let pto_intro_rule =
   let rl seq =
     try
-      let (cs, l), (cs', r) = Seq.dest seq in
-      let ((rx, rys) as p) =
-        Ptos.find
-          (fun (w, _) -> Option.is_some (Heap.find_lval w l))
-          r.SH.ptos
-      in
-      let ((lx, lys) as p') = Option.get (Heap.find_lval rx l) in
-      (* avoid scope jumping *)
-      if Blist.exists Term.is_exist_var lys then []
-      else
-        (* take care to remove only the 1st match *)
-        let l' = SH.del_pto l p' in
-        let r' = SH.del_pto r p in
-        let r' =
-          SH.with_eqs r'
-            (Uf.union r'.SH.eqs (Uf.of_list (Blist.combine rys lys)))
+      let (cs, ls), (cs', rs) = Seq.dest_sum seq in
+      match (ls, rs) with
+       | (_, []) | ([], _) -> []
+       | (l1 :: lstail, r1 :: rstail) ->
+        let (lys, ((rx, rys) as pr)) =
+          Ptos.fold
+            (fun ((x, ys) as p) ((lysres, (rxres, rysres)) as res) ->
+              if not (Blist.is_empty lysres) then res
+              else if not (Blist.for_all (fun r -> Ptos.mem p r.SH.ptos) rstail) then res
+              else
+                let pl = Ptos.find_first_opt 
+                  (fun ((lx', lys') as p') -> 
+                    lx' = x
+                    && Blist.for_all (fun l -> Ptos.mem p' l.SH.ptos) lstail
+                    && Blist.for_all (fun ly -> not (Term.is_exist_var ly)) lys' (*avoid scope jumping*)
+                  ) l1.SH.ptos in
+                match pl with
+                  | None -> res
+                  | Some (lx, lys) -> (lys, (x, ys)) 
+            ) r1.SH.ptos ([], (Term.of_string "a", []))
         in
-        [ ( [(((cs, [[l']]), (cs', [[r']])), Heap.tag_pairs l, Tagpairs.empty)]
-          , "Pto Intro" ) ]
+        if Blist.is_empty lys then []
+        else
+          (* take care to remove only the 1st match *)
+          let ls' = Blist.map (fun l -> SH.del_pto l (rx, lys)) ls in
+          let rs' = Blist.map (fun r -> 
+            let r' = SH.del_pto r pr in
+            SH.with_eqs r' (Uf.union r'.SH.eqs (Uf.of_list (Blist.combine rys lys)))
+          ) rs in
+          [ ( [(((cs, [ls']), (cs', [rs'])), Heapsum.tag_pairs ls, Tagpairs.empty)]
+            , "Pto Intro" ) ]
     with
-    | Not_symheap | Not_found | Invalid_argument _ -> []
+    | Not_symheap_sum | Not_found | Invalid_argument _ -> []
   in
   wrap rl
 
 (* do the following transformation for the first P, (x_1,...,x_n) such that *)
 (*   P[a](x_1, ..., x_n) * A |- P[b](x_1, ..., x_n) * B    if  A |- B[a/b]  *)
 (* with [a] a universal tag and either [b] = [a] or [b] existential         *)
-let pred_intro_rule =
+(* P has to appear in all summands and either both sides are one heap, or RHS is one heap, or P is domain-exact*)
+let pred_intro_rule defs =
   let rl ((l, r) as seq) =
     try
-      let (_, h), (_, h') = Seq.dest seq in
-      let linds, rinds = Pair.map Tpreds.elements (h.SH.inds, h'.SH.inds) in
-      let cp = Blist.cartesian_product linds rinds in
-      let matches eq ((t, (id, vs)), (t', (id', vs'))) =
-        Predsym.equal id id'
-        && Blist.for_all (Fun.neg Term.is_exist_var) vs
-        && Blist.for_all (Fun.neg Term.is_exist_var) vs'
-        && Tags.is_free_var t
-        && (Tags.is_exist_var t' || Tags.Elt.equal t t')
-        && Blist.for_all2 eq vs vs'
-      in
-      let combine_eqs h h' =
-        let ts, ts' = Pair.map Heap.vars (h, h') in
-        let exs = Term.Set.filter Term.is_exist_var ts in
-        let h_eqs =
-          if Term.Set.is_empty exs then h.SH.eqs
-          else
-            let theta =
-              Subst.mk_free_subst (Term.Set.union ts ts') exs
+      let (_, hs), (_, hs') = Seq.dest_sum seq in
+      match (hs, hs') with
+        | ([], _) | (_, []) -> []
+        | (h :: hs, h' :: hs') ->
+          let must_be_domain_exact = not (Blist.is_empty hs') in
+          let linds, rinds = Pair.map Tpreds.elements (h.SH.inds, h'.SH.inds) in
+          let linds = Blist.filter (fun lind -> Blist.for_all (fun h -> Tpreds.mem lind h.SH.inds && (not must_be_domain_exact || Form.is_domain_exact (Defs.get_def_forms defs) (Form.mk_heap (Heap.mk_ind lind)))) hs) linds in
+          let rinds = Blist.filter (fun rind -> Blist.for_all (fun h' -> Tpreds.mem rind h'.SH.inds && (not must_be_domain_exact || Form.is_domain_exact (Defs.get_def_forms defs) (Form.mk_heap (Heap.mk_ind rind)))) hs') rinds in
+          let cp = Blist.cartesian_product linds rinds in
+          let matches ((t, (id, vs)), (t', (id', vs'))) =
+            Predsym.equal id id'
+            && Blist.for_all (Fun.neg Term.is_exist_var) vs
+            && Blist.for_all (Fun.neg Term.is_exist_var) vs'
+            && Tags.is_free_var t
+            && (Tags.is_exist_var t' || Tags.Elt.equal t t')
+          in
+          let combine_eqs h h' =
+            let ts, ts' = Pair.map Heap.vars (h, h') in
+            let exs = Term.Set.filter Term.is_exist_var ts in
+            let h_eqs =
+              if Term.Set.is_empty exs then h.SH.eqs
+              else
+                let theta =
+                  Subst.mk_free_subst (Term.Set.union ts ts') exs
+                in
+                Uf.subst theta h.SH.eqs
             in
-            Uf.subst theta h.SH.eqs
-        in
-        let combined_eqs = Uf.union h_eqs h'.SH.eqs in
-        Uf.equates combined_eqs
-      in
-      let p, q =
-        Option.dest
-          (Blist.find (matches (combine_eqs h h')) cp)
-          Fun.id
-          (Blist.find_opt (matches (Heap.equates h)) cp)
-      in
-      let h = SH.del_ind h p in
-      let h' = SH.del_ind h' q in
-      let t, t' = Pair.map Tpred.tag (p, q) in
-      let subst = Tagpairs.singleton (t', t) in
-      let rl_name =
-        if Tags.Elt.equal t t' then "Pred Intro" else "Tag.Inst+Pred.Intro"
-      in
-      [ ( [ ( ( Form.with_heapsums l [[h]]
-              , Form.subst_tags subst (Form.with_heapsums r [[h']]) )
-            , Heap.tag_pairs h
-            , Tagpairs.empty ) ]
-        , rl_name ) ]
+            let combined_eqs = Uf.union h_eqs h'.SH.eqs in
+            Uf.equates combined_eqs
+          in
+          let p, q =
+            Option.dest
+              (Blist.find (fun (((t, (id, vs)), (t', (id', vs'))) as cp) ->
+                matches cp && Blist.for_all2 (fun v v' ->
+                  let heap_product = Blist.cartesian_product ([h] @ hs) ([h'] @ hs') in
+                  Blist.for_all (fun (h, h') -> (combine_eqs h h') v v') heap_product)
+                vs vs')
+              cp)
+              Fun.id
+              (Blist.find_opt (fun (((t, (id, vs)), (t', (id', vs'))) as cp) ->
+                matches cp && Blist.for_all2 (Heap.equates h) vs vs')
+              cp)
+          in
+          let hs = Blist.map (fun h -> SH.del_ind h p) hs in
+          let hs' = Blist.map (fun h' -> SH.del_ind h' q) hs' in
+          let t, t' = Pair.map Tpred.tag (p, q) in
+          let subst = Tagpairs.singleton (t', t) in
+          let rl_name =
+            if Tags.Elt.equal t t' then "Pred Intro" else "Tag.Inst+Pred.Intro"
+          in
+          [ ( [ ( ( Form.with_heapsums l [hs]
+                  , Form.subst_tags subst (Form.with_heapsums r [hs']) )
+                , Heapsum.tag_pairs hs
+                , Tagpairs.empty ) ]
+            , rl_name ) ]
     with
-    | Not_symheap | Not_found -> []
+    | Not_symheap_sum | Not_found -> []
   in
   wrap rl
 
 (* x->ys * A |- e->zs * B if  A |- ys=zs * B[x/e] where e existential *)
 (* and at least one var in ys,zs is the same *)
+(* x->ys, e->zs, ys=zs have to appear in all summands on the respective side*)
 (* multiple applications possible *)
 let instantiate_pto =
   let rl seq =
     try
-      let (cs, l), (cs', r) = Seq.dest seq in
-      let lptos, rptos = Pair.map Ptos.elements (l.SH.ptos, r.SH.ptos) in
-      let eptos = Blist.filter (fun (x, _) -> Term.is_exist_var x) rptos in
-      let match_ls xs ys =
-        try
-          (* avoid scope jumping *)
-          (not (Blist.exists Term.is_exist_var xs))
-          && Blist.exists2 (fun x y -> Heap.equates l x y) xs ys
-        with Invalid_argument _ -> false
-      in
-      let cp = Blist.cartesian_product eptos lptos in
-      let cp = Blist.filter (fun ((_, zs), (_, ys)) -> match_ls ys zs) cp in
-      let do_instantiation (((x, ys) as p), ((w, zs) as q)) =
-        let l' = SH.del_pto l q in
-        let r' = SH.del_pto r p in
-        let r' =
-          SH.with_eqs r'
-            (Uf.union r'.SH.eqs
-               (Uf.of_list ((x, w) :: Blist.combine ys zs)))
-        in
-        ( [(((cs, [[l']]), (cs', [[r']])), Heap.tag_pairs l, Tagpairs.empty)]
-        , "Inst Pto" )
-      in
-      Blist.map do_instantiation cp
+      let (cs, ls), (cs', rs) = Seq.dest_sum seq in
+      match (ls, rs) with
+        | ([], _) | (_, []) -> []
+        | (l :: ls, r :: rs) ->
+          let lptos, rptos = Pair.map Ptos.elements (l.SH.ptos, r.SH.ptos) in
+          let eptos = Blist.filter (fun (x, _) -> Term.is_exist_var x) rptos in
+          let lptos = Blist.filter (fun p -> Blist.for_all (fun l -> Ptos.mem p l.SH.ptos) ls) lptos in
+          let eptos = Blist.filter (fun p -> Blist.for_all (fun r -> Ptos.mem p r.SH.ptos) rs) eptos in
+          let match_ls xs ys =
+            try
+              (* avoid scope jumping *)
+              (not (Blist.exists Term.is_exist_var xs))
+              && Blist.exists2 (fun x y -> Heapsum.equates ([l] @ ls) x y) xs ys
+            with Invalid_argument _ -> false
+          in
+          let cp = Blist.cartesian_product eptos lptos in
+          let cp = Blist.filter (fun ((_, zs), (_, ys)) -> match_ls ys zs) cp in
+          let do_instantiation (((x, ys) as p), ((w, zs) as q)) =
+            let ls' = Blist.map (fun l -> SH.del_pto l q ) ([l] @ ls) in
+            let rs' = Blist.map (fun r -> SH.del_pto r p ) ([r] @ rs) in
+            let rs' = Blist.map
+              (fun r' ->
+                SH.with_eqs r'
+                  (Uf.union r'.SH.eqs
+                    (Uf.of_list ((x, w) :: Blist.combine ys zs)))
+              ) rs' in
+            ( [(((cs, [ls']), (cs', [rs'])), Heapsum.tag_pairs ([l] @ ls), Tagpairs.empty)]
+            , "Inst Pto" )
+          in
+          Blist.map do_instantiation cp
     with
-    | Not_symheap | Invalid_argument _ -> []
+    | Not_symheap_sum | Invalid_argument _ -> []
   in
   wrap rl
 
@@ -514,25 +549,25 @@ let upper_bound_tag_instantiate =
 (* can be any tags *)
 let bounds_intro_rl ((l, r) as seq) =
   try
-    let _, (cs, h) = Seq.dest seq in
+    let _, (cs, hs) = Seq.dest_sum seq in
     let f (cs, descr) =
       [ ( [ ( (l, Form.with_constraints r cs)
             , Form.tag_pairs l
             , Tagpairs.empty ) ]
         , descr ^ " Intro" ) ]
     in
-    let result = Ord_constraints.remove_schema cs (Heap.tags h) in
+    let result = Ord_constraints.remove_schema cs (Heapsum.tags hs) in
     Option.dest [] f result
-  with Not_symheap -> []
+  with Not_symheap_sum -> []
 
 let bounds_intro = Rule.mk_infrule bounds_intro_rl
 
 let ruf_rl defs seq =
   try
-    let (cs, l), (cs', r) = Seq.dest seq in
+    let (cs, ls), (cs', rs) = Seq.dest_sum seq in
     let seq_vars = Seq.vars seq in
     let seq_tags = Seq.tags seq in
-    let right_unfold ((tag, (ident, _)) as p) =
+    let right_unfold (r, ((tag, (ident, _)) as p)) =
       if not (Defs.mem ident defs) then []
       else
         let r' = SH.del_ind r p in
@@ -544,28 +579,33 @@ let ruf_rl defs seq =
           in
           let r' = Heapsum.star [r'] f in
           let tps =
-            Tagpairs.union (Heap.tag_pairs l) (Ord_constraints.tag_pairs cs)
+            Tagpairs.union (Heapsum.tag_pairs ls) (Ord_constraints.tag_pairs cs)
           in
-          ( [(((cs, [[l]]), (cs', [r'])), tps, Tagpairs.empty)]
+          let rs' = Blist.flatten (Blist.map (fun r'' -> if r'' == r then r' else [r]) rs) in
+          ( [(((cs, [ls]), (cs', [rs'])), tps, Tagpairs.empty)]
           , Predsym.to_string ident ^ " R.Unf." )
         in
         Blist.map do_case cases
     in
-    Blist.flatten (Tpreds.map_to_list right_unfold r.SH.inds)
-  with Not_symheap -> []
+    let heap_preds = 
+      Blist.foldr ( fun r list ->
+        list @ Blist.map (fun pred -> (r, pred)) (Tpreds.to_list r.SH.inds)
+      ) rs [] in
+    Blist.flatten (Blist.map right_unfold heap_preds)
+  with Not_symheap_sum -> []
 
 let ruf defs = wrap (ruf_rl defs)
 
 let luf defs =
   let rl seq =
     try
-      let (cs, l), (cs', r) = Seq.dest seq in
+      let (cs, ls), (cs', rs) = Seq.dest_sum seq in
       let seq_vars = Seq.vars seq in
       let seq_tags = Seq.tags seq in
-      let left_unfold ((tag, (ident, _)) as p) =
+      let left_unfold (l, ((tag, (ident, _)) as p)) =
         if not (Defs.mem ident defs) then None
         else
-          let l = SH.with_inds l (Tpreds.remove p l.SH.inds) in
+          let l' = SH.with_inds l (Tpreds.remove p l.SH.inds) in
           let cases = Defs.unfold (seq_vars, seq_tags) p defs in
           let do_case f =
             let new_cs =
@@ -582,13 +622,19 @@ let luf defs =
                 ( Ord_constraints.all_pairs cclosure
                 , Ord_constraints.prog_pairs cclosure )
             in
-            let vts = Tagpairs.union vts (Tagpairs.mk (Heap.tags l)) in
-            (((new_cs, [Heapsum.star [l] f]), (cs', [[r]])), vts, pts)
+            let l' = Heapsum.star [l'] f in
+            let ls' = Blist.flatten (Blist.map (fun l'' -> if l'' == l then l' else [l]) ls) in
+            let vts = Tagpairs.union vts (Tagpairs.mk (Heapsum.tags ls')) in (*TODO === ls' (I believe so)?*)
+            (((new_cs, [ls']), (cs', [rs])), vts, pts)
           in
           Some (Blist.map do_case cases, Predsym.to_string ident ^ " L.Unf.")
       in
-      Option.list_get (Tpreds.map_to_list left_unfold l.SH.inds)
-    with Not_symheap -> []
+      let heap_preds =
+        Blist.foldr (fun l list ->
+          list @ Blist.map (fun pred -> (l, pred)) (Tpreds.to_list l.SH.inds)
+        ) ls [] in
+      Option.list_get (Blist.map left_unfold heap_preds)
+    with Not_symheap_sum -> []
   in
   wrap (Seqtactics.compose rl (Seqtactics.attempt lhs_instantiate_seq))
 
@@ -1092,7 +1138,7 @@ let setup defs =
       ; Rule.choice
           [ dobackl
           ; pto_intro_rule
-          ; pred_intro_rule
+          ; pred_intro_rule defs
           ; instantiate_pto
           ; Rule.conditional
               (fun (_, (cs, _)) ->

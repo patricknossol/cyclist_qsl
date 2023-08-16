@@ -19,6 +19,8 @@ val is_undefined : t -> Tpred.t -> bool
 
 val get_def : Predsym.t -> t -> Indrule.t list
 
+val get_def_forms : t -> (Predsym.t * Form.t) list
+
 val fixpoint : (t -> t) -> t -> t
 
 (*val relevant_defs : t -> Form.t -> t*)

@@ -40,6 +40,14 @@ module Defs = struct
          (fun def -> Predsym.equal ident (Preddef.predsym def))
          defs)
 
+  let get_def_forms defs =
+    Blist.foldr (fun def list -> 
+      list @ Blist.map (fun rule -> 
+        let form = Indrule.body rule in
+        (Indrule.predsym rule, Form.mk_heapsums [form])
+      ) (Preddef.rules def)
+    ) defs []
+
   let unfold ?(gen_tags = true) (vars, tags) ((_, (ident, _)) as pred) defs =
     Blist.map
       (Indrule.unfold ~gen_tags (vars, tags) pred)
