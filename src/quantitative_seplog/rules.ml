@@ -50,29 +50,6 @@ let lemma_option_descr_str ?(line_prefix = "\t") () =
 (*       some alpha-renaming, existential introduction or splitting of        *)
 (*       existentials (i.e. when the right-hand side is not simply subsumed   *)
 (*       the left-hand side). *)
-
-let rec id_helper hs hs' theta =
-  match hs with
-    | [] -> true
-    | h::hs -> (
-      let subs = 
-          let res = Blist.foldr
-              (fun h' list ->
-                let r = Heap.classical_unify
-                  ~update_check:
-                    Unify.Unidirectional.modulo_entl h' h
-                  Unification.trivial_continuation theta in
-                if Option.is_some r then 
-                  let dif = (Heap.sub_num h' h.num) in
-                  let hs'_wo_dif = Blist.del_first (fun h2 -> h2 = h') hs' in
-                  if dif.num > 0. then (dif :: hs'_wo_dif) :: list else hs'_wo_dif :: list      
-                else list)
-              hs' [] in
-          res
-      in
-      Blist.exists (fun sub -> id_helper hs sub theta) subs
-    )
-    
 let id_axiom =
   Rule.mk_axiom (fun ((cs, hss), (cs', hss')) ->
       let cs = Ord_constraints.close cs in
@@ -86,7 +63,11 @@ let id_axiom =
                    && Blist.for_all
                         (fun hs -> 
                           (Blist.exists
-                            (fun hs' -> id_helper hs hs' theta)
+                            (fun hs' -> 
+                              Option.is_some (Heapsum.classical_unify
+                                ~update_check:Unify.Unidirectional.modulo_entl hs' hs
+                                Unification.trivial_continuation theta)  
+                            )
                             hss'))
                         hss)))))
 
@@ -336,12 +317,12 @@ let pto_intro_rule =
               if not (Blist.is_empty lysres) then res
               else if not (Blist.for_all (fun r -> Ptos.mem p r.SH.ptos) rstail) then res
               else
-                let pl = Ptos.find_first_opt 
+                let pl = Blist.find_opt 
                   (fun ((lx', lys') as p') -> 
                     lx' = x
                     && Blist.for_all (fun l -> Ptos.mem p' l.SH.ptos) lstail
                     && Blist.for_all (fun ly -> not (Term.is_exist_var ly)) lys' (*avoid scope jumping*)
-                  ) l1.SH.ptos in
+                  ) (Ptos.to_list l1.SH.ptos) in
                 match pl with
                   | None -> res
                   | Some (lx, lys) -> (lys, (x, ys)) 
@@ -361,7 +342,7 @@ let pto_intro_rule =
     | Not_symheap_sum | Not_found | Invalid_argument _ -> []
   in
   wrap rl
-
+ 
 (* do the following transformation for the first P, (x_1,...,x_n) such that *)
 (*   P[a](x_1, ..., x_n) * A |- P[b](x_1, ..., x_n) * B    if  A |- B[a/b]  *)
 (* with [a] a universal tag and either [b] = [a] or [b] existential         *)
@@ -375,8 +356,14 @@ let pred_intro_rule defs =
         | (h :: hs, h' :: hs') ->
           let must_be_domain_exact = not (Blist.is_empty hs') in
           let linds, rinds = Pair.map Tpreds.elements (h.SH.inds, h'.SH.inds) in
-          let linds = Blist.filter (fun lind -> Blist.for_all (fun h -> Tpreds.mem lind h.SH.inds && (not must_be_domain_exact || Form.is_domain_exact (Defs.get_def_forms defs) (Form.mk_heap (Heap.mk_ind lind)))) hs) linds in
-          let rinds = Blist.filter (fun rind -> Blist.for_all (fun h' -> Tpreds.mem rind h'.SH.inds && (not must_be_domain_exact || Form.is_domain_exact (Defs.get_def_forms defs) (Form.mk_heap (Heap.mk_ind rind)))) hs') rinds in
+          let linds = Blist.filter (fun lind -> 
+            Blist.for_all (fun h -> Tpreds.mem lind h.SH.inds) hs
+            && (not must_be_domain_exact || Form.is_domain_exact (Defs.get_def_forms defs) (Form.mk_heap (Heap.mk_ind lind)))
+          ) linds in
+          let rinds = Blist.filter (fun rind ->
+            Blist.for_all (fun h' -> Tpreds.mem rind h'.SH.inds) hs'
+            && (not must_be_domain_exact || Form.is_domain_exact (Defs.get_def_forms defs) (Form.mk_heap (Heap.mk_ind rind)))  
+          ) rinds in
           let cp = Blist.cartesian_product linds rinds in
           let matches ((t, (id, vs)), (t', (id', vs'))) =
             Predsym.equal id id'
@@ -399,11 +386,13 @@ let pred_intro_rule defs =
             let combined_eqs = Uf.union h_eqs h'.SH.eqs in
             Uf.equates combined_eqs
           in
+          let hs = [h] @ hs in
+          let hs' = [h'] @ hs' in
           let p, q =
             Option.dest
               (Blist.find (fun (((t, (id, vs)), (t', (id', vs'))) as cp) ->
                 matches cp && Blist.for_all2 (fun v v' ->
-                  let heap_product = Blist.cartesian_product ([h] @ hs) ([h'] @ hs') in
+                  let heap_product = Blist.cartesian_product hs hs' in
                   Blist.for_all (fun (h, h') -> (combine_eqs h h') v v') heap_product)
                 vs vs')
               cp)
@@ -622,10 +611,10 @@ let luf defs =
                 ( Ord_constraints.all_pairs cclosure
                 , Ord_constraints.prog_pairs cclosure )
             in
+            let vts = Tagpairs.union vts (Tagpairs.mk (Heapsum.tags ls)) in 
             let l' = Heapsum.star [l'] f in
             let ls' = Blist.flatten (Blist.map (fun l'' -> if l'' == l then l' else [l]) ls) in
-            let vts = Tagpairs.union vts (Tagpairs.mk (Heapsum.tags ls')) in (*TODO === ls' (I believe so)?*)
-            (((new_cs, [ls']), (cs', [rs])), vts, pts)
+            (((new_cs, [ls']), (cs', [rs])), vts, pts)(*TODO === ls' (I believe so)?*)
           in
           Some (Blist.map do_case cases, Predsym.to_string ident ^ " L.Unf.")
       in
@@ -649,11 +638,11 @@ let luf defs =
 (* r'[theta] subsumes r *)
 let matches ((lhs, rhs) as seq) =
   try
-    let (lcs, l), (rcs, r) = Seq.dest seq in
+    let (lcs, ls), (rcs, rs) = Seq.dest_sum seq in
     fun ((lhs', rhs') as seq') ->
       try
-        let (lcs', l'), (rcs', r') = Seq.dest seq' in
-        if Tpreds.is_empty l'.SH.inds then []
+        let (lcs', ls'), (rcs', rs') = Seq.dest_sum seq' in
+        if Blist.for_all (fun l' -> Tpreds.is_empty l'.SH.inds) ls' then []
         else
           let lcs = Ord_constraints.close lcs in
           let lhs_check =
@@ -662,8 +651,8 @@ let matches ((lhs, rhs) as seq) =
           in
           Unify.Unidirectional.realize
             (Unification.backtrack
-               (Heap.unify_partial ~update_check:lhs_check)
-               l' l
+               (Heapsum.unify_partial ~update_check:lhs_check)
+               ls' ls
                (Unify.Unidirectional.unify_tag_constraints ~inverse:false
                   ~update_check:lhs_check lcs' lcs
                   (fun ((trm_subst, tag_subst) as state) ->
@@ -682,18 +671,18 @@ let matches ((lhs, rhs) as seq) =
                       Form.subst_tags tag_subst
                         (Form.subst trm_subst lhs')
                     in
-                    let _, l' = Form.dest lhs' in
+                    let _, ls' = Form.dest_sum lhs' in
                     assert (Form.subsumed ~total:false lhs' lhs) ;
-                    if not (Heap.subsumed l' l) then
+                    if not (Heapsum.subsumed ls' ls) then
                       if lemma_equal !lemma_level NO_LEMMAS then None
                       else if
                         lemma_equal !lemma_level ONLY_WITH_PREDICATES
-                        && Tpreds.is_empty l'.SH.inds
+                        && Blist.for_all (fun l' -> Tpreds.is_empty l'.SH.inds) ls'
                       then None
                       else if
                         lemma_equal !lemma_level NON_EMPTY
-                        && Tpreds.is_empty l'.SH.inds
-                        && Ptos.is_empty l'.SH.ptos
+                        && Blist.for_all (fun l' -> Tpreds.is_empty l'.SH.inds) ls'
+                        && Blist.for_all (fun l' -> Ptos.is_empty l'.SH.ptos) ls'
                       then None
                       else Option.some state
                     else
@@ -711,7 +700,7 @@ let matches ((lhs, rhs) as seq) =
                              Unify.Unidirectional.is_substitution)
                       in
                       let bisubst =
-                        (Heap.classical_biunify ~update_check:rhs_check r r'
+                        (Heapsum.classical_biunify ~update_check:rhs_check rs rs'
                            (Unify.Bidirectional.unify_tag_constraints
                               ~update_check:rhs_check rcs rcs'
                               (fun ( ( (trm_subst, tag_subst)
@@ -759,9 +748,9 @@ let matches ((lhs, rhs) as seq) =
                           ( Term.Map.union trm_subst trm_subst'
                           , Tagpairs.union tag_subst tag_subst' ) )
                         bisubst )))
-      with Not_symheap -> []
-  with Not_symheap -> fun _ -> []
-
+      with Not_symheap_sum -> []
+  with Not_symheap_sum -> fun _ -> []
+   
 (*    seq'     *)
 (* ----------  *)
 (* seq'[theta] *)
@@ -783,7 +772,7 @@ let subst_rule (theta, tps) ((l', _) as seq') ((l, _) as seq) =
       debug (fun _ -> "Unsuccessfully tried to apply substitution rule!")
     in
     []
-
+    
 (*   F |- G * Pi'  *)
 (* --------------- *)
 (*   Pi * F |- G   *)
@@ -801,17 +790,17 @@ let weaken seq' seq =
     let () = debug (fun _ -> Seq.to_string seq') in
     let () = debug (fun _ -> Seq.to_string seq) in
     []
-
+   
 let left_transform_rule ((lhs', rhs') as seq') (lhs, rhs) =
   try
-    let lhs_cs', lhs_h' = Form.dest lhs' in
-    let lhs_cs, lhs_h = Form.dest lhs in
+    let lhs_cs', lhs_hs' = Form.dest_sum lhs' in
+    let lhs_cs, lhs_hs = Form.dest_sum lhs in
     if Form.equal rhs' rhs then
       let transform =
         Unify.Unidirectional.realize
-          ((Heap.classical_unify
-              ~update_check:Unify.Unidirectional.modulo_entl lhs_h' lhs_h)
-             (Unify.Unidirectional.unify_tag_constraints
+          ((Heapsum.classical_unify
+              ~update_check:Unify.Unidirectional.modulo_entl lhs_hs' lhs_hs)
+              (Unify.Unidirectional.unify_tag_constraints
                 ~update_check:Unify.Unidirectional.modulo_entl lhs_cs'
                 lhs_cs Unification.trivial_continuation))
       in
@@ -829,27 +818,27 @@ let left_transform_rule ((lhs', rhs') as seq') (lhs, rhs) =
       let () =
         debug (fun _ ->
             "Unsuccessfully tried to apply left transformation rule - \
-             right-hand sides not equal!" )
+              right-hand sides not equal!" )
       in
       []
-  with Not_symheap ->
+  with Not_symheap_sum ->
     let () =
       debug (fun _ ->
           "Unsuccessfully tried to apply left transformation rule - one \
-           left-hand side not a symbolic heap!" )
+            left-hand side not a symbolic heap!" )
     in
     []
-
+  
 let right_transform_rule ((lhs', rhs') as seq') (lhs, rhs) =
   try
-    let rhs_cs', rhs_h' = Form.dest rhs' in
-    let rhs_cs, rhs_h = Form.dest rhs in
+    let rhs_cs', rhs_hs' = Form.dest_sum rhs' in
+    let rhs_cs, rhs_hs = Form.dest_sum rhs in
     if Form.equal lhs' lhs then
       let transform =
         Unify.Unidirectional.realize
-          ((Heap.classical_unify
-              ~update_check:Unify.Unidirectional.modulo_entl rhs_h rhs_h')
-             (Unify.Unidirectional.unify_tag_constraints
+          ((Heapsum.classical_unify
+              ~update_check:Unify.Unidirectional.modulo_entl rhs_hs rhs_hs')
+              (Unify.Unidirectional.unify_tag_constraints
                 ~update_check:Unify.Unidirectional.modulo_entl rhs_cs
                 rhs_cs' Unification.trivial_continuation))
       in
@@ -865,50 +854,79 @@ let right_transform_rule ((lhs', rhs') as seq') (lhs, rhs) =
       let () =
         debug (fun _ ->
             "Unsuccessfully tried to apply right transformation rule - \
-             left-hand sides not equal!" )
+              left-hand sides not equal!" )
       in
       []
-  with Not_symheap ->
+  with Not_symheap_sum ->
     let () =
       debug (fun _ ->
           "Unsuccessfully tried to apply right transformation rule - one \
-           right-hand side not a symbolic heap!" )
+            right-hand side not a symbolic heap!" )
     in
     []
 
-let apply_lemma (lemma_seq, ((lhs, rhs) as cont_seq)) ((lhs', rhs') as seq) =
+(**
+    Apply lemma to seq lhs'=hs' |- rhs'
+    Lemma: ls |- rs
+    cont: lhs=hs |- rhs
+    
+    lemma = unfolding of predicate (apply inverse to h, so:)
+    l + h - r = h'
+
+      seq: hs' |- rhs'
+    --------------------
+      cont: hs |- rhs
+
+    Assume that rs of lemma is only one summand (since right of predicate is only one symbol)
+    and do the reverse lemma application for every summand of hs independently
+*)
+let apply_lemma defs (lemma_seq, ((lhs, rhs) as cont_seq)) ((lhs', rhs') as seq) =
   let () =
     debug (fun _ -> "Trying to apply lemma to subgoal: " ^ Seq.to_string seq)
   in
   let () = debug (fun _ -> "Lemma: " ^ Seq.to_string lemma_seq) in
   let () = debug (fun _ -> "Continuation: " ^ Seq.to_string cont_seq) in
-  let (lcs, l), (rcs, r) = Seq.dest lemma_seq in
-  let cs, h = Form.dest lhs in
-  assert (Ptos.subset r.SH.ptos h.SH.ptos) ;
-  assert (Tpreds.subset r.SH.inds h.SH.inds) ;
+  let (lcs, ls), (rcs, rs) = Seq.dest_sum lemma_seq in
+  let r = Heapsum.dest rs in
+  let cs, hs = Form.dest_sum lhs in
   assert (Ord_constraints.equal cs (Ord_constraints.union lcs rcs)) ;
+  (*assert (Ptos.subset r.SH.ptos h.SH.ptos) ;
+  assert (Tpreds.subset r.SH.inds h.SH.inds) ;*)
   (* The separating conjunction of the lemma antecedent and the frame may *)
   (* introduce more disequalities that simply the union *)
-  assert (Deqs.subset (Deqs.union l.SH.deqs r.SH.deqs) h.SH.deqs) ;
-  assert (Uf.subsumed l.SH.eqs h.SH.eqs) ;
+  (*assert (Deqs.subset (Deqs.union l.SH.deqs r.SH.deqs) h.SH.deqs) ;
+  assert (Uf.subsumed l.SH.eqs h.SH.eqs) ; TODO include again?
   assert (Uf.subsumed r.SH.eqs h.SH.eqs) ;
   assert (
     Uf.subsumed h.SH.eqs
-      (Uf.fold (Fun.curry Uf.add) l.SH.eqs r.SH.eqs) ) ;
+      (Uf.fold (Fun.curry Uf.add) l.SH.eqs r.SH.eqs) ) ;*)
   try
-    let cs', h' = Form.dest lhs' in
+    let cs', hs' = Form.dest_sum lhs' in
     let expected =
-      Heap.with_ptos
-        (Heap.with_inds l
-           (Tpreds.union l.SH.inds (Tpreds.diff h.SH.inds r.SH.inds)))
-        (Ptos.union l.SH.ptos (Ptos.diff h.SH.ptos r.SH.ptos))
+      Blist.flatten (Blist.map (fun h ->
+        if 
+          Ptos.subset r.SH.ptos h.SH.ptos
+          && Tpreds.subset r.SH.inds h.SH.inds
+        then 
+          let diff = Heap.with_ptos
+            (Heap.with_inds Heap.empty (Tpreds.diff h.SH.inds r.SH.inds))
+            (Ptos.diff h.SH.ptos r.SH.ptos) in
+          if Tpreds.for_all (fun pred -> 
+            Form.is_domain_exact (Defs.get_def_forms defs) (Form.mk_heap (Heap.mk_ind pred))
+          ) diff.SH.inds then
+            Heapsum.star ls [diff]
+          else [h]
+        else [h]
+      ) hs)
     in
     (* let () = debug (fun _ -> "Constraints match: " ^ (string_of_bool (Ord_constraints.equal lcs cs'))) in *)
     (* let () = debug (fun _ -> "Heap as expected: " ^ (string_of_bool (Heap.equal h' expected))) in      *)
     (* let () = debug (fun _ -> "RHS match: " ^ (string_of_bool (Form.equal rhs rhs'))) in                *)
     if
-      Ord_constraints.equal lcs cs'
-      && Heap.equal h' expected && Form.equal rhs rhs'
+      not (Heapsum.equal expected hs) (*TODO implement equal with different sum positions?*)
+      && Ord_constraints.equal lcs cs'
+      && Heapsum.equal hs' expected
+      && Form.equal rhs rhs'
     then
       let vts, pts = Seq.get_tracepairs seq cont_seq in
       [ ( [ (lemma_seq, Seq.tag_pairs lemma_seq, Tagpairs.empty)
@@ -921,7 +939,7 @@ let apply_lemma (lemma_seq, ((lhs, rhs) as cont_seq)) ((lhs', rhs') as seq) =
              expected!" )
       in
       []
-  with Not_symheap ->
+  with Not_symheap_sum ->
     let () =
       debug (fun _ ->
           "Unsuccessfully tried to apply lemma - LHS of open node not a \
@@ -934,26 +952,26 @@ let mk_backlink_rule_seq (trm_subst, tag_subst) ((src_lhs, src_rhs) as src_seq)
   let ((subst_lhs, subst_rhs) as subst_seq) =
     Seq.subst trm_subst (Seq.subst_tags tag_subst targ_seq)
   in
-  let (subst_lhs_cs, subst_lhs_h), (subst_rhs_cs, subst_rhs_h) =
-    Seq.dest subst_seq
+  let (subst_lhs_cs, subst_lhs_hs), (subst_rhs_cs, subst_rhs_hs) =
+    Seq.dest_sum subst_seq
   in
-  let (src_lhs_cs, src_lhs_h), (src_rhs_cs, src_rhs_h) = Seq.dest src_seq in
+  let (src_lhs_cs, src_lhs_hs), (src_rhs_cs, src_rhs_hs) = Seq.dest_sum src_seq in
   let src_lhs_cs = Ord_constraints.close src_lhs_cs in
   let subst_rhs_cs = Ord_constraints.close subst_rhs_cs in
   let lhs_transform = 
     Unify.Unidirectional.realize
-      ((Heap.classical_unify
-          ~update_check:Unify.Unidirectional.modulo_entl subst_lhs_h
-          src_lhs_h)
+      ((Heapsum.classical_unify
+          ~update_check:Unify.Unidirectional.modulo_entl subst_lhs_hs
+          src_lhs_hs)
          (Unify.Unidirectional.unify_tag_constraints (*Left: theta(Backlink target node) subset of leaf node*)
             ~update_check:Unify.Unidirectional.modulo_entl subst_lhs_cs
             src_lhs_cs Unification.trivial_continuation))
   in
   let rhs_transform =
     Unify.Unidirectional.realize
-      ((Heap.classical_unify
-          ~update_check:Unify.Unidirectional.modulo_entl src_rhs_h
-          subst_rhs_h)
+      ((Heapsum.classical_unify
+          ~update_check:Unify.Unidirectional.modulo_entl src_rhs_hs
+          subst_rhs_hs)
          (Unify.Unidirectional.unify_tag_constraints (*Right: Leaf node subset of theta(Backlink target node)*)
             ~update_check:Unify.Unidirectional.modulo_entl src_rhs_cs
             subst_rhs_cs Unification.trivial_continuation))
@@ -998,29 +1016,48 @@ let mk_backlink_rule_seq (trm_subst, tag_subst) ((src_lhs, src_rhs) as src_seq)
         (fun _ _ -> [targ_idx])
         (fun s s' -> [(Seq.tag_pairs s', "Backl")]) ]
 
-let mk_lemma_rule_seq (trm_subst, tag_subst) (src_lhs, src_rhs)
+let mk_lemma_rule_seq (trm_subst, tag_subst) (src_lhs, src_rhs) defs
     (targ_idx, ((lhs, rhs) as targ_seq)) =
-  let cs, h = Form.dest src_lhs in
+  let cs, hs = Form.dest_sum src_lhs in
   let trm_theta, _ = Subst.partition trm_subst in
   let tag_theta, _ = Tagpairs.partition_subst tag_subst in
   let subst_lhs = Form.subst trm_subst (Form.subst_tags tag_subst lhs) in
   let subst_rhs = Form.subst trm_theta (Form.subst_tags tag_theta rhs) in
   let subst_seq = (subst_lhs, subst_rhs) in
   (* let () = debug (fun _ -> "substituted seq is " ^ (Seq.to_string subst_seq)) in *)
-  let subst_cs, subst_h = Form.dest subst_lhs in
+  let subst_cs, subst_hs = Form.dest_sum subst_lhs in
   (* Calculate the frame *)
-  let frame =
-    Ptos.fold (Fun.swap Heap.del_pto) subst_h.SH.ptos
-      (Tpreds.fold (Fun.swap Heap.del_ind) subst_h.SH.inds h)
+  let frame = (*TODO maybe over sum?*)
+    match subst_hs with
+      | [] -> []
+      | subst_h :: subst_hs ->
+        let inds = Tpreds.filter 
+          (fun pred ->
+            Blist.for_all (fun h -> Tpreds.mem pred h.SH.inds) subst_hs
+            && Blist.for_all (fun h -> Tpreds.mem pred h.SH.inds) hs
+            && Form.is_domain_exact (Defs.get_def_forms defs) (Form.mk_heap (Heap.mk_ind pred))
+          )
+          subst_h.SH.inds in
+        let ptos = Ptos.filter 
+          (fun pto ->
+            Blist.for_all (fun h -> Ptos.mem pto h.SH.ptos) subst_hs
+            && Blist.for_all (fun h -> Ptos.mem pto h.SH.ptos) hs
+          )
+          subst_h.SH.ptos in
+        Blist.map 
+          (fun h ->
+            Ptos.fold (Fun.swap Heap.del_pto) ptos
+            (Tpreds.fold (Fun.swap Heap.del_ind) inds h)
+          ) hs
   in
   (* let () = debug (fun _ -> "Calculated frame is " ^ (Heap.to_string frame)) in *)
   (* Alpha-rename any clashing existential variables in the succedent of the lemma *)
   let ctxt_vars =
-    Term.Set.union (Heap.terms frame) (Form.terms src_rhs)
+    Term.Set.union (Heapsum.terms frame) (Form.terms src_rhs)
   in
   let ctxt_tags =
     Tags.union_of_list
-      [Heap.tags frame; Ord_constraints.tags cs; Form.tags src_rhs]
+      [Heapsum.tags frame; Ord_constraints.tags cs; Form.tags src_rhs]
   in
   let clashed_tags =
     Tags.inter ctxt_tags
@@ -1038,17 +1075,22 @@ let mk_lemma_rule_seq (trm_subst, tag_subst) (src_lhs, src_rhs)
     Form.subst trm_subst' (Form.subst_tags tag_subst' subst_rhs)
   in
   (* Construct the new subgoals *)
-  let lemma_seq =
-    let subst_h =
-      Heap.with_eqs (Heap.with_deqs subst_h h.SH.deqs) h.SH.eqs
-    in
-    ((cs, [[subst_h]]), subst_rhs)
+  let lemma_seq = (*TODO unsure if correct*)
+    match hs with
+      | [] -> ((cs, [subst_hs]), subst_rhs)
+      | h :: hs ->
+        let deqs = Deqs.filter (fun deq -> Blist.for_all (fun h' -> Deqs.mem deq h'.SH.deqs) hs) h.SH.deqs in
+        let eqs = Uf.fold (fun leq req eqs -> if Blist.for_all (fun h' -> Uf.equates h'.SH.eqs leq req) hs then Uf.add (leq, req) eqs else eqs) h.SH.eqs Uf.empty in
+        let subst_hs = Blist.map (fun subst_h ->
+          Heap.with_eqs (Heap.with_deqs subst_h deqs) eqs
+        ) subst_hs in
+        ((cs, [subst_hs]), subst_rhs)
   in
   (* let () = debug (fun _ -> (Heap.to_string subst_h') ^ " * " ^ (Heap.to_string frame) ^ " = " ^ (Heap.to_string (Heap.star subst_h' frame))) in *)
-  let cont_seq = (Form.star (cs, [[frame]]) subst_rhs, src_rhs) in
+  let cont_seq = (Form.star (cs, [frame]) subst_rhs, src_rhs) in
   (* Construct the rule sequence *)
   Rule.compose_pairwise
-    (Rule.mk_infrule (apply_lemma (lemma_seq, cont_seq)))
+    (Rule.mk_infrule (apply_lemma defs (lemma_seq, cont_seq)))
     [ mk_backlink_rule_seq (trm_theta, tag_theta) lemma_seq (targ_idx, targ_seq)
     ; Rule.identity ]
 
@@ -1066,7 +1108,7 @@ let cmp_taggedrule r r' =
 (* weakening (possibly after applying a lemma), then make the proof steps *)
 (* that achieve it explicit so that actual backlinking can be done on     *)
 (* Seq.equal sequents *)
-let dobackl idx prf =
+let dobackl defs idx prf =
   let ((src_lhs, src_rhs) as src_seq) = Proof.get_seq idx prf in
   let matches = matches src_seq in
   let targets = Rule.all_nodes idx prf in
@@ -1105,7 +1147,7 @@ let dobackl idx prf =
         (mk_backlink_rule_seq (theta, tagpairs) src_seq (targ_idx, targ_seq))
     else
       let () = debug (fun _ -> "\t\t" ^ "PARTIAL") in
-      PARTIAL (mk_lemma_rule_seq subst src_seq (targ_idx, targ_seq))
+      PARTIAL (mk_lemma_rule_seq subst src_seq defs (targ_idx, targ_seq))
   in
   (* Although application of all the constructed rule sequences will *)
   (* succeed by construction the backlinking may fail to satisfy the *)
@@ -1136,7 +1178,7 @@ let setup defs =
       ; constraint_match_tag_instantiate
       ; upper_bound_tag_instantiate
       ; Rule.choice
-          [ dobackl
+          [ dobackl defs
           ; pto_intro_rule
           ; pred_intro_rule defs
           ; instantiate_pto

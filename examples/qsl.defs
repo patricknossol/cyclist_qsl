@@ -183,7 +183,7 @@ ls {
 
 lsLen { 
 	x=y => lsLen(x,y) | 
-	x!=y * x->x' * lsLen(x',y) => lsLen(x,y) 
+	x!=y * x->x' * lsLen(x',y) + x!=y * x->x' * ls(x',y) => lsLen(x,y) 
 } ;
 
 ls2 {

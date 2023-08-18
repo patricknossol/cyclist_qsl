@@ -1,0 +1,831 @@
+0:
+nil!=x * x->y * RList[a](y, z) |- RList[a'](x, z) (RList R.Unf.) [1 <
+                                                                  {(a, a)}/
+                                                                  {}>]
+  1:
+  nil!=x * x->y * RList[a](y, z) |-
+  [b' < a'] : nil!=w' * w'->z * RList[b'](x, w') (UBound Intro) [2 <{(a, a)}/
+                                                                 {}>]
+    2:
+    nil!=x * x->y * RList[a](y, z) |- nil!=w' * w'->z * RList[b'](x, w') (RList L.Unf./LHS Inst.,LHS Inst.) [
+    3 <{(a, a)}/{(a, b)}>, 4 <{(a, a)}/{(a, b)}>]
+      3:
+      [b < a] : nil!=x * nil!=y * x!=y * x->y * y->z |-
+      nil!=w' * w'->z * RList[b'](x, w') (RList R.Unf./Simplify) [5 <
+                                                                  {(b, b),
+                                                                  (a, a)}/
+                                                                  {}>]
+        5:
+        [b < a] : nil!=x * nil!=y * x!=y * x->y * y->z |-
+        nil!=w' * x!=w' * x->w' * w'->z (Id)
+      4:
+      [b < a] : nil!=x * nil!=w * x!=w * x->y * w->z * RList[b](y, w) |-
+      nil!=w' * w'->z * RList[b'](x, w') (Lemma.App) [6 <{(b, b), (a, a)}/{}>,
+      7 <{(b, b), (a, a)}/{(a, b)}>]
+        6:
+        [b < a] : nil!=x * nil!=w * x!=w * x->y * RList[b](y, w) |-
+        RList[a'](x, w) (Weaken) [8 <{(b, b)}/{}>]
+          8:
+          nil!=x * x->y * RList[b](y, w) |- RList[a'](x, w) (Subst) [
+          9 <{(b, a)}/{}>]
+            9:
+            nil!=x * x->y * RList[a](y, z) |- RList[a'](x, z) (Backl) [0] <pre=
+            {(a, a)}>
+        7:
+        [b < a] : nil!=x * nil!=w * x!=w * w->z * RList[a'](x, w) |-
+        nil!=w' * w'->z * RList[b'](x, w') (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+RList[b](x, y) * RList[a](y, z) |- RList[a'](x, z) (RList R.Unf.) [1 <
+                                                                   {(b, b),
+                                                                   (a, a)}/
+                                                                   {}>]
+  1:
+  RList[b](x, y) * RList[a](y, z) |-
+  [b' < a'] : nil!=w' * w'->z * RList[b'](x, w') (UBound Intro) [2 <{
+                                                                    (b, b),
+                                                                    (a, a)}/
+                                                                 {}>]
+    2:
+    RList[b](x, y) * RList[a](y, z) |- nil!=w' * w'->z * RList[b'](x, w') (RList L.Unf./LHS Inst.,LHS Inst.) [
+    3 <{(b, b), (a, a)}/{(a, c)}>, 4 <{(b, b), (a, a)}/{(a, c)}>]
+      3:
+      [c < a] : nil!=y * y->z * RList[b](x, y) |-
+      nil!=w' * w'->z * RList[b'](x, w') (Id)
+      4:
+      [c < a] : nil!=w * w->z * RList[c](y, w) * RList[b](x, y) |-
+      nil!=w' * w'->z * RList[b'](x, w') (Lemma.App) [5 <{(c, c), (b, b),
+                                                         (a, a)}/{}>,
+      6 <{(c, c), (a, a)}/{(a, c)}>]
+        5:
+        [c < a] : nil!=w * RList[c](y, w) * RList[b](x, y) |- RList[a'](x, w) (Weaken) [
+        7 <{(c, c), (b, b)}/{}>]
+          7:
+          RList[c](y, w) * RList[b](x, y) |- RList[a'](x, w) (Subst) [
+          8 <{(c, a), (b, b)}/{}>]
+            8:
+            RList[b](x, y) * RList[a](y, z) |- RList[a'](x, z) (Backl) [0] <pre=
+            {(b, b), (a, a)}>
+        6:
+        [c < a] : nil!=w * w->z * RList[a'](x, w) |-
+        nil!=w' * w'->z * RList[b'](x, w') (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+nil!=y * y->z * List[a](x, y) |- List[a'](x, z) (List R.Unf.) [1 <{(a, a)}/
+                                                               {}>]
+  1:
+  nil!=y * y->z * List[a](x, y) |-
+  [b' < a'] : nil!=x * x->w' * List[b'](w', z) (UBound Intro) [2 <{(a, a)}/
+                                                               {}>]
+    2:
+    nil!=y * y->z * List[a](x, y) |- nil!=x * x->w' * List[b'](w', z) (List L.Unf./LHS Inst.,LHS Inst./Simplify,Simplify) [
+    3 <{(a, a)}/{(a, b)}>, 4 <{(a, a)}/{(a, b)}>]
+      3:
+      [b < a] : nil!=x * nil!=y * x!=y * x->y * y->z |-
+      x->w' * List[b'](w', z) (List R.Unf./Simplify) [5 <{(b, b), (a, a)}/{}>]
+        5:
+        [b < a] : nil!=x * nil!=y * x!=y * x->y * y->z |-
+        nil!=w' * x!=w' * x->w' * w'->z (Id)
+      4:
+      [b < a] : nil!=x * nil!=y * x!=y * x->w * y->z * List[b](w, y) |-
+      x->w' * List[b'](w', z) (Lemma.App) [6 <{(b, b), (a, a)}/{}>,
+      7 <{(b, b), (a, a)}/{(a, b)}>]
+        6:
+        [b < a] : nil!=x * nil!=y * x!=y * y->z * List[b](w, y) |-
+        List[a'](w, z) (Weaken) [8 <{(b, b)}/{}>]
+          8:
+          nil!=y * y->z * List[b](w, y) |- List[a'](w, z) (Subst) [9 <
+                                                                   {(b, a)}/
+                                                                   {}>]
+            9:
+            nil!=y * y->z * List[a](x, y) |- List[a'](x, z) (Backl) [0] <pre=
+            {(a, a)}>
+        7:
+        [b < a] : nil!=x * nil!=y * x!=y * x->w * List[a'](w, z) |-
+        x->w' * List[b'](w', z) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+List[b](x, y) * List[a](y, z) |- List[a'](x, z) (List R.Unf.) [1 <{(b, b),
+                                                                  (a, a)}/
+                                                               {}>]
+  1:
+  List[b](x, y) * List[a](y, z) |-
+  [b' < a'] : nil!=x * x->w' * List[b'](w', z) (UBound Intro) [2 <{(b, b),
+                                                                  (a, a)}/
+                                                               {}>]
+    2:
+    List[b](x, y) * List[a](y, z) |- nil!=x * x->w' * List[b'](w', z) (List L.Unf./LHS Inst.,LHS Inst./Simplify,Simplify) [
+    3 <{(b, b), (a, a)}/{(b, c)}>, 4 <{(b, b), (a, a)}/{(b, c)}>]
+      3:
+      [c < b] : nil!=x * x->y * List[a](y, z) |- x->w' * List[b'](w', z) (Id)
+      4:
+      [c < b] : nil!=x * x->w * List[c](w, y) * List[a](y, z) |-
+      x->w' * List[b'](w', z) (Lemma.App) [5 <{(c, c), (b, b), (a, a)}/{}>,
+      6 <{(c, c), (b, b)}/{(b, c)}>]
+        5:
+        [c < b] : nil!=x * List[c](w, y) * List[a](y, z) |- List[a'](w, z) (Weaken) [
+        7 <{(c, c), (a, a)}/{}>]
+          7:
+          List[c](w, y) * List[a](y, z) |- List[a'](w, z) (Subst) [8 <
+                                                                   {(c, b),
+                                                                   (a, a)}/
+                                                                   {}>]
+            8:
+            List[b](x, y) * List[a](y, z) |- List[a'](x, z) (Backl) [0] <pre=
+            {(b, b), (a, a)}>
+        6:
+        [c < b] : nil!=x * x->w * List[a'](w, z) |- x->w' * List[b'](w', z) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+nil!=y * y->z * PeList[a](x, y) |- PeList[a'](x, z) (PeList R.Unf.) [
+1 <{(a, a)}/{}>]
+  1:
+  nil!=y * y->z * PeList[a](x, y) |-
+  [b' < a'] : nil!=x * x->w' * PeList[b'](w', z) (UBound Intro) [2 <{(a, a)}/
+                                                                 {}>]
+    2:
+    nil!=y * y->z * PeList[a](x, y) |- nil!=x * x->w' * PeList[b'](w', z) (PeList L.Unf./LHS Inst.,LHS Inst./Simplify,Simplify) [
+    3 <{(a, a)}/{(a, b)}>, 4 <{(a, a)}/{(a, b)}>]
+      3:
+      [b < a] : nil!=y * y->z |- y->w' * PeList[b'](w', z) (PeList R.Unf./Simplify) [
+      5 <{(b, b), (a, a)}/{}>]
+        5: [b < a] : nil!=y * y->z |- y->z (Id)
+      4:
+      [b < a] : nil!=x * nil!=y * x!=y * x->w * y->z * PeList[b](w, y) |-
+      x->w' * PeList[b'](w', z) (Lemma.App) [6 <{(b, b), (a, a)}/{}>,
+      7 <{(b, b), (a, a)}/{(a, b)}>]
+        6:
+        [b < a] : nil!=x * nil!=y * x!=y * y->z * PeList[b](w, y) |-
+        PeList[a'](w, z) (Weaken) [8 <{(b, b)}/{}>]
+          8:
+          nil!=y * y->z * PeList[b](w, y) |- PeList[a'](w, z) (Subst) [
+          9 <{(b, a)}/{}>]
+            9:
+            nil!=y * y->z * PeList[a](x, y) |- PeList[a'](x, z) (Backl) [0] <pre=
+            {(a, a)}>
+        7:
+        [b < a] : nil!=x * nil!=y * x!=y * x->w * PeList[a'](w, z) |-
+        x->w' * PeList[b'](w', z) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+PeList[b](x, y) * PeList[a](y, z) |- PeList[a'](x, z) (PeList L.Unf./LHS Inst.,LHS Inst./Simplify) [
+1 <{(b, b), (a, a)}/{(b, c)}>, 2 <{(b, b), (a, a)}/{(b, c)}>]
+  1: [c < b] : PeList[a](y, z) |- PeList[a'](y, z) (Id)
+  2:
+  [c < b] : nil!=x * x->w * PeList[a](y, z) * PeList[c](w, y) |-
+  PeList[a'](x, z) (PeList R.Unf./Simplify) [3 <{(b, b), (a, a), (c, c)}/{}>]
+    3:
+    [c < b] : nil!=x * x->w * PeList[a](y, z) * PeList[c](w, y) |-
+    [b' < a'] : x->w' * PeList[b'](w', z) (UBound Intro) [4 <{(b, b), 
+                                                             (a, a), 
+                                                             (c, c)}/
+                                                          {}>]
+      4:
+      [c < b] : nil!=x * x->w * PeList[a](y, z) * PeList[c](w, y) |-
+      x->w' * PeList[b'](w', z) (Lemma.App) [5 <{(b, b), (a, a), (c, c)}/{}>,
+      6 <{(b, b), (c, c)}/{(b, c)}>]
+        5:
+        [c < b] : nil!=x * PeList[a](y, z) * PeList[c](w, y) |-
+        PeList[a'](w, z) (Weaken) [7 <{(a, a), (c, c)}/{}>]
+          7:
+          PeList[a](y, z) * PeList[c](w, y) |- PeList[a'](w, z) (Subst) [
+          8 <{(a, a), (c, b)}/{}>]
+            8:
+            PeList[b](x, y) * PeList[a](y, z) |- PeList[a'](x, z) (Backl) [0] <pre=
+            {(b, b), (a, a)}>
+        6:
+        [c < b] : nil!=x * x->w * PeList[a'](w, z) |-
+        x->w' * PeList[b'](w', z) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+DLL[a](x, y, z, w) |- SLL[a'](x, y) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
+1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>]
+  1: [b < a] : emp |- SLL[a'](y, y) (SLL R.Unf.) [3 <{(b, b), (a, a)}/{}>]
+    3: [b < a] : emp |- emp (Id)
+  2:
+  [b < a] : nil!=x * x->a, w * DLL[b](a, y, z, x) |- SLL[a'](x, y) (SLL R.Unf./Simplify) [
+  4 <{(b, b), (a, a)}/{}>]
+    4:
+    [b < a] : nil!=x * x->a, w * DLL[b](a, y, z, x) |-
+    [b' < a'] : x->w', z' * SLL[b'](w', y) (UBound Intro) [5 <{(b, b),
+                                                              (a, a)}/
+                                                           {}>]
+      5:
+      [b < a] : nil!=x * x->a, w * DLL[b](a, y, z, x) |-
+      x->w', z' * SLL[b'](w', y) (Lemma.App) [6 <{(b, b), (a, a)}/{}>,
+      7 <{(b, b), (a, a)}/{(a, b)}>]
+        6:
+        [b < a] : nil!=x * DLL[b](a, y, z, x) |- SLL[a'](a, y) (Weaken) [
+        8 <{(b, b)}/{}>]
+          8: DLL[b](a, y, z, x) |- SLL[a'](a, y) (Subst) [9 <{(b, a)}/{}>]
+            9: DLL[a](x, y, z, w) |- SLL[a'](x, y) (Backl) [0] <pre={(a, a)}>
+        7:
+        [b < a] : nil!=x * x->a, w * SLL[a'](a, y) |-
+        x->w', z' * SLL[b'](w', y) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+DLL[a](x, y, z, w) |- BSLL[a'](z, w) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
+1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>]
+  1: [b < a] : emp |- BSLL[a'](w, w) (BSLL R.Unf.) [3 <{(b, b), (a, a)}/{}>]
+    3: [b < a] : emp |- emp (Id)
+  2:
+  [b < a] : nil!=x * x->a, w * DLL[b](a, y, z, x) |- BSLL[a'](z, w) (BSLL R.Unf.) [
+  4 <{(b, b), (a, a)}/{}>]
+    4:
+    [b < a] : nil!=x * x->a, w * DLL[b](a, y, z, x) |-
+    [b' < a'] : nil!=w' * w'->z', w * BSLL[b'](z, w') (UBound Intro) [
+    5 <{(b, b), (a, a)}/{}>]
+      5:
+      [b < a] : nil!=x * x->a, w * DLL[b](a, y, z, x) |-
+      nil!=w' * w'->z', w * BSLL[b'](z, w') (Lemma.App) [6 <{(b, b), (a, a)}/
+                                                         {}>,
+      7 <{(b, b), (a, a)}/{(a, b)}>]
+        6:
+        [b < a] : nil!=x * DLL[b](a, y, z, x) |- BSLL[a'](z, x) (Weaken) [
+        8 <{(b, b)}/{}>]
+          8: DLL[b](a, y, z, x) |- BSLL[a'](z, x) (Subst) [9 <{(b, a)}/{}>]
+            9:
+            DLL[a](x, y, z, w) |- BSLL[a'](z, w) (Backl) [0] <pre={(a, a)}>
+        7:
+        [b < a] : nil!=x * x->a, w * BSLL[a'](z, x) |-
+        nil!=w' * w'->z', w * BSLL[b'](z, w') (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+DLL[b](x, y, z, w) * DLL[a](a, x, w, b) |- DLL[a'](a, y, z, b) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
+1 <{(b, b), (a, a)}/{(a, c)}>, 2 <{(b, b), (a, a)}/{(a, c)}>]
+  1: [c < a] : DLL[b](a, y, z, b) |- DLL[a'](a, y, z, b) (Id)
+  2:
+  [c < a] : nil!=a * a->c, b * DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |-
+  DLL[a'](a, y, z, b) (DLL R.Unf./Simplify) [3 <{(c, c), (b, b), (a, a)}/{}>]
+    3:
+    [c < a] : nil!=a * a->c, b * DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |-
+    [b' < a'] : a->w', b * DLL[b'](w', y, z, a) (UBound Intro) [4 <{(c, c),
+                                                                   (b, b),
+                                                                   (a, a)}/
+                                                                {}>]
+      4:
+      [c < a] : nil!=a * a->c, b * DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |-
+      a->w', b * DLL[b'](w', y, z, a) (Lemma.App) [5 <{(c, c), (b, b),
+                                                      (a, a)}/{}>,
+      6 <{(c, c), (a, a)}/{(a, c)}>]
+        5:
+        [c < a] : nil!=a * DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |-
+        DLL[a'](c, y, z, a) (Weaken) [7 <{(c, c), (b, b)}/{}>]
+          7:
+          DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |- DLL[a'](c, y, z, a) (Subst) [
+          8 <{(c, a), (b, b)}/{}>]
+            8:
+            DLL[b](x, y, z, w) * DLL[a](a, x, w, b) |- DLL[a'](a, y, z, b) (Backl) [0] <pre=
+            {(b, b), (a, a)}>
+        6:
+        [c < a] : nil!=a * a->c, b * DLL[a'](c, y, z, a) |-
+        a->w', b * DLL[b'](w', y, z, a) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+ListO[b](x, y) * ListO[a](y, z) |- ListE[a'](x, z) (ListE R.Unf.) [1 <
+                                                                   {(b, b),
+                                                                   (a, a)}/
+                                                                   {}>]
+  1:
+  ListO[b](x, y) * ListO[a](y, z) |-
+  [b' < a'] : nil!=x * x->w' * ListO[b'](w', z) (UBound Intro) [2 <{(b, b),
+                                                                   (a, a)}/
+                                                                {}>]
+    2:
+    ListO[b](x, y) * ListO[a](y, z) |- nil!=x * x->w' * ListO[b'](w', z) (ListO L.Unf./LHS Inst.,LHS Inst./Simplify,Simplify) [
+    3 <{(b, b), (a, a)}/{(b, c)}>, 4 <{(b, b), (a, a)}/{(b, c)}>]
+      3:
+      [c < b] : nil!=x * x->y * ListO[a](y, z) |- x->w' * ListO[b'](w', z) (Id)
+      4:
+      [c < b] : nil!=x * x->w * ListE[c](w, y) * ListO[a](y, z) |-
+      x->w' * ListO[b'](w', z) (ListO R.Unf./Simplify) [5 <{(c, c), (b, b),
+                                                           (a, a)}/{}>]
+        5:
+        [c < b] : nil!=x * x->w * ListE[c](w, y) * ListO[a](y, z) |-
+        [a' < b'] : nil!=w' * x!=w' * x->w' * w'->y' * ListE[a'](y', z) (UBound Intro) [
+        6 <{(c, c), (b, b), (a, a)}/{}>]
+          6:
+          [c < b] : nil!=x * x->w * ListE[c](w, y) * ListO[a](y, z) |-
+          nil!=w' * x!=w' * x->w' * w'->y' * ListE[a'](y', z) (ListE L.Unf./LHS Inst.) [
+          7 <{(c, c), (b, b), (a, a)}/{(c, d), (b, d), (b, c)}>]
+            7:
+            [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->a *
+                             ListO[d](a, y) * ListO[a](y, z) |-
+            nil!=w' * x!=w' * x->w' * w'->y' * ListE[a'](y', z) (Lemma.App) [
+            8 <{(d, d), (c, c), (b, b), (a, a)}/{}>,
+            9 <{(d, d), (c, c), (b, b)}/{(c, d), (b, d), (b, c)}>]
+              8:
+              [d < c; c < b] : nil!=x * nil!=w * x!=w * ListO[d](a, y) *
+                               ListO[a](y, z) |-
+              ListE[b'](a, z) (R.Trans.Ex) [10 <{(d, d), (c, c), (b, b),
+                                                (a, a)}/{}>]
+                10:
+                [d < c; c < b] : nil!=x * nil!=w * x!=w * ListO[d](a, y) *
+                                 ListO[a](y, z) |-
+                ListE[a'](a, z) (Weaken) [11 <{(d, d), (a, a)}/{}>]
+                  11:
+                  ListO[d](a, y) * ListO[a](y, z) |- ListE[a'](a, z) (Subst) [
+                  12 <{(d, b), (a, a)}/{}>]
+                    12:
+                    ListO[b](x, y) * ListO[a](y, z) |- ListE[a'](x, z) (Backl) [0] <pre=
+                    {(b, b), (a, a)}>
+              9:
+              [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->a *
+                               ListE[b'](a, z) |-
+              nil!=w' * x!=w' * x->w' * w'->y' * ListE[a'](y', z) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+ListE[b](x, y) * ListE[a](y, z) |- ListE[a'](x, z) (ListE L.Unf./LHS Inst.) [
+1 <{(b, b), (a, a)}/{(b, c)}>]
+  1:
+  [c < b] : nil!=x * x->w * ListO[c](w, y) * ListE[a](y, z) |-
+  ListE[a'](x, z) (ListO L.Unf./LHS Inst.,LHS Inst.) [2 <{(c, c), (b, b),
+                                                         (a, a)}/{(c, d),
+                                                                 (b, d),
+                                                                 (b, c)}>,
+  3 <{(c, c), (b, b), (a, a)}/{(c, d), (b, d), (b, c)}>]
+    2:
+    [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->y * ListE[a](y, z) |-
+    ListE[a'](x, z) (ListE R.Unf./Simplify) [4 <{(d, d), (c, c), (b, b),
+                                                (a, a)}/{}>]
+      4:
+      [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->y * ListE[a](y, z) |-
+      [b' < a'] : x->w' * ListO[b'](w', z) (UBound Intro) [5 <{(d, d),
+                                                              (c, c), 
+                                                              (b, b), 
+                                                              (a, a)}/
+                                                           {}>]
+        5:
+        [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->y *
+                         ListE[a](y, z) |-
+        x->w' * ListO[b'](w', z) (ListO R.Unf./Simplify) [6 <{(d, d), 
+                                                             (c, c), 
+                                                             (b, b), 
+                                                             (a, a)}/
+                                                          {}>]
+          6:
+          [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->y *
+                           ListE[a](y, z) |-
+          [a' < b'] : nil!=w' * x!=w' * x->w' * w'->y' * ListE[a'](y', z) (UBound Intro) [
+          7 <{(d, d), (c, c), (b, b), (a, a)}/{}>]
+            7:
+            [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->y *
+                             ListE[a](y, z) |-
+            nil!=w' * x!=w' * x->w' * w'->y' * ListE[a'](y', z) (Id)
+    3:
+    [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->a * ListE[d](a, y) *
+                     ListE[a](y, z) |-
+    ListE[a'](x, z) (Lemma.App) [8 <{(d, d), (c, c), (b, b), (a, a)}/{}>,
+    9 <{(d, d), (c, c), (b, b)}/{(c, d), (b, d), (b, c)}>]
+      8:
+      [d < c; c < b] : nil!=x * nil!=w * x!=w * ListE[d](a, y) *
+                       ListE[a](y, z) |-
+      ListE[b'](a, z) (R.Trans.Ex) [10 <{(d, d), (c, c), (b, b), (a, a)}/{}>]
+        10:
+        [d < c; c < b] : nil!=x * nil!=w * x!=w * ListE[d](a, y) *
+                         ListE[a](y, z) |-
+        ListE[a'](a, z) (Weaken) [11 <{(d, d), (a, a)}/{}>]
+          11:
+          ListE[d](a, y) * ListE[a](y, z) |- ListE[a'](a, z) (Subst) [
+          12 <{(d, b), (a, a)}/{}>]
+            12:
+            ListE[b](x, y) * ListE[a](y, z) |- ListE[a'](x, z) (Backl) [0] <pre=
+            {(b, b), (a, a)}>
+      9:
+      [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->a * ListE[b'](a, z) |-
+      ListE[a'](x, z) (LHS Inst.) [13 <{(d, d), (c, c), (b, b), (b', a)}/{}>]
+        13:
+        [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->a *
+                         ListE[a](a, z) |-
+        ListE[a'](x, z) (Subst) [14 <{(d, d), (c, c), (b, b), (a, a)}/{}>]
+          14:
+          [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->y *
+                           ListE[a](y, z) |-
+          ListE[a'](x, z) (Backl) [2] <pre={(d, d), (c, c), (b, b), (a, a)}>
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+ListO[b](y, z) * ListE[a](x, y) |- ListO[a'](x, z) (ListE L.Unf./LHS Inst.) [
+1 <{(b, b), (a, a)}/{(a, c)}>]
+  1:
+  [c < a] : nil!=x * x->w * ListO[c](w, y) * ListO[b](y, z) |-
+  ListO[a'](x, z) (ListO L.Unf./LHS Inst.,LHS Inst.) [2 <{(c, c), (b, b),
+                                                         (a, a)}/{(c, d),
+                                                                 (a, c),
+                                                                 (a, d)}>,
+  3 <{(c, c), (b, b), (a, a)}/{(c, d), (a, c), (a, d)}>]
+    2:
+    [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->y * ListO[b](y, z) |-
+    ListO[a'](x, z) (ListO R.Unf./Simplify) [4 <{(c, c), (b, b), (a, a),
+                                                (d, d)}/{}>]
+      4:
+      [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->y * ListO[b](y, z) |-
+      [b' < a'] : x->w' * ListE[b'](w', z) (UBound Intro) [5 <{(c, c),
+                                                              (b, b), 
+                                                              (a, a), 
+                                                              (d, d)}/
+                                                           {}>]
+        5:
+        [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->y *
+                         ListO[b](y, z) |-
+        x->w' * ListE[b'](w', z) (ListE R.Unf./Simplify) [6 <{(c, c), 
+                                                             (b, b), 
+                                                             (a, a), 
+                                                             (d, d)}/
+                                                          {}>]
+          6:
+          [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->y *
+                           ListO[b](y, z) |-
+          [a' < b'] : nil!=w' * x!=w' * x->w' * w'->y' * ListO[a'](y', z) (UBound Intro) [
+          7 <{(c, c), (b, b), (a, a), (d, d)}/{}>]
+            7:
+            [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->y *
+                             ListO[b](y, z) |-
+            nil!=w' * x!=w' * x->w' * w'->y' * ListO[a'](y', z) (Id)
+    3:
+    [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->a * ListO[b](y, z) *
+                     ListE[d](a, y) |-
+    ListO[a'](x, z) (Lemma.App) [8 <{(c, c), (b, b), (a, a), (d, d)}/{}>,
+    9 <{(c, c), (a, a), (d, d)}/{(c, d), (a, c), (a, d)}>]
+      8:
+      [c < a; d < c] : nil!=x * nil!=w * x!=w * ListO[b](y, z) *
+                       ListE[d](a, y) |-
+      ListO[b'](a, z) (R.Trans.Ex) [10 <{(c, c), (b, b), (a, a), (d, d)}/{}>]
+        10:
+        [c < a; d < c] : nil!=x * nil!=w * x!=w * ListO[b](y, z) *
+                         ListE[d](a, y) |-
+        ListO[a'](a, z) (Weaken) [11 <{(b, b), (d, d)}/{}>]
+          11:
+          ListO[b](y, z) * ListE[d](a, y) |- ListO[a'](a, z) (Subst) [
+          12 <{(b, b), (d, a)}/{}>]
+            12:
+            ListO[b](y, z) * ListE[a](x, y) |- ListO[a'](x, z) (Backl) [0] <pre=
+            {(b, b), (a, a)}>
+      9:
+      [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->a * ListO[b'](a, z) |-
+      ListO[a'](x, z) (LHS Inst.) [13 <{(b', b), (c, c), (a, a), (d, d)}/{}>]
+        13:
+        [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->a *
+                         ListO[b](a, z) |-
+        ListO[a'](x, z) (Subst) [14 <{(c, c), (b, b), (a, a), (d, d)}/{}>]
+          14:
+          [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->y *
+                           ListO[b](y, z) |-
+          ListO[a'](x, z) (Backl) [2] <pre={(c, c), (b, b), (a, a), (d, d)}>
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+BinListFirst[a](x) |- BinTree[a'](x) (BinListFirst L.Unf./LHS Inst.,LHS Inst.) [
+1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>]
+  1:
+  [b < a] : emp |- BinTree[a'](x) (BinTree R.Unf.) [3 <{(b, b), (a, a)}/{}>]
+    3: [b < a] : emp |- emp (Id)
+  2:
+  [b < a] : nil!=x * x->y, w * BinListFirst[b](y) |- BinTree[a'](x) (BinTree R.Unf./Simplify) [
+  4 <{(b, b), (a, a)}/{}>]
+    4:
+    [b < a] : nil!=x * x->y, w * BinListFirst[b](y) |-
+    [c' < a'; b' < a'] : x->z', w' * BinTree[c'](z') * BinTree[b'](w') (UBound Intro) [
+    5 <{(b, b), (a, a)}/{}>]
+      5:
+      [b < a] : nil!=x * x->y, w * BinListFirst[b](y) |-
+      x->z', w' * BinTree[c'](z') * BinTree[b'](w') (BinTree R.Unf./Simplify) [
+      6 <{(b, b), (a, a)}/{}>]
+        6:
+        [b < a] : nil!=x * x->y, w * BinListFirst[b](y) |-
+        x->z', w' * BinTree[c'](z') (Lemma.App) [7 <{(b, b), (a, a)}/{}>,
+        8 <{(b, b), (a, a)}/{(a, b)}>]
+          7:
+          [b < a] : nil!=x * BinListFirst[b](y) |- BinTree[a'](y) (Weaken) [
+          9 <{(b, b)}/{}>]
+            9:
+            BinListFirst[b](y) |- BinTree[a'](y) (Subst) [10 <{(b, a)}/{}>]
+              10:
+              BinListFirst[a](x) |- BinTree[a'](x) (Backl) [0] <pre={(a, a)}>
+          8:
+          [b < a] : nil!=x * x->y, w * BinTree[a'](y) |-
+          x->z', w' * BinTree[c'](z') (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+BinListSecond[a](x) |- BinTree[a'](x) (BinListSecond L.Unf./LHS Inst.,LHS Inst.) [
+1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>]
+  1:
+  [b < a] : emp |- BinTree[a'](x) (BinTree R.Unf.) [3 <{(b, b), (a, a)}/{}>]
+    3: [b < a] : emp |- emp (Id)
+  2:
+  [b < a] : nil!=x * x->y, w * BinListSecond[b](w) |- BinTree[a'](x) (BinTree R.Unf./Simplify) [
+  4 <{(b, b), (a, a)}/{}>]
+    4:
+    [b < a] : nil!=x * x->y, w * BinListSecond[b](w) |-
+    [c' < a'; b' < a'] : x->z', w' * BinTree[c'](z') * BinTree[b'](w') (UBound Intro) [
+    5 <{(b, b), (a, a)}/{}>]
+      5:
+      [b < a] : nil!=x * x->y, w * BinListSecond[b](w) |-
+      x->z', w' * BinTree[c'](z') * BinTree[b'](w') (BinTree R.Unf./Simplify) [
+      6 <{(b, b), (a, a)}/{}>]
+        6:
+        [b < a] : nil!=x * x->y, w * BinListSecond[b](w) |-
+        x->z', w' * BinTree[b'](w') (Lemma.App) [7 <{(b, b), (a, a)}/{}>,
+        8 <{(b, b), (a, a)}/{(a, b)}>]
+          7:
+          [b < a] : nil!=x * BinListSecond[b](w) |- BinTree[a'](w) (Weaken) [
+          9 <{(b, b)}/{}>]
+            9:
+            BinListSecond[b](w) |- BinTree[a'](w) (Subst) [10 <{(b, a)}/{}>]
+              10:
+              BinListSecond[a](x) |- BinTree[a'](x) (Backl) [0] <pre=
+              {(a, a)}>
+          8:
+          [b < a] : nil!=x * x->y, w * BinTree[a'](w) |-
+          x->z', w' * BinTree[b'](w') (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+BinPath[b](x, z) * BinPath[a](z, y) |- BinPath[a'](x, y) (BinPath L.Unf./LHS Inst.,LHS Inst.,LHS Inst./Simplify) [
+1 <{(b, b), (a, a)}/{(b, c)}>, 2 <{(b, b), (a, a)}/{(b, c)}>,
+3 <{(b, b), (a, a)}/{(b, c)}>]
+  1: [c < b] : BinPath[a](z, y) |- BinPath[a'](z, y) (Id)
+  2:
+  [c < b] : nil!=x * x->w, a * BinPath[c](w, z) * BinPath[a](z, y) |-
+  BinPath[a'](x, y) (BinPath R.Unf./Simplify) [4 <{(c, c), (b, b), (a, a)}/
+                                               {}>]
+    4:
+    [c < b] : nil!=x * x->w, a * BinPath[c](w, z) * BinPath[a](z, y) |-
+    [b' < a'] : x->w', z' * BinPath[b'](w', y) (UBound Intro) [5 <{(c, c),
+                                                                  (b, b),
+                                                                  (a, a)}/
+                                                               {}>]
+      5:
+      [c < b] : nil!=x * x->w, a * BinPath[c](w, z) * BinPath[a](z, y) |-
+      x->w', z' * BinPath[b'](w', y) (Lemma.App) [6 <{(c, c), (b, b), (a, a)}/
+                                                  {}>,
+      7 <{(c, c), (b, b)}/{(b, c)}>]
+        6:
+        [c < b] : nil!=x * BinPath[c](w, z) * BinPath[a](z, y) |-
+        BinPath[a'](w, y) (Weaken) [8 <{(c, c), (a, a)}/{}>]
+          8:
+          BinPath[c](w, z) * BinPath[a](z, y) |- BinPath[a'](w, y) (Subst) [
+          9 <{(c, b), (a, a)}/{}>]
+            9:
+            BinPath[b](x, z) * BinPath[a](z, y) |- BinPath[a'](x, y) (Backl) [0] <pre=
+            {(b, b), (a, a)}>
+        7:
+        [c < b] : nil!=x * x->w, a * BinPath[a'](w, y) |-
+        x->w', z' * BinPath[b'](w', y) (Id)
+  3:
+  [c < b] : nil!=x * x->w, a * BinPath[c](a, z) * BinPath[a](z, y) |-
+  BinPath[a'](x, y) (BinPath R.Unf./Simplify) [10 <{(c, c), (b, b), (a, a)}/
+                                               {}>]
+    10:
+    [c < b] : nil!=x * x->w, a * BinPath[c](a, z) * BinPath[a](z, y) |-
+    [b' < a'] : x->w', z' * BinPath[b'](z', y) (UBound Intro) [11 <{(c, c),
+                                                                   (b, b),
+                                                                   (a, a)}/
+                                                               {}>]
+      11:
+      [c < b] : nil!=x * x->w, a * BinPath[c](a, z) * BinPath[a](z, y) |-
+      x->w', z' * BinPath[b'](z', y) (Lemma.App) [12 <{(c, c), (b, b),
+                                                      (a, a)}/{}>,
+      13 <{(c, c), (b, b)}/{(b, c)}>]
+        12:
+        [c < b] : nil!=x * BinPath[c](a, z) * BinPath[a](z, y) |-
+        BinPath[a'](a, y) (Weaken) [14 <{(c, c), (a, a)}/{}>]
+          14:
+          BinPath[c](a, z) * BinPath[a](z, y) |- BinPath[a'](a, y) (Subst) [
+          15 <{(c, b), (a, a)}/{}>]
+            15:
+            BinPath[b](x, z) * BinPath[a](z, y) |- BinPath[a'](x, y) (Backl) [0] <pre=
+            {(b, b), (a, a)}>
+        13:
+        [c < b] : nil!=x * x->w, a * BinPath[a'](a, y) |-
+        x->w', z' * BinPath[b'](z', y) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+BinPath[a](x, y) |- BinTreeSeg[a'](x, y) (BinPath L.Unf./LHS Inst.,LHS Inst.,LHS Inst./Simplify) [
+1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>, 3 <{(a, a)}/{(a, b)}>]
+  1:
+  [b < a] : emp |- BinTreeSeg[a'](y, y) (BinTreeSeg R.Unf.) [4 <{(b, b),
+                                                                (a, a)}/
+                                                             {}>]
+    4: [b < a] : emp |- emp (Id)
+  2:
+  [b < a] : nil!=x * x->w, z * BinPath[b](w, y) |- BinTreeSeg[a'](x, y) (BinTreeSeg R.Unf./Simplify) [
+  5 <{(b, b), (a, a)}/{}>]
+    5:
+    [b < a] : nil!=x * x->w, z * BinPath[b](w, y) |-
+    [c' < a'; b' < a'] : x->w', z' * BinTreeSeg[c'](w', y) * BinTree[b'](z') (UBound Intro) [
+    6 <{(b, b), (a, a)}/{}>]
+      6:
+      [b < a] : nil!=x * x->w, z * BinPath[b](w, y) |-
+      x->w', z' * BinTreeSeg[c'](w', y) * BinTree[b'](z') (BinTree R.Unf./Simplify) [
+      7 <{(b, b), (a, a)}/{}>]
+        7:
+        [b < a] : nil!=x * x->w, z * BinPath[b](w, y) |-
+        x->w', z' * BinTreeSeg[c'](w', y) (Lemma.App) [8 <{(b, b), (a, a)}/
+                                                       {}>,
+        9 <{(b, b), (a, a)}/{(a, b)}>]
+          8:
+          [b < a] : nil!=x * BinPath[b](w, y) |- BinTreeSeg[a'](w, y) (Weaken) [
+          10 <{(b, b)}/{}>]
+            10:
+            BinPath[b](w, y) |- BinTreeSeg[a'](w, y) (Subst) [11 <{(b, a)}/
+                                                              {}>]
+              11:
+              BinPath[a](x, y) |- BinTreeSeg[a'](x, y) (Backl) [0] <pre=
+              {(a, a)}>
+          9:
+          [b < a] : nil!=x * x->w, z * BinTreeSeg[a'](w, y) |-
+          x->w', z' * BinTreeSeg[c'](w', y) (Id)
+  3:
+  [b < a] : nil!=x * x->w, z * BinPath[b](z, y) |- BinTreeSeg[a'](x, y) (BinTreeSeg R.Unf./Simplify) [
+  12 <{(b, b), (a, a)}/{}>]
+    12:
+    [b < a] : nil!=x * x->w, z * BinPath[b](z, y) |-
+    [c' < a'; b' < a'] : x->w', z' * BinTreeSeg[c'](z', y) * BinTree[b'](w') (UBound Intro) [
+    13 <{(b, b), (a, a)}/{}>]
+      13:
+      [b < a] : nil!=x * x->w, z * BinPath[b](z, y) |-
+      x->w', z' * BinTreeSeg[c'](z', y) * BinTree[b'](w') (BinTree R.Unf./Simplify) [
+      14 <{(b, b), (a, a)}/{}>]
+        14:
+        [b < a] : nil!=x * x->w, z * BinPath[b](z, y) |-
+        x->w', z' * BinTreeSeg[c'](z', y) (Lemma.App) [15 <{(b, b), (a, a)}/
+                                                       {}>,
+        16 <{(b, b), (a, a)}/{(a, b)}>]
+          15:
+          [b < a] : nil!=x * BinPath[b](z, y) |- BinTreeSeg[a'](z, y) (Weaken) [
+          17 <{(b, b)}/{}>]
+            17:
+            BinPath[b](z, y) |- BinTreeSeg[a'](z, y) (Subst) [18 <{(b, a)}/
+                                                              {}>]
+              18:
+              BinPath[a](x, y) |- BinTreeSeg[a'](x, y) (Backl) [0] <pre=
+              {(a, a)}>
+          16:
+          [b < a] : nil!=x * x->w, z * BinTreeSeg[a'](z, y) |-
+          x->w', z' * BinTreeSeg[c'](z', y) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+NOT proved: BinTree[b](y) * BinTreeSeg[a](x, z) |- BinTree[a'](x) [TIMEOUT]
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+nil!=x * x!=z * x->y * ls[a](y, z) |- ls[a'](x, z) (ls R.Unf./Simplify) [
+1 <{(a, a)}/{}>]
+  1:
+  nil!=x * x!=z * x->y * ls[a](y, z) |- [b' < a'] : x->w' * ls[b'](w', z) (UBound Intro) [
+  2 <{(a, a)}/{}>]
+    2: nil!=x * x!=z * x->y * ls[a](y, z) |- x->w' * ls[b'](w', z) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+ls[b](x, y) * ls[a](y, nil) |- ls[a'](x, nil) (ls L.Unf./LHS Inst.,LHS Inst./Simplify) [
+1 <{(b, b), (a, a)}/{(b, c)}>, 2 <{(b, b), (a, a)}/{(b, c)}>]
+  1: [c < b] : ls[a](y, nil) |- ls[a'](y, nil) (Id)
+  2:
+  [c < b] : nil!=x * x!=y * x->w * ls[c](w, y) * ls[a](y, nil) |-
+  ls[a'](x, nil) (ls R.Unf./Simplify) [3 <{(c, c), (b, b), (a, a)}/{}>]
+    3:
+    [c < b] : nil!=x * x!=y * x->w * ls[c](w, y) * ls[a](y, nil) |-
+    [b' < a'] : x->w' * ls[b'](w', nil) (UBound Intro) [4 <{(c, c), (b, b),
+                                                           (a, a)}/{}>]
+      4:
+      [c < b] : nil!=x * x!=y * x->w * ls[c](w, y) * ls[a](y, nil) |-
+      x->w' * ls[b'](w', nil) (Lemma.App) [5 <{(c, c), (b, b), (a, a)}/{}>,
+      6 <{(c, c), (b, b)}/{(b, c)}>]
+        5:
+        [c < b] : nil!=x * x!=y * ls[c](w, y) * ls[a](y, nil) |-
+        ls[a'](w, nil) (Weaken) [7 <{(c, c), (a, a)}/{}>]
+          7:
+          ls[c](w, y) * ls[a](y, nil) |- ls[a'](w, nil) (Subst) [8 <{
+                                                                    (c, b),
+                                                                    (a, a)}/
+                                                                 {}>]
+            8:
+            ls[b](x, y) * ls[a](y, nil) |- ls[a'](x, nil) (Backl) [0] <pre=
+            {(b, b), (a, a)}>
+        6:
+        [c < b] : nil!=x * x!=y * x->w * ls[a'](w, nil) |-
+        x->w' * ls[b'](w', nil) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+0:
+ListE[b](x, y) \/ ListO[a](x, y) |- List[a'](x, y) (L. Or) [1 <{(b, b)}/{}>,
+2 <{(a, a)}/{}>]
+  1: ListE[b](x, y) |- List[a'](x, y) (List R.Unf.) [3 <{(b, b)}/{}>]
+    3:
+    ListE[b](x, y) |- [b' < a'] : nil!=x * x->w' * List[b'](w', y) (UBound Intro) [
+    4 <{(b, b)}/{}>]
+      4:
+      ListE[b](x, y) |- nil!=x * x->w' * List[b'](w', y) (ListE L.Unf./LHS Inst./Simplify) [
+      5 <{(b, b)}/{(b, a)}>]
+        5:
+        [a < b] : nil!=x * x->w * ListO[a](w, y) |- x->w' * List[b'](w', y) (Lemma.App) [
+        6 <{(b, b), (a, a)}/{}>, 7 <{(b, b), (a, a)}/{(b, a)}>]
+          6:
+          [a < b] : nil!=x * ListO[a](w, y) |- List[a'](w, y) (Weaken) [
+          8 <{(a, a)}/{}>]
+            8: ListO[a](w, y) |- List[a'](w, y) (Subst) [9 <{(a, a)}/{}>]
+              9: ListO[a](x, y) |- List[a'](x, y) (Backl) [2] <pre={(a, a)}>
+          7:
+          [a < b] : nil!=x * x->w * List[a'](w, y) |- x->w' * List[b'](w', y) (Id)
+  2:
+  ListO[a](x, y) |- List[a'](x, y) (ListO L.Unf./LHS Inst.,LHS Inst.) [
+  10 <{(a, a)}/{(a, b)}>, 11 <{(a, a)}/{(a, b)}>]
+    10:
+    [b < a] : nil!=x * x->y |- List[a'](x, y) (List R.Unf./Simplify) [
+    12 <{(b, b), (a, a)}/{}>]
+      12: [b < a] : nil!=x * x->y |- x->y (Id)
+    11:
+    [b < a] : nil!=x * x->w * ListE[b](w, y) |- List[a'](x, y) (List R.Unf./Simplify) [
+    13 <{(b, b), (a, a)}/{}>]
+      13:
+      [b < a] : nil!=x * x->w * ListE[b](w, y) |-
+      [b' < a'] : x->w' * List[b'](w', y) (UBound Intro) [14 <{(b, b),
+                                                              (a, a)}/
+                                                          {}>]
+        14:
+        [b < a] : nil!=x * x->w * ListE[b](w, y) |- x->w' * List[b'](w', y) (Lemma.App) [
+        15 <{(b, b), (a, a)}/{}>, 16 <{(b, b), (a, a)}/{(a, b)}>]
+          15:
+          [b < a] : nil!=x * ListE[b](w, y) |- List[a'](w, y) (Weaken) [
+          17 <{(b, b)}/{}>]
+            17: ListE[b](w, y) |- List[a'](w, y) (Subst) [18 <{(b, b)}/{}>]
+              18: ListE[b](x, y) |- List[a'](x, y) (Backl) [1] <pre={(b, b)}>
+          16:
+          [b < a] : nil!=x * x->w * List[a'](w, y) |- x->w' * List[b'](w', y) (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+
