@@ -141,7 +141,7 @@ let disequates hs a b =
 
 let rec unify_partial_rec ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
   match hs' with
-    | [] -> [(init_state, hs')]
+    | [] -> [(init_state, hs)]
     | h'::hs' -> 
       let subs = Blist.foldr
         (fun h list ->
@@ -162,11 +162,11 @@ let unify_partial ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont ini
 
 let rec biunify_partial_rec ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
   match hs' with
-    | [] -> [(init_state, hs')]
+    | [] -> [(init_state, hs)]
     | h'::hs' -> 
       let subs = Blist.foldr
         (fun h list ->
-          let state = Heap.biunify_partial ~tagpairs ~update_check h h' cont init_state in
+          let state = Heap.biunify_partial ~tagpairs ~update_check h h' Unification.trivial_continuation init_state in
           if Option.is_some state then
             let dif = Heap.sub_num h h'.Heap.num in
             let hs_wo_dif = Blist.del_first (fun h2 -> h2 = h) hs in
@@ -183,11 +183,11 @@ let biunify_partial ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont i
 
 let rec classical_unify_rec ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
   match hs' with
-    | [] -> [(init_state, hs')]
+    | [] -> [(init_state, hs)]
     | h'::hs' -> 
       let subs = Blist.foldr
         (fun h list ->
-          let state = Heap.classical_unify ~tagpairs ~update_check h h' cont init_state in
+          let state = Heap.classical_unify ~tagpairs ~update_check h h' Unification.trivial_continuation init_state in
           if Option.is_some state then
             let dif = Heap.sub_num h h'.Heap.num in
             let hs_wo_dif = Blist.del_first (fun h2 -> h2 = h) hs in
@@ -197,18 +197,18 @@ let rec classical_unify_rec ?(tagpairs = true) ?(update_check = Fun._true) hs hs
       Blist.flatten (Blist.map (fun (state, sub) -> classical_unify_rec ~tagpairs ~update_check sub hs' cont state) subs)
 
 let classical_unify ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =  
-  let results = classical_unify_rec ~tagpairs ~update_check hs hs' cont init_state in
+  let results = classical_unify_rec ~tagpairs ~update_check hs hs' Unification.trivial_continuation init_state in
   match results with
-    | [] -> None
+    | [] -> (*print_endline ("NONE " ^ to_string hs ^ " =hs/hs'= " ^ to_string hs');*)None
     | (state, _) :: results -> Some(state)
   
 let rec classical_biunify_rec ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
   match hs' with
-    | [] -> [(init_state, hs')]
+    | [] -> [(init_state, hs)]
     | h'::hs' -> 
       let subs = Blist.foldr
         (fun h list ->
-          let state = Heap.classical_biunify ~tagpairs ~update_check h h' cont init_state in
+          let state = Heap.classical_biunify ~tagpairs ~update_check h h' Unification.trivial_continuation init_state in
           if Option.is_some state then
             let dif = Heap.sub_num h h'.Heap.num in
             let hs_wo_dif = Blist.del_first (fun h2 -> h2 = h) hs in
@@ -221,4 +221,10 @@ let classical_biunify ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont
   let results = classical_biunify_rec ~tagpairs ~update_check hs hs' cont init_state in
   match results with
     | [] -> None
-    | (state, _) :: results -> Some(state)
+    | (state, hs_) :: results -> 
+      (*(*print_endline "\n\n----------RESULTS_BIUNIFY--------------------";*)
+      let results = [(state, hs_)] @ results in
+      let () = Blist.iter (fun (_, _) -> 
+        (*print_endline (to_string hs ^ " SUB " ^ to_string hs' ^ "\ņ");  *)
+      ) results in*)
+      Some(state)

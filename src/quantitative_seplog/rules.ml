@@ -150,8 +150,12 @@ let eq_subst_rule ((lhs, rhs) as seq) =
     let (_, ls), (_, rs) = Seq.dest_sum seq in
     match ls with
       | [] -> []
-      | l1 :: _ -> 
+      | l1 :: ls2 -> 
         let leqs1 = Uf.bindings l1.SH.eqs in (*searching only first summand suffices*)
+        let leqs1 = Blist.filter (fun leq -> Blist.for_all (fun h ->
+          Blist.mem leq (Uf.bindings h.SH.eqs)
+          || Blist.mem (Pair.swap leq) (Uf.bindings h.SH.eqs)
+        )ls2) leqs1 in
         let ((x, y) as p) =
           Blist.find
             (fun p' -> not (Pair.either (Pair.map Term.is_exist_var p')))
@@ -162,10 +166,8 @@ let eq_subst_rule ((lhs, rhs) as seq) =
             let leqs = Uf.bindings l.SH.eqs in
             let leqs = Blist.filter (fun q -> q <> p && Pair.swap q <> p) leqs in
             let l' = SH.with_eqs l (Uf.of_list leqs) in
-            if l' = l then list
-            else l :: list)
+            l' :: list)
           ls [] in
-        if Blist.length ls' != Blist.length ls then [] else
         let x, y = if Term.is_var x then p else (y, x) in
         let theta = Subst.singleton x y in
         let ls', rs' = Pair.map (Heapsum.subst theta) (ls', rs) in
@@ -200,7 +202,7 @@ let eq_ex_subst_rule ((lhs, rhs) as seq) =
                 else Subst.singleton y x
               in
               let r' = Heap.subst theta r in
-              Some (Blist.map (fun r -> if r = h then r' else h) rs)
+              Some (Blist.map (fun r -> if r == h then r' else r) rs)
         )
         rs
     in
@@ -298,7 +300,7 @@ let simplify_seq =
 
 let simplify = Rule.mk_infrule simplify_seq
 
-let wrap r =
+let wrap r = 
   Rule.mk_infrule (Seqtactics.compose r (Seqtactics.attempt simplify_seq))
 
 (* do the following transformation for the first x such that *)
@@ -559,7 +561,7 @@ let ruf_rl defs seq =
     let right_unfold (r, ((tag, (ident, _)) as p)) =
       if not (Defs.mem ident defs) then []
       else
-        let r' = SH.del_ind r p in
+        let r' = SH.del_ind r p in (*TODO check domain-exact? also lUnfold?*)
         let cases = Defs.unfold (seq_vars, seq_tags) p defs in
         let do_case f =
           let cs' =
@@ -580,7 +582,13 @@ let ruf_rl defs seq =
       Blist.foldr ( fun r list ->
         list @ Blist.map (fun pred -> (r, pred)) (Tpreds.to_list r.SH.inds)
       ) rs [] in
-    Blist.flatten (Blist.map right_unfold heap_preds)
+    let res = Blist.flatten (Blist.map right_unfold heap_preds) in
+    (*print_endline (Blist.to_string " || " (fun 
+      (rs, _) -> match rs with
+      | ((_, (cs, rs::rss)), _, _) :: _ -> Heapsum.to_string rs
+      | _ -> ""
+    ) res);*)
+    res
   with Not_symheap_sum -> []
 
 let ruf defs = wrap (ruf_rl defs)
@@ -911,11 +919,12 @@ let apply_lemma defs (lemma_seq, ((lhs, rhs) as cont_seq)) ((lhs', rhs') as seq)
           let diff = Heap.with_ptos
             (Heap.with_inds Heap.empty (Tpreds.diff h.SH.inds r.SH.inds))
             (Ptos.diff h.SH.ptos r.SH.ptos) in
-          if Tpreds.for_all (fun pred -> 
+          (*Since from up to down, the max value of LHS would be lowered if pred not domain exact, it is okay to not do this check*)
+          (*if Blist.length ls <= 1 || Tpreds.for_all (fun pred -> 
             Form.is_domain_exact (Defs.get_def_forms defs) (Form.mk_heap (Heap.mk_ind pred))
-          ) diff.SH.inds then
+          ) diff.SH.inds then*)
             Heapsum.star ls [diff]
-          else [h]
+          (*else [h]*)
         else [h]
       ) hs)
     in
@@ -1183,14 +1192,16 @@ let setup defs =
           ; pred_intro_rule defs
           ; instantiate_pto
           ; Rule.conditional
-              (fun (_, (cs, _)) ->
-                Ord_constraints.for_all
+              (fun (_, (cs, rs)) ->
+                let res = Ord_constraints.for_all
                   (fun c ->
                     Tags.exists Tags.is_free_var (Ord_constraints.Elt.tags c)
-                    )
-                  cs )
+                  ) cs in
+                  (*print_endline ("NOOOOOOO " ^ string_of_bool res ^ " : " ^ Ord_constraints.to_string cs ^ " ; " ^ Heapsum.to_string (Blist.nth rs 0));
+                  *)res
+              )
               (ruf defs)
-          ; luf defs ] ] ;
+          (*; luf defs*) ] ] ;
   let axioms = Rule.first [id_axiom; ex_falso_axiom] in
   rules := Rule.combine_axioms axioms !rules ;
   (*if !use_invalidity_heuristic then

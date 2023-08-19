@@ -69,16 +69,16 @@ let () =
   Arg.parse spec_list
     (fun _ -> raise (Arg.Bad "Stray argument found."))
     !F.usage ;
-  if (not !do_testing) && String.equal !cl_sequent "" then
-    F.die "-S must be specified." spec_list !F.usage ;
-  let seq, defs =
-    ( Seq.of_string ~null_is_emp:!parse_null_as_emp !cl_sequent
-    , Defs.of_channel (open_in !defs_path) )
-  in
+  let defs = Defs.of_channel (open_in !defs_path) in
   Rules.setup defs ;
 
   if(not !do_testing) then
     
+    let () = (if String.equal !cl_sequent "" then
+      F.die "-S must be specified." spec_list !F.usage ;) in
+    
+    let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp !cl_sequent in
+
     let res =
       F.gather_stats (fun () ->
           (*if !invalidity_check && Invalid.check defs seq then None
@@ -96,33 +96,59 @@ let () =
   (*-----------TESTING------------*)
   else
 
-    let list = [1;2;3;4] in
-    let dofold (r, r2) =
-      Blist.foldr
-        (fun element res -> 
-          if element == r then true else res
-        ) list false
-    in
-    let heap_preds = 
-      Blist.foldr ( fun r list ->
-        list @ [(r, r)]
-      ) list [] in
-    let res = Blist.for_all dofold heap_preds in
-    print_endline ("Equality: " ^ string_of_bool res);
+    let list_equality_test = false in
 
-    let res =
-      F.gather_stats (fun () ->
-          (*if !invalidity_check && Invalid.check defs seq then None
-          else*) Some (F.idfs !Rules.axioms !Rules.rules seq) )
-    in
+    if list_equality_test then
+      
+      let list = [1;2;3;4] in
+      let dofold (r, r2) =
+        Blist.foldr
+          (fun element res -> 
+            if element == r then true else res
+          ) list false
+      in
+      let heap_preds = 
+        Blist.foldr ( fun r list ->
+          list @ [(r, r)]
+        ) list [] in
+      let res = Blist.for_all dofold heap_preds in
+      print_endline ("Equality: " ^ string_of_bool res);
+    
+    else 
 
-    print_endline (Seq.to_string seq);
+      let read_file filename =
+        let lines = ref[] in
+        let chan = open_in filename in
+        try
+          while true; do
+            lines := input_line chan :: !lines
+          done; !lines
+        with End_of_file ->
+          close_in chan;
+          List.rev !lines; in
 
-    match res with
-    | Some None ->
-        print_endline
-          ( "NOT proved: " ^ Seq.to_string seq ^ " [invalid]" ) ;
-        exit 255
-    | _ ->
-        let res = Option.flatten res in
-        F.exit (F.process_result true seq res)
+      let tests = read_file "tests.txt" in
+
+      Blist.iter (fun test ->
+
+        if not (String.get test 0 = '/' || test = "") then
+
+          let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp test in
+          
+          let res =
+            F.gather_stats (fun () ->
+                (*if !invalidity_check && Invalid.check defs seq then None
+                else*) Some (F.idfs !Rules.axioms !Rules.rules seq) )
+          in
+
+          match res with
+          | Some None ->
+              print_endline
+                ( "NOT proved: " ^ Seq.to_string seq ^ " [invalid]" ) ;
+          | _ ->
+              let res = Option.flatten res in
+              let res = F.process_result true seq res in
+              match res with
+                | _ -> print_endline "\n-----------------------------------------------------\n";
+      
+      ) tests

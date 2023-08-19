@@ -1,0 +1,23 @@
+//eq_subst_rule
+//b->c*b=a + b->c |- 2*a->c
+//b->c*b=a + b->c*a=b |- 2*a->c
+//eq_ex_subst_rule
+//b->c |- a'=b*a'->c + b->d
+//(d)eq_simplify
+//constraint_simplify if constr sum works
+//pto_intro_rule
+//x->y*y=z + x->y*y=z |- x->z + x->z
+//pred_intro_rule TODO
+//List[a](a,c)*a->b |- List[a](a,c)*a->b
+//instantiate_pto OK
+//x->y1,y2*y1=z1 |- a'->z1,z2
+//predicates
+List(b,c)*a->b |- List(a,c)
+//List(b,c)*a->b |- List(a,c)+List(a,c)
+//List(b,c)*a->b + List(b,c)*a->b |- List(a,c)+List(a,c)
+//List(b,c)*a->b + a->c |- 2*List(a,c)
+//matching TODO
+//2*a->c |- a->c + a->c
+//2*a->c + 2*a->c |- a->c + 3*a->c
+//3*a->b*b=d + a->b*b=e |- 2*a->b + 2*a->b*b=e
+x->y*RList(y,z)|-RList(x,z)
