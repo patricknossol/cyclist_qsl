@@ -25,7 +25,7 @@ List {
 
 ListLen { 
 	x->y => ListLen(x,y) | 
-	x->x' * ListLen(x',y) + x->x' * List(x',y) => ListLen(x,y) 
+	x->x' * ListLen(x',y) + x->y' * List(y',y) => ListLen(x,y) 
 } ;
 
 ListO { 

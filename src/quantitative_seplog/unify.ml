@@ -67,9 +67,9 @@ end
 
 module Unidirectional = struct
   module Core = struct
-    type state = Subst.t * Tagpairs.t
+    type state = Subst.t * Tagpairs.t * (int * int) list
 
-    let empty_state = (Subst.empty, Tagpairs.empty)
+    let empty_state = (Subst.empty, Tagpairs.empty, [])
   end
 
   include Core
@@ -82,7 +82,7 @@ module Unidirectional = struct
     in
     f old_state new_state
 
-  let existential_split_check (trm_subst, tag_subst) =
+  let existential_split_check (trm_subst, tag_subst, _) =
     Term.Map.for_all
       (fun k v ->
         Term.equal k v
@@ -99,12 +99,12 @@ module Unidirectional = struct
                 tag_subst )
          tag_subst
 
-  let modulo_entl (_, (trm_subst, tag_subst)) =
+  let modulo_entl (_, (trm_subst, tag_subst, _)) =
     Term.Map.for_all (fun x _ -> Term.is_exist_var x) trm_subst
     && Tagpairs.for_all (fun (t, _) -> Tags.is_exist_var t) tag_subst
 
   let existential_intro
-      ((trm_subst_old, tag_subst_old), (trm_subst_new, tag_subst_new)) =
+      ((trm_subst_old, tag_subst_old, _), (trm_subst_new, tag_subst_new, _)) =
     let tag_test theta (t, t') =
       Tags.is_exist_var t && Tags.is_free_var t'
       && Tagpairs.for_all (fun (_, t'') -> not (Tags.Elt.equal t' t'')) theta
@@ -120,7 +120,7 @@ module Unidirectional = struct
          trm_subst_old
          (Term.Map.bindings trm_subst_new)
 
-  let is_substitution (_, (trm_subst, tag_subst)) =
+  let is_substitution (_, (trm_subst, tag_subst, _)) =
     Term.Map.for_all
       (fun x y ->
         Term.is_free_var x && (Term.is_nil y || Term.is_free_var y) )
@@ -129,7 +129,7 @@ module Unidirectional = struct
          (fun tp -> Pair.both (Pair.map Tags.is_free_var tp))
          tag_subst
 
-  let trm_check ((theta, _), (theta', _)) =
+  let trm_check ((theta, _, _), (theta', _, _)) =
     let test sub (x, y) =
       Term.is_free_var x || Term.is_free_var y
       || (Term.is_exist_var x && Term.is_nil y)
@@ -141,7 +141,7 @@ module Unidirectional = struct
       theta
       (Term.Map.bindings theta')
 
-  let tag_check ((_, theta), (_, theta')) =
+  let tag_check ((_, theta, _), (_, theta', _)) =
     let injective p =
       Tagpairs.for_all (fun p' ->
           (not (Tags.Elt.equal (fst p) (fst p')))
@@ -162,17 +162,17 @@ module Unidirectional = struct
     in
     test_bindings test Tagpairs.add theta (Tagpairs.to_list theta')
 
-  let avoid_replacing_trms ?(inverse = false) vars (_, (theta, _)) =
+  let avoid_replacing_trms ?(inverse = false) vars (_, (theta, _, _)) =
     Term.Map.for_all
       (Fun.direct inverse (fun x _ -> not (Term.Set.mem x vars)))
       theta
 
-  let avoid_replacing_tags ?(inverse = false) tags (_, (_, theta)) =
+  let avoid_replacing_tags ?(inverse = false) tags (_, (_, theta, _)) =
     Tagpairs.for_all
       (Fun.uncurry (Fun.direct inverse (fun t _ -> not (Tags.mem t tags))))
       theta
 
-  let existentials_only (_, (trm_subst, tag_subst)) =
+  let existentials_only (_, (trm_subst, tag_subst, _)) =
     Term.Map.for_all
       (fun x y ->
         Term.equal x y || (Term.is_exist_var x && Term.is_exist_var y)
@@ -184,12 +184,12 @@ module Unidirectional = struct
            )
          tag_subst
 
-  let unify_tag ?(update_check = Fun._true) t t' cont init_state =
-    let extract s = snd s in
-    let recombine (theta, _) tps = (theta, tps) in
+  let unify_tag ?(update_check = Fun._true) t t' cont ((_, _, init_list) as init_state) =
+    let extract (a,b,c) = b in
+    let recombine (theta, _, list) tps = (theta, tps, list) in
     let update_check (tps, tps') =
       let state = recombine init_state tps in
-      let state' = (Term.Map.empty, tps') in
+      let state' = (Term.Map.empty, tps', init_list) in (*TODO correct?*)
       update_check (state, state')
     in
     Unification.transform extract recombine
@@ -197,36 +197,36 @@ module Unidirectional = struct
       t t' cont init_state
 
   let unify_tag_constraints ?(total = false) ?(inverse = false)
-      ?(update_check = Fun._true) cs cs' cont init_state =
-    let extract s = snd s in
-    let recombine (theta, _) tps = (theta, tps) in
+      ?(update_check = Fun._true) cs cs' cont ((_, _, init_list) as init_state) =
+    let extract (a,b,c) = b in
+    let recombine (theta, _, list) tps = (theta, tps, list) in
     let update_check (tps, tps') =
       let state = recombine init_state tps in
-      let state' = (Term.Map.empty, tps') in
+      let state' = (Term.Map.empty, tps', init_list) in
       update_check (state, state')
     in
     Unification.transform extract recombine
       (Ord_constraints.unify ~total ~inverse ~update_check)
       cs cs' cont init_state
 
-  let unify_trm ?(update_check = Fun._true) t t' cont init_state =
-    let extract s = fst s in
-    let recombine (_, tps) theta = (theta, tps) in
+  let unify_trm ?(update_check = Fun._true) t t' cont ((_, _, init_list) as init_state) =
+    let extract (a,b,c) = a in
+    let recombine (_, tps, list) theta = (theta, tps, list) in
     let update_check (theta, theta') =
       let state = recombine init_state theta in
-      let state' = (theta', Tagpairs.empty) in
+      let state' = (theta', Tagpairs.empty, init_list) in
       update_check (state, state')
     in
     Unification.transform extract recombine
       (Term.unify ~update_check)
       t t' cont init_state
 
-  let unify_trm_list ?(update_check = Fun._true) ts ts' cont init_state =
-    let extract s = fst s in
-    let recombine (_, tps) theta = (theta, tps) in
+  let unify_trm_list ?(update_check = Fun._true) ts ts' cont ((_, _, init_list) as init_state) =
+    let extract (a,b,c) = a in
+    let recombine (_, tps, list) theta = (theta, tps, list) in
     let update_check (theta, theta') =
       let state = recombine init_state theta in
-      let state' = (theta', Tagpairs.empty) in
+      let state' = (theta', Tagpairs.empty, init_list) in
       update_check (state, state')
     in
     Unification.transform extract recombine
@@ -234,12 +234,12 @@ module Unidirectional = struct
       ts ts' cont init_state
 
   let remove_dup_substs states =
-    let check_add substs ((trm_subst, tag_subst) as subst) =
+    let check_add substs ((trm_subst, tag_subst, list) as subst) =
       let trm_subst, _ = Subst.partition trm_subst in
       let tag_subst, _ = Tagpairs.partition_subst tag_subst in
       if
         Blist.exists
-          (fun (trm_subst', tag_subst') ->
+          (fun (trm_subst', tag_subst', list') ->
             let trm_subst', _ = Subst.partition trm_subst' in
             let tag_subst', _ = Tagpairs.partition_subst tag_subst' in
             Term.Map.equal Term.equal trm_subst trm_subst'
@@ -261,14 +261,14 @@ module Bidirectional = struct
   include Core
   include Make (Core)
 
-  let unify_tag ?(update_check = Fun._true) t t' cont init_state =
-    let extract s = Pair.map snd s in
-    let recombine ((theta, _), (theta', _)) (tag_subst, tag_subst') =
-      ((theta, tag_subst), (theta', tag_subst'))
+  let unify_tag ?(update_check = Fun._true) t t' cont (((_,_,init_list1), (_,_,init_list2))as init_state) =
+    let extract s = Pair.map (fun (a,b,c) -> b) s in
+    let recombine ((theta, _, list), (theta', _, list')) (tag_subst, tag_subst') =
+      ((theta, tag_subst, list), (theta', tag_subst', list'))
     in
-    let update_check (old, update) =
+    let update_check (old, (tag1,tag2)) =
       let old' = recombine init_state old in
-      let update' = Pair.map (Pair.mk Term.Map.empty) update in
+      let update' = ((Term.Map.empty, tag1, init_list1), (Term.Map.empty, tag1, init_list2)) in
       update_check (old', update')
     in
     Unification.transform extract recombine
@@ -276,42 +276,42 @@ module Bidirectional = struct
       t t' cont init_state
 
   let unify_tag_constraints ?(total = false) ?(update_check = Fun._true) cs cs'
-      cont init_state =
-    let extract s = Pair.map snd s in
-    let recombine ((theta, _), (theta', _)) (tag_subst, tag_subst') =
-      ((theta, tag_subst), (theta', tag_subst'))
+      cont (((_,_,init_list1), (_,_,init_list2))as init_state) =
+    let extract s = Pair.map (fun (a,b,c) -> b) s in
+    let recombine ((theta, _, list), (theta', _, list')) (tag_subst, tag_subst') =
+      ((theta, tag_subst, list), (theta', tag_subst', list'))
     in
-    let update_check (old, update) =
+    let update_check (old, (tag1,tag2)) =
       let old' = recombine init_state old in
-      let update' = Pair.map (Pair.mk Term.Map.empty) update in
+      let update' = ((Term.Map.empty, tag1, init_list1), (Term.Map.empty, tag1, init_list2)) in
       update_check (old', update')
     in
     Unification.transform extract recombine
       (Ord_constraints.biunify ~total ~update_check)
       cs cs' cont init_state
 
-  let unify_trm ?(update_check = Fun._true) t t' cont init_state =
-    let extract s = Pair.map fst s in
-    let recombine ((_, tps), (_, tps')) (theta, theta') =
-      ((theta, tps), (theta', tps'))
+  let unify_trm ?(update_check = Fun._true) t t' cont (((_,_,init_list1), (_,_,init_list2))as init_state) =
+    let extract s = Pair.map (fun (a,b,c) -> a) s in
+    let recombine ((_, tps, list), (_, tps', list')) (theta, theta') =
+      ((theta, tps, list), (theta', tps', list'))
     in
-    let update_check (old, update) =
+    let update_check (old, (theta1,theta2)) =
       let old' = recombine init_state old in
-      let update' = Pair.map (Fun.swap Pair.mk Tagpairs.empty) update in
+      let update' = ((theta1, Tagpairs.empty, init_list1), (theta2, Tagpairs.empty, init_list2)) in
       update_check (old', update')
     in
     Unification.transform extract recombine
       (Term.biunify ~update_check)
       t t' cont init_state
 
-  let unify_trm_list ?(update_check = Fun._true) ts ts' cont init_state =
-    let extract s = Pair.map fst s in
-    let recombine ((_, tps), (_, tps')) (theta, theta') =
-      ((theta, tps), (theta', tps'))
+  let unify_trm_list ?(update_check = Fun._true) ts ts' cont (((_,_,init_list1), (_,_,init_list2))as init_state) =
+    let extract s = Pair.map (fun (a,b,c) -> a) s in
+    let recombine ((_, tps, list), (_, tps', list')) (theta, theta') =
+      ((theta, tps, list), (theta', tps', list'))
     in
-    let update_check (old, update) =
+    let update_check (old, (theta1,theta2)) =
       let old' = recombine init_state old in
-      let update' = Pair.map (Fun.swap Pair.mk Tagpairs.empty) update in
+      let update' = ((theta1, Tagpairs.empty, init_list1), (theta2, Tagpairs.empty, init_list2)) in
       update_check (old', update')
     in
     Unification.transform extract recombine

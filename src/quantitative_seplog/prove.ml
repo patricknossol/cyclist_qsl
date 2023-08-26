@@ -11,6 +11,8 @@ let parse_null_as_emp = ref false
 (* switches controlling invalidity heuristic *)
 let invalidity_check = ref false
 
+let use_assignment_problem = ref false
+
 let do_testing = ref false
 
 module Prover = Prover.Make (Seq)
@@ -58,6 +60,9 @@ let () =
         ; ( "-S"
           , Arg.Set_string cl_sequent
           , ": prove the SL sequent provided in <string>" )
+        ; ( "-SumSplit"
+          , Arg.Set use_assignment_problem
+          , ": for checking subsumption of sums, use the General Assignment Problem instead of the standard implementation.")
         ; ( "-test"
           , Arg.Set do_testing
           , ": test qsl" ) ];;
@@ -78,6 +83,7 @@ let () =
       F.die "-S must be specified." spec_list !F.usage ;) in
     
     let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp !cl_sequent in
+    let seq = Seq.split_sum seq in
 
     let res =
       F.gather_stats (fun () ->
@@ -134,6 +140,7 @@ let () =
         if not (String.get test 0 = '/' || test = "") then
 
           let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp test in
+          let seq = Seq.split_sum seq in
           
           let res =
             F.gather_stats (fun () ->

@@ -12,12 +12,16 @@
 //instantiate_pto OK
 //x->y1,y2*y1=z1 |- a'->z1,z2
 //predicates
-List(b,c)*a->b |- List(a,c)
-//List(b,c)*a->b |- List(a,c)+List(a,c)
-//List(b,c)*a->b + List(b,c)*a->b |- List(a,c)+List(a,c)
+//List(b,c)*a->b + List(b,c)*a->b |- List(a,c) + List(a,c)
+//List(b,c)*a->b + List(b,c)*a->b |- 2*List(a,c)
+//List(b,c)*a->b + List(b,c)*a->b |- 2*List(a,c)
 //List(b,c)*a->b + a->c |- 2*List(a,c)
-//matching TODO
+//ListLen(b,c)*a->b + List(b,c)*a->b |- 2*ListLen(a,c)
+//ListLen(b,c)*a->b*x->a + 2*List(b,c)*a->b*x->a |- ListLen(x,c)
+//matching
 //2*a->c |- a->c + a->c
 //2*a->c + 2*a->c |- a->c + 3*a->c
-//3*a->b*b=d + a->b*b=e |- 2*a->b + 2*a->b*b=e
-x->y*RList(y,z)|-RList(x,z)
+//3*a->b*b=d + a->b |- 2*a->b + 2*a->b*b=d
+//backlinking
+ListLen(a,b)*b->c |- ListLen(a,c)
+//ListLen(a,b) + ListLen(b,c) |- ListLen(a,c)

@@ -72,3 +72,60 @@ let subsumed_upto_tags (l, r) (l', r') =
   Form.subsumed_upto_tags l' l && Form.subsumed_upto_tags r r'
 
 let norm s = Pair.map Form.norm s
+
+let split_sum (((lc, lss), (rc, rss)) as seq) =
+  let seq_vars = ref (vars seq) in
+  let seq_tags = ref (tags seq) in
+  let (lss', rss') = Pair.map (fun hss ->
+    Blist.map (fun hs ->
+      Blist.flatten (Blist.map (fun h ->
+        let h_single = Heap.with_num h 1. in
+        let hs' = Blist.foldl (fun hs' r ->
+          let h' = Heap.copy_fresh_heap (!seq_vars, !seq_tags) h_single in
+          seq_vars := Term.Set.union !seq_vars (Heap.vars h');
+          seq_tags := Tags.union !seq_tags (Heap.tags h');
+          hs' @ [h']
+        ) [h_single] (Blist.init ((int_of_float h.Heap.num) - 1) (fun i -> Heap.empty))
+        in
+        hs'
+      ) hs)
+    ) hss
+  ) (lss, rss) in
+  ((lc, lss'), (rc, rss'))
+
+let partition_summands seq mappings =
+  try
+    let (lc, ls), (rc, rs) = dest_sum seq in
+    let mappings_sorted_l = Blist.sort (fun (a1, _) (a2, _) -> a1 - a2) mappings in
+    let mappings_sorted_r = Blist.sort (fun (_, a1) (_, a2) -> a1 - a2) mappings in
+    let rs1 = Blist.foldl (fun rs1 (l_ind, r_ind) -> 
+      rs1 @ [Blist.nth rs r_ind]
+    ) [] mappings_sorted_l in
+    let (_, _, rs2) = Blist.foldl (fun (index, mappings, rs2) r -> 
+      match mappings with 
+        | mapping :: mappings' ->
+          if index = snd mapping then
+            (index + 1, mappings', rs2)
+          else (index + 1, mappings, rs2 @ [r])
+        | _ -> (index + 1, mappings, rs2 @ [r])
+    ) (0, mappings_sorted_r, []) rs in
+    let (_, _, ls1, ls2) = Blist.foldl (fun (index, mappings, ls1, ls2) l -> 
+      match mappings with 
+        | mapping :: mappings' ->
+          if index = fst mapping then
+            (index + 1, mappings', ls1 @ [l], ls2)
+          else (index + 1, mappings, ls1, ls2 @ [l])
+        | _ -> (index + 1, mappings, ls1, ls2 @ [l])
+    ) (0, mappings_sorted_l, [], []) ls in
+    (*let filter_constraints cs hs =
+      Ord_constraints.filter (fun c -> Tags.exists (
+        fun tag -> Tags.mem tag (Ord_constraints.Elt.tags c)
+      ) (Heapsum.tags hs)) cs
+    in
+    let lc1 = filter_constraints lc ls1 in
+    let rc1 = filter_constraints rc rs1 in
+    let lc2 = filter_constraints lc ls2 in
+    let rc2 = filter_constraints rc rs2 in
+    (((lc1, [ls1]), (rc1, [rs1])), ((lc2, [ls2]), (rc2, [rs2])))*)
+    (((lc, [ls1]), (rc, [rs1])), ((lc, [ls2]), (rc, [rs2])))
+  with Form.Not_symheap_sum -> ((Form.empty, Form.empty), seq)

@@ -783,6 +783,21 @@ let right_transform_rule ((lhs', rhs') as seq') (lhs, rhs) =
     in
     []
 
+(**
+Apply lemma to seq lhs'=hs' |- rhs'
+Lemma: ls |- rs
+cont: lhs=hs |- rhs
+
+lemma = unfolding of predicate (apply inverse to h, so:)
+l + h - r = h'
+
+  seq: hs' |- rhs'
+--------------------
+  cont: hs |- rhs
+
+Assume that rs of lemma is only one summand (since right of predicate is only one symbol)
+and do the reverse lemma application for every summand of hs independently
+*)
 let apply_lemma (lemma_seq, ((lhs, rhs) as cont_seq)) ((lhs', rhs') as seq) =
   let () =
     debug (fun _ -> "Trying to apply lemma to subgoal: " ^ Seq.to_string seq)
@@ -811,8 +826,8 @@ let apply_lemma (lemma_seq, ((lhs, rhs) as cont_seq)) ((lhs', rhs') as seq) =
         (Ptos.union l.SH.ptos (Ptos.diff h.SH.ptos r.SH.ptos))
     in
     (* let () = debug (fun _ -> "Constraints match: " ^ (string_of_bool (Ord_constraints.equal lcs cs'))) in *)
-    (* let () = debug (fun _ -> "Heap as expected: " ^ (string_of_bool (Heap.equal h' expected))) in      *)
-    (* let () = debug (fun _ -> "RHS match: " ^ (string_of_bool (Form.equal rhs rhs'))) in                *)
+    let () = debug (fun _ -> "Heap as expected: " ^ (string_of_bool (Heap.equal h' expected))) in     
+    let () = debug (fun _ -> "RHS match: " ^ (string_of_bool (Form.equal rhs rhs'))) in                
     if
       Ord_constraints.equal lcs cs'
       && Heap.equal h' expected && Form.equal rhs rhs'
@@ -913,14 +928,14 @@ let mk_lemma_rule_seq (trm_subst, tag_subst) (src_lhs, src_rhs)
   let subst_lhs = Form.subst trm_subst (Form.subst_tags tag_subst lhs) in
   let subst_rhs = Form.subst trm_theta (Form.subst_tags tag_theta rhs) in
   let subst_seq = (subst_lhs, subst_rhs) in
-  (* let () = debug (fun _ -> "substituted seq is " ^ (Seq.to_string subst_seq)) in *)
+  let () = debug (fun _ -> "substituted seq is " ^ (Seq.to_string subst_seq)) in
   let subst_cs, subst_h = Form.dest subst_lhs in
   (* Calculate the frame *)
   let frame =
     Ptos.fold (Fun.swap Heap.del_pto) subst_h.SH.ptos
       (Tpreds.fold (Fun.swap Heap.del_ind) subst_h.SH.inds h)
   in
-  (* let () = debug (fun _ -> "Calculated frame is " ^ (Heap.to_string frame)) in *)
+  let () = debug (fun _ -> "Calculated frame is " ^ (Heap.to_string frame)) in 
   (* Alpha-rename any clashing existential variables in the succedent of the lemma *)
   let ctxt_vars =
     Term.Set.union (Heap.terms frame) (Form.terms src_rhs)
@@ -951,13 +966,15 @@ let mk_lemma_rule_seq (trm_subst, tag_subst) (src_lhs, src_rhs)
     in
     ((cs, [subst_h]), subst_rhs)
   in
-  (* let () = debug (fun _ -> (Heap.to_string subst_h') ^ " * " ^ (Heap.to_string frame) ^ " = " ^ (Heap.to_string (Heap.star subst_h' frame))) in *)
+  let () = debug (fun _ -> (Heap.to_string subst_h) ^ " * " ^ (Heap.to_string frame) ^ " = " ^ (Heap.to_string (Heap.star subst_h frame))) in
   let cont_seq = (Form.star (cs, [frame]) subst_rhs, src_rhs) in
   (* Construct the rule sequence *)
   Rule.compose_pairwise
     (Rule.mk_infrule (apply_lemma (lemma_seq, cont_seq)))
     [ mk_backlink_rule_seq (trm_theta, tag_theta) lemma_seq (targ_idx, targ_seq)
     ; Rule.identity ]
+
+
 
 type backlink_t = FULL of Rule.t | PARTIAL of Rule.t
 
@@ -1036,7 +1053,7 @@ let setup defs =
   rules :=
     Rule.first
       [ lhs_disj_to_symheaps
-      ; rhs_disj_to_symheaps
+      ; rhs_disj_to_symheaps 
       ; lhs_instantiate
       ; simplify
       ; bounds_intro

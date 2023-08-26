@@ -164,19 +164,19 @@ let inconsistent h =
 
 let idents p = Tpreds.idents p.inds
 
-let subsumed_upto_tags ?(total = true) h h' =
-  Uf.subsumed h.eqs h'.eqs
+let subsumed_upto_tags ?(total = true) ?(with_num = true) h h' =
+  (not with_num || Num.subsumed h.num h'.num)
+  && Uf.subsumed h.eqs h'.eqs
   && Deqs.subsumed h'.eqs h.deqs h'.deqs
   && Ptos.subsumed ~total h'.eqs h.ptos h'.ptos
   && Tpreds.subsumed_upto_tags ~total h'.eqs h.inds h'.inds
-  && Num.subsumed h.num h'.num
 
-let subsumed ?(total = true) h h' =
-  Uf.subsumed h.eqs h'.eqs
+let subsumed ?(total = true) ?(with_num = true) h h' =
+  (not with_num || Num.subsumed h.num h'.num)
+  && Uf.subsumed h.eqs h'.eqs
   && Deqs.subsumed h'.eqs h.deqs h'.deqs
   && Ptos.subsumed ~total h'.eqs h.ptos h'.ptos
   && Tpreds.subsumed ~total h'.eqs h.inds h'.inds
-  && Num.subsumed h.num h'.num
 
 (* Constructors *)
 
@@ -214,9 +214,9 @@ let with_inds h inds = fix_empty_num (mk h.eqs h.deqs h.ptos inds h.num)
 
 let with_num h num = fix_empty_num (mk h.eqs h.deqs h.ptos h.inds num)
 
-let del_deq h deq = with_deqs h (Deqs.remove deq h.deqs)
+let del_deq h deq = with_deqs h (Deqs.del_first (fun deq' -> deq = deq') h.deqs)
 
-let del_pto h pto = with_ptos h (Ptos.remove pto h.ptos)
+let del_pto h pto = with_ptos h (Ptos.del_first (fun pto' -> pto' = pto) h.ptos)
 
 let del_num h num = with_num h Num.empty
 
@@ -362,29 +362,29 @@ let freshen_tags h' h = with_inds h (Tpreds.freshen_tags h'.inds h.inds)
 
 let subst_tags tagpairs h = with_inds h (Tpreds.subst_tags tagpairs h.inds)
 
-let unify_partial ?(tagpairs = true) ?(update_check = Fun._true) h h' cont
+let copy_fresh_heap (vars_avoid, tags_avoid) h =
+  let tags_avoid = Tags.filter (fun tag -> Tags.is_exist_var tag) tags_avoid in
+  let h_tags = Tags.filter (fun tag -> Tags.is_exist_var tag) (tags h) in
+  let vars_avoid = Term.Set.filter (fun var -> Term.is_exist_var var) vars_avoid in
+  let h_vars = Term.Set.filter (fun var -> Term.is_exist_var var) (vars h) in
+  let theta = Subst.avoid vars_avoid h_vars in
+  let tag_theta = Tagpairs.mk_ex_subst tags_avoid h_tags in
+  subst theta (subst_tags tag_theta h)
+  
+
+let unify_partial ?(tagpairs = true) ?(update_check = Fun._true) ?(with_num = true) h h' cont
     init_state =
-  if Num.subsumed h.num h'.num then
+  if not with_num || Num.subsumed h.num h'.num then
     (Tpreds.unify ~total:false ~tagpairs ~update_check h.inds h'.inds
       (Ptos.unify ~total:false ~update_check h.ptos h'.ptos
         (Deqs.unify_partial ~update_check h.deqs h'.deqs
             (Uf.unify_partial ~update_check h.eqs h'.eqs cont))))
     init_state
-  else None (*TODO test biunify, unify?*)
-
-let biunify_partial ?(tagpairs = true) ?(update_check = Fun._true) h h' cont
-  init_state =
-  if Num.subsumed h.num h'.num then
-    (Tpreds.biunify ~total:false ~tagpairs ~update_check h.inds h'.inds
-      (Ptos.biunify ~total:false ~update_check h.ptos h'.ptos
-        (Deqs.biunify_partial ~update_check h.deqs h'.deqs
-          (Uf.biunify_partial ~update_check h.eqs h'.eqs cont))))
-    init_state
   else None
 
 let classical_unify ?(inverse = false) ?(tagpairs = true)
-  ?(update_check = Fun._true) h h' cont init_state =  
-  if Num.subsumed h.num h'.num then
+  ?(update_check = Fun._true)  ?(with_num = true) h h' cont init_state =  
+  if not with_num || Num.subsumed h.num h'.num then
     let h_inv, h'_inv = Fun.direct inverse Pair.mk h h' in
 (* NB how we don't need an "inverse" version for ptos and inds, since *)
 (* we unify the whole multiset, not a subformula *)
@@ -395,9 +395,9 @@ let classical_unify ?(inverse = false) ?(tagpairs = true)
     init_state
   else None
 
-let classical_biunify ?(tagpairs = true) ?(update_check = Fun._true) h h' cont
+let classical_biunify ?(tagpairs = true) ?(update_check = Fun._true) ?(with_num = true) h h' cont
   init_state =
-  if Num.subsumed h.num h'.num then
+  if not with_num || Num.subsumed h.num h'.num then
     (Tpreds.biunify ~tagpairs ~update_check h.inds h'.inds
       (Ptos.biunify ~update_check h.ptos h'.ptos
           (Deqs.biunify_partial ~update_check h.deqs h'.deqs

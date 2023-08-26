@@ -41,12 +41,7 @@ val inconsistent : t -> bool
 (** Do all disjuncts entail false in the sense of [Heap.inconsistent]
     or are the tag constraints inconsistent? *)
 
-val most_special_subsumption: ?upto_tags:bool -> ?total:bool -> Heap.t -> t -> t list
-(** [most_special_subsumption h hs] Calculates for every summand of hs if h is subsumed by
-    it and returns the list of the lists resulting from splitting the most special subsumptions from hs.
-    Most special meaning the product with the least amount of multiplicants*)
-
-val subsumed : ?total:bool -> t -> t -> bool
+val subsumed : ?total:bool -> ?upto_tags:bool -> t -> t -> bool
 (** [subsumed a b]: is it the case that
       for any disjunct [a'] of [a] there is a disjunct [b'] of [b] such that
           [a'] is subsumed by [b']?
@@ -92,17 +87,15 @@ val disequates : t -> Term.t -> Term.t -> bool
 val unify_partial :
      ?tagpairs:bool
   -> ?update_check:Unify.Unidirectional.update_check
+  -> Tags.t
   -> t Unify.Unidirectional.unifier
-(** Unify two heapsums. *)
-
-val biunify_partial :
-     ?tagpairs:bool
-  -> ?update_check:Unify.Bidirectional.update_check
-  -> t Unify.Bidirectional.unifier
+(** Unify two heapsums. 
+    TODO (but by design, do not change): this requires summands to be only 1 summands*)
 
 val classical_unify :
      ?tagpairs:bool
   -> ?update_check:Unify.Unidirectional.update_check
+  -> Tags.t
   -> t Unify.Unidirectional.unifier
 (** Unify two heapsums, by using [unify_partial] for the pure (classical) part whilst
     using [unify] for the spatial part*)
@@ -110,4 +103,5 @@ val classical_unify :
 val classical_biunify :
      ?tagpairs:bool
   -> ?update_check:Unify.Bidirectional.update_check
+  -> Tags.t
   -> t Unify.Bidirectional.unifier

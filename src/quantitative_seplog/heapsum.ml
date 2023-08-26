@@ -59,46 +59,45 @@ let complete_tags avoid hs =
   
 let has_untagged_preds hs =
   let res =
-    (Blist.foldr
-      (fun h b ->
+    (Blist.foldl
+      (fun b h ->
         if Heap.has_untagged_preds h then
           true
         else
           (b || false)
       )
-      hs false)
+      false hs)
   in
   res
 
-let most_special_subsumption ?(upto_tags = false) ?(total = true) h hs' =
-  (*TODO print_endline "HII TEST SUBSUMED";*) 
-  Blist.foldr (
-    fun h' list ->
-      let h_is_subsumed =
-        if upto_tags then Heap.subsumed_upto_tags ~total h h'
-        else Heap.subsumed ~total h h' in
-      if h_is_subsumed then
-        let h'_minus_h = (Heap.sub_num h' h.num) in
-        let hs'_wo_h' = Blist.del_first (fun h2 -> h2 = h') hs' in
-        if h'_minus_h.num > 0. then (h'_minus_h :: hs'_wo_h') :: list else hs'_wo_h' :: list
-      else list
-  ) hs' []
-
-let rec subsumed ?(total = true) hs hs' =
+let rec subsumed ?(total = true) ?(upto_tags = false) hs hs' =
+  (*TODO print_endline "HII TEST SUBSUMED"*)
   match hs with
     | [] -> true
-    | h::hs -> (
-      let hslist = most_special_subsumption ~total h hs' in
-      Blist.exists (fun hs2 -> subsumed ~total hs hs2) hslist
-    )
+    | h::hs ->
+      let res = Blist.foldl
+        (fun res h' ->
+          if res then res else
+          let res = 
+            if upto_tags then Heap.subsumed_upto_tags ~total ~with_num:false h h'
+            else Heap.subsumed ~total ~with_num:false h h' in
+          if res then
+            let dif = h.Heap.num -. h'.Heap.num in
+            let (hs_upd, hs'_upd) =
+              if dif = 0. then
+                (hs, Blist.del_first (fun h2 -> h2 = h') hs')
+              else if dif > 0. then
+                (Heap.with_num h dif :: hs, Blist.del_first (fun h2 -> h2 = h') hs')
+              else 
+                (hs, Blist.map (fun h2 -> if h2 = h' then Heap.with_num h' dif else h2) hs')
+            in
+            subsumed ~total ~upto_tags hs_upd hs'_upd
+          else false
+        ) false hs' in
+      res
 
 let subsumed_upto_tags ?(total = true) hs hs' =
-  match hs with
-    | [] -> true
-    | h::hs -> (
-      let hslist = most_special_subsumption ~upto_tags:true ~total h hs' in
-      Blist.exists (fun hs2 -> subsumed ~total hs hs2) hslist
-    )
+  subsumed ~total ~upto_tags:true hs hs'
 
 let equal_upto_tags hs hs' =
   Blist.for_all2 Heap.equal_upto_tags hs hs'
@@ -114,11 +113,14 @@ let parse ?(allow_tags = true) ?(augment_deqs = true) st =
 let of_string s =
   handle_reply (MParser.parse_string (parse ~allow_tags:true ~augment_deqs:true) s ())
 
+let cartesian_product_order xs ys =
+  Blist.foldl (fun acc x -> Blist.foldl (fun acc' y -> acc'@ [(x, y)] ) acc ys) [] xs
+
 let star ?(augment_deqs = true) f g = (*TODO check if okay to do for debugging*)
   let hs =
     Blist.map
       (fun (f', g') -> Heap.star ~augment_deqs f' g')
-      (Blist.cartesian_product f g)
+      (cartesian_product_order f g)
   in hs
 
 let subst theta hs = Blist.map (fun h -> Heap.subst theta h) hs
@@ -139,92 +141,150 @@ let equates hs a b =
 let disequates hs a b =
     Blist.for_all (fun h -> Heap.disequates h a b) hs
 
-let rec unify_partial_rec ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
+let rec unify_partial_rec ?(tagpairs = true) ?(update_check = Fun._true) avoid_vars avoid_tags hs hs' cont init_state =
+  match hs with
+  | [] -> Some(init_state)
+  | hs ->
   match hs' with
-    | [] -> [(init_state, hs)]
-    | h'::hs' -> 
-      let subs = Blist.foldr
-        (fun h list ->
-          let state = Heap.unify_partial ~tagpairs ~update_check h h' cont init_state in
+    | [] -> Some(init_state)
+    | (h', index')::hs' ->
+      let state = Blist.foldl
+        (fun res (h, index) ->
+          if Option.is_some res then res else
+          let state = Heap.unify_partial ~tagpairs ~update_check ~with_num:false h h' Unification.trivial_continuation init_state in
           if Option.is_some state then
-            let dif = Heap.sub_num h h'.Heap.num in
-            let hs_wo_dif = Blist.del_first (fun h2 -> h2 = h) hs in
-            if dif.num > 0. then (Option.get state, (dif :: hs_wo_dif)) :: list else (Option.get state, hs_wo_dif) :: list
-          else list
-        ) hs [] in
-      Blist.flatten (Blist.map (fun (state, sub) -> unify_partial_rec ~tagpairs ~update_check sub hs' cont state) subs)
+            let (v, t, mapping) = Option.get state in
+            let mapping = mapping @ [(index, index')] in
+            let dif = h.Heap.num -. h'.Heap.num in
+            let (hs_upd, hs'_upd, avoid_vars, avoid_tags) =
+              if dif = 0. then
+                (Blist.del_first (fun (_, i) -> i = index) hs, hs', avoid_vars, avoid_tags)
+              else if dif > 0. then
+                let h_upd = Heap.copy_fresh_heap (avoid_vars, avoid_tags) (Heap.with_num h dif) in
+                (Blist.map (fun (h2, i) -> if i = index then (h_upd, i) else (h2, i)) hs,
+                hs',
+                Term.Set.union avoid_vars (Heap.vars h_upd),
+                Tags.union avoid_tags (Heap.tags h_upd))
+              else 
+                let h'_upd = Heap.copy_fresh_heap (avoid_vars, avoid_tags) (Heap.with_num h' dif) in
+                (Blist.del_first (fun (h2, i) -> i = index) hs,
+                (h'_upd, index') :: hs',
+                Term.Set.union avoid_vars (Heap.vars h'_upd),
+                Tags.union avoid_tags (Heap.tags h'_upd))
+            in
+            let state = unify_partial_rec ~tagpairs ~update_check avoid_vars avoid_tags hs_upd hs'_upd cont (v, t, mapping) in
+            if Option.is_some state then state else None
+          else None
+        ) None hs in
+      state
 
-let unify_partial ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
-  let results = unify_partial_rec ~tagpairs ~update_check hs hs' cont init_state in
-  match results with
-    | [] -> None
-    | (state, _) :: results -> Some(state)
+let unify_partial ?(tagpairs = true) ?(update_check = Fun._true) constraint_tags hs hs' cont init_state =
+  let avoid_vars = (Term.Set.union (vars hs) (vars hs')) in
+  let avoid_tags = (Tags.union (Tags.union (tags hs) (tags hs')) constraint_tags) in
+  let hs, hs' = Pair.map (fun hs -> 
+    let _, res = Blist.foldl (fun (index, res) h -> 
+      (index + 1, res @ [(h, index)])
+    ) (0, []) hs in
+    res
+  ) (hs, hs') in
+  let res = unify_partial_rec ~tagpairs ~update_check
+    avoid_vars avoid_tags
+    hs hs' cont init_state
+  in
+  match res with
+    | None -> None
+    | Some(res) -> cont res
 
-let rec biunify_partial_rec ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
+let rec classical_unify_rec ?(tagpairs = true) ?(update_check = Fun._true) avoid_vars avoid_tags hs hs' cont init_state =
   match hs' with
-    | [] -> [(init_state, hs)]
-    | h'::hs' -> 
-      let subs = Blist.foldr
-        (fun h list ->
-          let state = Heap.biunify_partial ~tagpairs ~update_check h h' Unification.trivial_continuation init_state in
+    | [] -> Some(init_state)
+    | h'::hs' ->
+      let state = Blist.foldl
+        (fun res h ->
+          if Option.is_some res then res else
+          let state = Heap.classical_unify ~tagpairs ~update_check ~with_num:false h h' Unification.trivial_continuation init_state in
+          
           if Option.is_some state then
-            let dif = Heap.sub_num h h'.Heap.num in
-            let hs_wo_dif = Blist.del_first (fun h2 -> h2 = h) hs in
-            if dif.num > 0. then (Option.get state, (dif :: hs_wo_dif)) :: list else (Option.get state, hs_wo_dif) :: list
-          else list
-        ) hs [] in
-      Blist.flatten (Blist.map (fun (state, sub) -> biunify_partial_rec ~tagpairs ~update_check sub hs' cont state) subs)
+            let dif = h.Heap.num -. h'.Heap.num in
+            let (hs_upd, hs'_upd, avoid_vars, avoid_tags) =
+              if dif = 0. then
+                (Blist.del_first (fun h2 -> h2 = h) hs, hs', avoid_vars, avoid_tags)
+              else if dif > 0. then
+                let h_upd = Heap.copy_fresh_heap (avoid_vars, avoid_tags) (Heap.with_num h dif) in
+                (Blist.map (fun h2 -> if h2 = h then h_upd else h2) hs,
+                hs',
+                Term.Set.union avoid_vars (Heap.vars h_upd),
+                Tags.union avoid_tags (Heap.tags h_upd))
+              else 
+                let h'_upd = Heap.copy_fresh_heap (avoid_vars, avoid_tags) (Heap.with_num h' dif) in
+                (Blist.del_first (fun h2 -> h2 = h) hs,
+                h'_upd :: hs',
+                Term.Set.union avoid_vars (Heap.vars h'_upd),
+                Tags.union avoid_tags (Heap.tags h'_upd))
+            in
+            let state = classical_unify_rec ~tagpairs ~update_check avoid_vars avoid_tags hs_upd hs'_upd cont (Option.get state) in
+            if Option.is_some state then state else None
+          else None
+        ) None hs in
+      state
 
-let biunify_partial ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
-  let results = biunify_partial_rec ~tagpairs ~update_check hs hs' cont init_state in
-  match results with
-    | [] -> None
-    | (state, _) :: results -> Some(state)
-
-let rec classical_unify_rec ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
-  match hs' with
-    | [] -> [(init_state, hs)]
-    | h'::hs' -> 
-      let subs = Blist.foldr
-        (fun h list ->
-          let state = Heap.classical_unify ~tagpairs ~update_check h h' Unification.trivial_continuation init_state in
-          if Option.is_some state then
-            let dif = Heap.sub_num h h'.Heap.num in
-            let hs_wo_dif = Blist.del_first (fun h2 -> h2 = h) hs in
-            if dif.num > 0. then (Option.get state, (dif :: hs_wo_dif)) :: list else (Option.get state, hs_wo_dif) :: list
-          else list
-        ) hs [] in
-      Blist.flatten (Blist.map (fun (state, sub) -> classical_unify_rec ~tagpairs ~update_check sub hs' cont state) subs)
-
-let classical_unify ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =  
-  let results = classical_unify_rec ~tagpairs ~update_check hs hs' Unification.trivial_continuation init_state in
-  match results with
-    | [] -> (*print_endline ("NONE " ^ to_string hs ^ " =hs/hs'= " ^ to_string hs');*)None
-    | (state, _) :: results -> Some(state)
+let classical_unify ?(tagpairs = true) ?(update_check = Fun._true) constraint_tags hs hs' cont init_state =
+  let res = classical_unify_rec ~tagpairs ~update_check
+    (Term.Set.union (vars hs) (vars hs')) (Tags.union (Tags.union (tags hs) (tags hs')) constraint_tags)
+    hs hs' cont init_state
+  in
+  match res with
+    | None -> None
+    | Some(res) -> cont res
   
-let rec classical_biunify_rec ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
+let rec classical_biunify_rec ?(tagpairs = true) ?(update_check = Fun._true) avoid_vars avoid_tags hs hs' cont init_state =
   match hs' with
-    | [] -> [(init_state, hs)]
-    | h'::hs' -> 
-      let subs = Blist.foldr
-        (fun h list ->
-          let state = Heap.classical_biunify ~tagpairs ~update_check h h' Unification.trivial_continuation init_state in
+    | [] -> Some(init_state)
+    | (h', index')::hs' ->
+      let state = Blist.foldl
+        (fun res (h, index) ->
+          if Option.is_some res then res else
+          let state = Heap.classical_biunify ~tagpairs ~update_check ~with_num:false h h' Unification.trivial_continuation init_state in
           if Option.is_some state then
-            let dif = Heap.sub_num h h'.Heap.num in
-            let hs_wo_dif = Blist.del_first (fun h2 -> h2 = h) hs in
-            if dif.num > 0. then (Option.get state, (dif :: hs_wo_dif)) :: list else (Option.get state, hs_wo_dif) :: list
-          else list
-        ) hs [] in
-      Blist.flatten (Blist.map (fun (state, sub) -> classical_biunify_rec ~tagpairs ~update_check sub hs' cont state) subs)
+            let (v, t, mapping), (v2, t2, mapping2) = Option.get state in
+            let mapping = mapping @ [(index, index')] in
+            let mapping2 = mapping2 @ [(index, index')] in
+            let dif = h.Heap.num -. h'.Heap.num in
+            let (hs_upd, hs'_upd, avoid_vars, avoid_tags) =
+              if dif = 0. then
+                (Blist.del_first (fun (_, i) -> i = index) hs, hs', avoid_vars, avoid_tags)
+              else if dif > 0. then
+                let h_upd = Heap.copy_fresh_heap (avoid_vars, avoid_tags) (Heap.with_num h dif) in
+                (Blist.map (fun (h2, i) -> if i = index then (h_upd, i) else (h2, i)) hs,
+                hs',
+                Term.Set.union avoid_vars (Heap.vars h_upd),
+                Tags.union avoid_tags (Heap.tags h_upd))
+              else 
+                let h'_upd = Heap.copy_fresh_heap (avoid_vars, avoid_tags) (Heap.with_num h' dif) in
+                (Blist.del_first (fun (h2, i) -> i = index) hs,
+                (h'_upd, index') :: hs',
+                Term.Set.union avoid_vars (Heap.vars h'_upd),
+                Tags.union avoid_tags (Heap.tags h'_upd))
+            in
+            let state = classical_biunify_rec ~tagpairs ~update_check avoid_vars avoid_tags hs_upd hs'_upd cont ((v, t, mapping), (v2, t2, mapping2)) in
+            if Option.is_some state then state else None
+          else None
+        ) None hs in
+      state
 
-let classical_biunify ?(tagpairs = true) ?(update_check = Fun._true) hs hs' cont init_state =
-  let results = classical_biunify_rec ~tagpairs ~update_check hs hs' cont init_state in
-  match results with
-    | [] -> None
-    | (state, hs_) :: results -> 
-      (*(*print_endline "\n\n----------RESULTS_BIUNIFY--------------------";*)
-      let results = [(state, hs_)] @ results in
-      let () = Blist.iter (fun (_, _) -> 
-        (*print_endline (to_string hs ^ " SUB " ^ to_string hs' ^ "\ņ");  *)
-      ) results in*)
-      Some(state)
+let classical_biunify ?(tagpairs = true) ?(update_check = Fun._true) constraint_tags hs hs' cont init_state =
+  let avoid_vars = (Term.Set.union (vars hs) (vars hs')) in
+  let avoid_tags = (Tags.union (Tags.union (tags hs) (tags hs')) constraint_tags) in
+  let hs, hs' = Pair.map (fun hs -> 
+    let _, res = Blist.foldl (fun (index, res) h -> 
+      (index + 1, res @ [(h, index)])
+    ) (0, []) hs in
+    res
+  ) (hs, hs') in
+  let res = classical_biunify_rec ~tagpairs ~update_check
+    avoid_vars avoid_tags
+    hs hs' cont init_state
+  in
+  match res with
+    | None -> None
+    | Some(res) -> cont res

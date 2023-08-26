@@ -113,7 +113,7 @@ let biunify_partial ?(update_check = Fun._true) m m' cont init_state =
     (Tpair.biunify ~update_check)
     eqs eqs' cont init_state
 
-let subst_subsumed eqs ((theta, _) as state) =
+let subst_subsumed eqs ((theta, _, _) as state) =
   Option.mk (Term.Map.for_all (equates eqs) theta) state
 
 (* FIXME *)

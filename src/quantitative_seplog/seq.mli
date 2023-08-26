@@ -46,3 +46,13 @@ val subsumed_upto_tags : t -> t -> bool
 
 val norm : t -> t
 (** Replace all terms with their UF representatives in the respective formulas.` *)
+
+val split_sum : t -> t
+(** Split summands with a number > 1 to multiple summands with a number = 1
+    and rename ex. vars/tags in new summands*)
+
+val partition_summands : t -> (int * int) list -> t * t
+(**Split formulas into two formulas, one containing only summands at the indices given in the
+    respective entries in the pair, the other containing the rest of the summands.
+    The summands on the right side of the first returned sequence are ordered, so that they appear in
+    the same order as the summands they match with on the left hand side.*)

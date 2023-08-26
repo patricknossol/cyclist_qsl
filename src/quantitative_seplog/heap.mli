@@ -65,7 +65,7 @@ val inconsistent : t -> bool
     NB only equalities and disequalities are used for this check.
 *)
 
-val subsumed : ?total:bool -> t -> t -> bool
+val subsumed : ?total:bool -> ?with_num:bool -> t -> t -> bool
 (** [subsumed h h'] is true iff [h] can be rewritten using the equalities
     in [h'] such that its spatial part becomes equal to that of [h']
     and the pure part becomes a subset of that of [h'].
@@ -73,7 +73,7 @@ val subsumed : ?total:bool -> t -> t -> bool
     both pure and spatial parts are subsets of those of [h'] modulo the equalities
     of [h']. *)
 
-val subsumed_upto_tags : ?total:bool -> t -> t -> bool
+val subsumed_upto_tags : ?total:bool -> ?with_num:bool -> t -> t -> bool
 (** Like [subsumed] but ignoring tag assignment.
     If the optional argument [~total=true] is set to [false] then check whether
     both pure and spatial parts are subsets of those of [h'] modulo the equalities
@@ -166,6 +166,8 @@ val freshen_tags : t -> t -> t
 (** [freshen_tags f g] will rename all tags in [g] such that they are disjoint
     from those of [f]. *)
 
+val copy_fresh_heap : Subst.var_container * Tags.t -> t -> t
+
 val subst_tags : Tagpairs.t -> t -> t
 (** Substitute tags according to the function represented by the set of
     tag pairs provided. *)
@@ -173,18 +175,15 @@ val subst_tags : Tagpairs.t -> t -> t
 val unify_partial :
      ?tagpairs:bool
   -> ?update_check:Unify.Unidirectional.update_check
+  -> ?with_num:bool
   -> t Unify.Unidirectional.unifier
 (** Unify two heaps such that the first becomes a subformula of the second. *)
-
-val biunify_partial :
-     ?tagpairs:bool
-  -> ?update_check:Unify.Bidirectional.update_check
-  -> t Unify.Bidirectional.unifier
 
 val classical_unify :
      ?inverse:bool
   -> ?tagpairs:bool
   -> ?update_check:Unify.Unidirectional.update_check
+  -> ?with_num:bool
   -> t Unify.Unidirectional.unifier
 (** Unify two heaps, by using [unify_partial] for the pure (classical) part whilst
     using [unify] for the spatial part.
@@ -194,6 +193,7 @@ val classical_unify :
 val classical_biunify :
      ?tagpairs:bool
   -> ?update_check:Unify.Bidirectional.update_check
+  -> ?with_num:bool
   -> t Unify.Bidirectional.unifier
 
 val norm : t -> t

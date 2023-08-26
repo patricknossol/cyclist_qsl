@@ -44,7 +44,7 @@ module type S = sig
 end
 
 module Unidirectional : sig
-  include S with type state = Subst.t * Tagpairs.t
+  include S with type state = Subst.t * Tagpairs.t * (int * int) list
 
   val existential_split_check : state_check
 
