@@ -1,0 +1,47 @@
+
+print_endline (Blist.to_string "\n" Indrule.to_string rules) ;
+
+backtrace: OCAMLRUNPARAM=b (exec...)
+
+[ ( "-m"
+    , Arg.Set_int minbound
+    , ": set starting depth for IDFS to <int>, default is "
+    ^ string_of_int !minbound )
+; ( "-M"
+    , Arg.Set_int maxbound
+    , ": set maximum depth for IDFS to <int>, 0 disables it, default is "
+    ^ string_of_int !maxbound )
+; ( "-L"
+    , Arg.Int
+        (fun n ->
+        minbound := n ;
+        maxbound := n )
+    , ": set both depths to <int>." )
+; ("-p", Arg.Set show_proof, ": show proof")
+; ("-d", Arg.Set do_debug, ": print debug messages")
+; ("-s", Arg.Set Stats.do_statistics, ": print statistics")
+; ("-l", Arg.Set_string latex_path, ": write proofs to <file>")
+; ( "-t"
+    , Arg.Set_int timeout
+    , ": set timeout in seconds to <int>, 0 disables it, default is "
+    ^ string_of_int !timeout ) ] )
+[ ( "-D"
+    , Arg.Set_string defs_path
+    , ": read inductive definitions from <file>, default is "
+    ^ !defs_path )
+; ( "-emp"
+    , Arg.Set parse_null_as_emp
+    , "parse the empty string as the formula [emp] rather than [False], "
+    ^ "default is "
+    ^ string_of_bool !parse_null_as_emp )
+; ( "-Lem"
+    , Arg.Int Rules.set_lemma_level
+    , ": specify the permissiveness of the lemma application strategy"
+    ^ "\n"
+    ^ Rules.lemma_option_descr_str () )
+; ( "-S"
+    , Arg.Set_string cl_sequent
+    , ": prove the SL sequent provided in <string>" )
+; ( "-test"
+    , Arg.Set do_testing
+    , ": test qsl" ) ];;

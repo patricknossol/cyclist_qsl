@@ -70,7 +70,7 @@ let has_untagged_preds hs =
   in
   res
 
-let rec subsumed ?(total = true) ?(upto_tags = false) hs hs' =
+let rec subsumed_rec ?(total = true) ?(upto_tags = false) hs hs' =
   match hs with
     | [] -> true
     | h::hs ->
@@ -90,10 +90,18 @@ let rec subsumed ?(total = true) ?(upto_tags = false) hs hs' =
               else 
                 (hs, Blist.map (fun h2 -> if h2 = h' then Heap.with_num h' dif else h2) hs')
             in
-            subsumed ~total ~upto_tags hs_upd hs'_upd
+            subsumed_rec ~total ~upto_tags hs_upd hs'_upd
           else false
         ) false hs' in
       res
+
+let subsumed ?(total = true) ?(upto_tags = false) hs hs' =
+  let time = if !Stats.do_statistics then Stats.now() else 0. in
+  let res = subsumed_rec ~total ~upto_tags hs hs' in
+  (if !Stats.do_statistics then
+    Test_stats.unify_calls := !Test_stats.unify_calls + 1;
+    Test_stats.unify_time := !Test_stats.unify_time +. (Stats.time_since time););
+  res
 
 let subsumed_upto_tags ?(total = true) hs hs' =
   subsumed ~total ~upto_tags:true hs hs'
@@ -178,6 +186,7 @@ let rec unify_partial_rec ?(tagpairs = true) ?(update_check = Fun._true) avoid_v
       state
 
 let unify_partial ?(tagpairs = true) ?(update_check = Fun._true) constraint_tags hs hs' cont init_state =
+  let time = if !Stats.do_statistics then Stats.now() else 0. in
   let avoid_vars = (Term.Set.union (vars hs) (vars hs')) in
   let avoid_tags = (Tags.union (Tags.union (tags hs) (tags hs')) constraint_tags) in
   let hs, hs' = Pair.map (fun hs -> 
@@ -190,6 +199,9 @@ let unify_partial ?(tagpairs = true) ?(update_check = Fun._true) constraint_tags
     avoid_vars avoid_tags
     hs hs' cont init_state
   in
+  (if !Stats.do_statistics then
+    Test_stats.unify_calls := !Test_stats.unify_calls + 1;
+    Test_stats.unify_time := !Test_stats.unify_time +. (Stats.time_since time););
   match res with
     | None -> None
     | Some(res) -> cont res
@@ -233,6 +245,7 @@ let rec classical_unify_rec ?(match_whole = true) ?(tagpairs = true) ?(update_ch
       state
 
 let classical_unify ?(match_whole = true) ?(tagpairs = true) ?(update_check = Fun._true) constraint_tags hs hs' cont init_state =
+  let time = if !Stats.do_statistics then Stats.now() else 0. in
   let avoid_vars = (Term.Set.union (vars hs) (vars hs')) in
   let avoid_tags = (Tags.union (Tags.union (tags hs) (tags hs')) constraint_tags) in
   let hs, hs' = Pair.map (fun hs -> 
@@ -245,6 +258,9 @@ let classical_unify ?(match_whole = true) ?(tagpairs = true) ?(update_check = Fu
     avoid_vars avoid_tags
     hs hs' cont init_state
   in
+  (if !Stats.do_statistics then
+    Test_stats.unify_calls := !Test_stats.unify_calls + 1;
+    Test_stats.unify_time := !Test_stats.unify_time +. (Stats.time_since time););
   match res with
     | None -> None
     | Some(res) -> cont res
@@ -285,6 +301,7 @@ let rec classical_biunify_rec ?(tagpairs = true) ?(update_check = Fun._true) avo
       state
 
 let classical_biunify ?(tagpairs = true) ?(update_check = Fun._true) constraint_tags hs hs' cont init_state =
+  let time = if !Stats.do_statistics then Stats.now() else 0. in
   let avoid_vars = (Term.Set.union (vars hs) (vars hs')) in
   let avoid_tags = (Tags.union (Tags.union (tags hs) (tags hs')) constraint_tags) in
   let hs, hs' = Pair.map (fun hs -> 
@@ -297,6 +314,9 @@ let classical_biunify ?(tagpairs = true) ?(update_check = Fun._true) constraint_
     avoid_vars avoid_tags
     hs hs' cont init_state
   in
+  (if !Stats.do_statistics then
+    Test_stats.unify_calls := !Test_stats.unify_calls + 1;
+    Test_stats.unify_time := !Test_stats.unify_time +. (Stats.time_since time););
   match res with
     | None -> None
     | Some(res) -> cont res

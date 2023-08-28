@@ -1229,6 +1229,7 @@ let sort_rule (l, r) =
       (check for rules) ODER DOCH?
   TODO optimize calls of unify/subsumed, maybe store in sum or something
   TODO optimize unify/subsumed with General Assignment Problem? Make time measurements of calls
+  TODO try new proof call after lemma app. (or maybe even split sum?) for speed up?
 *)
 let split_sum_rule ((l, r) as seq) =
   try

@@ -155,6 +155,16 @@ let () =
           | _ ->
               let res = Option.flatten res in
               let res = F.process_result true seq res in
+              (if !Stats.do_statistics then
+                print_endline (
+                  "\nUNIFY TIME: " ^ string_of_float(1000. *. !Test_stats.unify_time)
+                ^  "\nUNIFY CALLS: " ^ string_of_int(!Test_stats.unify_calls)
+                ^ "\nUNIFY TIME: " ^ string_of_float(1000. *. !Test_stats.unify_time)
+                ^ "\nAVG UNIFY TIME: " ^ string_of_float(1000. *. !Test_stats.unify_time /. (float_of_int !Test_stats.unify_calls))
+                ^ "\nPERCENTAGE UNIFY TIME: " ^ string_of_float(100. *. !Test_stats.unify_time /. !Stats.Gen.cpu_time)
+                );
+                Stats.gen_print();
+              );
               match res with
                 | _ -> print_endline "\n-----------------------------------------------------\n";
       
