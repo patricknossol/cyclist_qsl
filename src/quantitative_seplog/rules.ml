@@ -52,25 +52,25 @@ let lemma_option_descr_str ?(line_prefix = "\t") () =
 (*       the left-hand side). *)
 let id_axiom =
   Rule.mk_axiom (fun (((cs, hss), (cs', hss')) as seq) ->
-      let constraint_tags = Seq.tags seq in
-      let cs = Ord_constraints.close cs in
-      Option.map
-        (fun _ -> "Id")
-        (Unify.Unidirectional.realize
-           (Unify.Unidirectional.unify_tag_constraints
-              ~update_check:Unify.Unidirectional.modulo_entl cs' cs
-              (Unify.Unidirectional.mk_verifier (fun theta ->
-                   (not (Blist.is_empty hss'))
-                   && Blist.for_all
-                        (fun hs -> 
-                          (Blist.exists
-                            (fun hs' -> 
-                              Option.is_some (Heapsum.classical_unify
-                                ~update_check:Unify.Unidirectional.modulo_entl constraint_tags hs' hs
-                                Unification.trivial_continuation theta)  
-                            )
-                            hss'))
-                        hss)))))
+    let constraint_tags = Seq.tags seq in
+    let cs = Ord_constraints.close cs in
+    Option.map
+      (fun _ -> "Id")
+      (Unify.Unidirectional.realize
+        (Unify.Unidirectional.unify_tag_constraints
+          ~update_check:Unify.Unidirectional.modulo_entl cs' cs
+          (Unify.Unidirectional.mk_verifier (fun theta ->
+            (not (Blist.is_empty hss'))
+            && Blist.for_all
+              (fun hs -> 
+                (Blist.exists
+                  (fun hs' -> 
+                    Option.is_some (Heapsum.classical_unify
+                      ~update_check:Unify.Unidirectional.modulo_entl constraint_tags hs' hs
+                      Unification.trivial_continuation theta)  
+                  )
+                hss'))
+              hss)))))
 
 let preddefs = ref Defs.empty
 
@@ -624,7 +624,7 @@ let luf defs =
             let vts = Tagpairs.union vts (Tagpairs.mk (Heapsum.tags ls)) in 
             let l' = Heapsum.star [l'] f in
             let ls' = Blist.flatten (Blist.map (fun l'' -> if l'' == l then l' else [l'']) ls) in
-            (((new_cs, [ls']), (cs', [rs])), vts, pts)(*TODO === ls' (I believe so)?*)
+            (((new_cs, [ls']), (cs', [rs])), vts, pts)
           in
           Some (Blist.map do_case cases, Predsym.to_string ident ^ " L.Unf.")
       in
@@ -1117,7 +1117,6 @@ let mk_lemma_rule_seq (trm_subst, tag_subst, _) (mapped_src_lhs, _)
     ((cs, [subst_hs]), subst_rhs)
   in
   (* let () = debug (fun _ -> (Heap.to_string subst_h') ^ " * " ^ (Heap.to_string frame) ^ " = " ^ (Heap.to_string (Heap.star subst_h' frame))) in *)
-  (*TODO cont_seq STAR rule???*)
   let cont_seq = (Form.star (cs, [frames]) subst_rhs, rest_src_rhs) in
   let () = debug (fun _ -> "Rest: " ^ Seq.to_string rest_src_seq) in
   (* Construct the rule sequence *)
@@ -1222,14 +1221,14 @@ let sort_rule (l, r) =
   TODO constraints copy at split_sum -> no, delete this rule, only apply it when unfolding and at start
                          and in unify(?)
   TODO test if both w' in ListLen also works
-  TODO split sum in unfolding
   TODO rewoek domain exact impl -> preds not domain exact at all ??
   TODO impl domain exact for sums? (same ptos/preds, only dom.exact preds, same pred vars)
   TODO if you define predicates lslen + ls then can you trivially assume ls proof? bzw. can you automatically generate a + predicate or check if this is the case?
   TODO make summands completely indifferent from each other (no shared vars, tags)
       NO does not work, but when substituting vars, do it only for the relevant summands, not whole formula!
       (check for rules) ODER DOCH?
-  TODO id axiom to left empty axiom and id rule -> split summands?
+  TODO optimize calls of unify/subsumed, maybe store in sum or something
+  TODO optimize unify/subsumed with General Assignment Problem? Make time measurements of calls
 *)
 let split_sum_rule ((l, r) as seq) =
   try
@@ -1240,6 +1239,21 @@ let split_sum_rule ((l, r) as seq) =
       [ ( [ Seq.split_sum seq, Form.tag_pairs l, Tagpairs.empty ] , "Split Sum")])
     else []
   with Not_symheap_sum -> []
+
+let split_id_summand seq =
+  let (lcs, ls), (rcs, rs) = Seq.dest_sum seq in
+  let constraint_tags = Seq.tags seq in
+  (*let lcs = Ord_constraints.close lcs in*)
+  let state = 
+    Heapsum.classical_unify ~match_whole:false constraint_tags rs ls
+      Unification.trivial_continuation Unify.Unidirectional.empty_state
+  in
+  match state with
+    | None -> []
+    | Some((_, _, mapping)) ->
+        let (_, seq_rest) = Seq.partition_summands (Pair.swap seq) mapping in
+        let ((lhs, _) as seq_rest) = Pair.swap seq_rest in
+        [ ( [ seq_rest, Form.tag_pairs lhs, Tagpairs.empty ] , "Split Id Summand")]
 
 
 (* let axioms = ref (Rule.first [id_axiom ; ex_falso_axiom]) *)
@@ -1252,11 +1266,13 @@ let use_invalidity_heuristic = ref false
 let setup defs =
   preddefs := defs ;
   (*let sort_rule_seq = [Rule.mk_infrule sort_rule] in*)
+  let split_id_summand_seq = [wrap split_id_summand] in
   rules :=
     Rule.first
       ([ lhs_disj_to_symheaps
       ; rhs_disj_to_symheaps ]
-      (*@ sort_rule_seq*) @
+      (*@ sort_rule_seq*)
+      @ split_id_summand_seq @
       [ lhs_instantiate
       ; simplify
       ; bounds_intro

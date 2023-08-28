@@ -42,13 +42,7 @@ val inconsistent : t -> bool
     or are the tag constraints inconsistent? *)
 
 val subsumed : ?total:bool -> ?upto_tags:bool -> t -> t -> bool
-(** [subsumed a b]: is it the case that
-      for any disjunct [a'] of [a] there is a disjunct [b'] of [b] such that
-          [a'] is subsumed by [b']?
-    If the optional argument [~total=true] is set to [false] then relax the
-    check on the spatial part so that it is included rather than equal to that
-    of [b].
-    NB this includes matching the tags exactly. *)
+(** Works similar to the unify functions but without renaming of vars and tags *)
 
 val subsumed_upto_tags : ?total:bool -> t -> t -> bool
 (** As above but ignoring tags.
@@ -89,19 +83,34 @@ val unify_partial :
   -> ?update_check:Unify.Unidirectional.update_check
   -> Tags.t
   -> t Unify.Unidirectional.unifier
-(** Unify two heapsums. 
-    TODO (but by design, do not change): this requires summands to be only 1 summands*)
+(** [unify_partial avoid_tags hs hs' cont init_state]
+    Unify two heapsums (substitute vars and tags), such that every summand h of hs matches with one summand h' of hs',
+    where h' can be matched by at most one h. h needs to be a subformula of h'.
+    This is used for backlinking (matching LHS, hs' is target, hs is source).
+    This requires the factor of summands to be exactly 1*)
 
 val classical_unify :
-     ?tagpairs:bool
+     ?match_whole:bool
+  -> ?tagpairs:bool
   -> ?update_check:Unify.Unidirectional.update_check
   -> Tags.t
   -> t Unify.Unidirectional.unifier
-(** Unify two heapsums, by using [unify_partial] for the pure (classical) part whilst
-    using [unify] for the spatial part*)
+(** [classical_unify ?match_whole avoid_tags hs hs' cont init_state]
+    Unify two heapsums (substitute vars and tags), such that every summand h' of hs' matches with one summand h of hs,
+    where h can be matched by at most one h'.
+    The pure part of h needs to be a subformula of h' whilst the spatial part needs to be equal.
+    This is used in various occasions, including splitting id summands, ... .
+    If match_whole is false, return after the first summand has been matched and not every summand of hs' has to be matched.
+    This requires the factor of summands to be exactly 1*)
 
 val classical_biunify :
      ?tagpairs:bool
   -> ?update_check:Unify.Bidirectional.update_check
   -> Tags.t
   -> t Unify.Bidirectional.unifier
+(** [classical_biunify avoid_tags hs hs' cont init_state]
+    Unify two heapsums (substitute vars and tags), such that every summand h' of hs' matches with one summand h of hs,
+    where h can be matched by at most one h'.
+    The pure part of h needs to be a subformula of h' whilst the spatial part needs to be equal.
+    This is used for backlinking (matching RHS, hs is target, hs' is source).
+    This requires the factor of summands to be exactly 1*)

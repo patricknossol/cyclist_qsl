@@ -189,7 +189,7 @@ module Unidirectional = struct
     let recombine (theta, _, list) tps = (theta, tps, list) in
     let update_check (tps, tps') =
       let state = recombine init_state tps in
-      let state' = (Term.Map.empty, tps', init_list) in (*TODO correct?*)
+      let state' = (Term.Map.empty, tps', init_list) in
       update_check (state, state')
     in
     Unification.transform extract recombine

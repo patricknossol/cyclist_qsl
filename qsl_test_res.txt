@@ -433,12 +433,8 @@ ListE[b](x, y) * ListE[a](y, z) * 1. |- ListE[a'](x, z) * 1. (ListE L.Unf./LHS I
           [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->y *
                            ListE[a](y, z) * 1. |-
           [a' < b'] : nil!=w' * x!=w' * x->w' * w'->y' * ListE[a'](y', z) *
-                      1. (UBound Intro) [7 <{(d, d), (c, c), (b, b), (a, a)}/
-                                         {}>]
-            7:
-            [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->y *
-                             ListE[a](y, z) * 1. |-
-            nil!=w' * x!=w' * x->w' * w'->y' * ListE[a'](y', z) * 1. (Id)
+                      1. (Split Id Summand) [7 <{(d, d), (c, c), (b, b)}/{}>]
+            7: [d < c; c < b] :  |- [a' < b'] :  (Id)
     3:
     [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->a * ListE[d](a, y) *
                      ListE[a](y, z) * 1. |-
@@ -462,7 +458,7 @@ ListE[b](x, y) * ListE[a](y, z) * 1. |- ListE[a'](x, z) * 1. (ListE L.Unf./LHS I
       9:
       [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->a *
                        ListE[b'](a, z) * 1. |-
-      ListE[a'](x, z) * 1. (LHS Inst.) [13 <{(d, d), (c, c), (b, b), (b', a)}/
+      ListE[a'](x, z) * 1. (LHS Inst.) [13 <{(b', a), (d, d), (c, c), (b, b)}/
                                         {}>]
         13:
         [d < c; c < b] : nil!=x * nil!=w * x!=w * x->w * w->a *
@@ -516,12 +512,8 @@ ListO[b](y, z) * ListE[a](x, y) * 1. |- ListO[a'](x, z) * 1. (ListE L.Unf./LHS I
           [d < c; c < a] : nil!=x * nil!=w * x!=w * x->w * w->y *
                            ListO[b](y, z) * 1. |-
           [a' < b'] : nil!=w' * x!=w' * x->w' * w'->y' * ListO[a'](y', z) *
-                      1. (UBound Intro) [7 <{(d, d), (c, c), (b, b), (a, a)}/
-                                         {}>]
-            7:
-            [d < c; c < a] : nil!=x * nil!=w * x!=w * x->w * w->y *
-                             ListO[b](y, z) * 1. |-
-            nil!=w' * x!=w' * x->w' * w'->y' * ListO[a'](y', z) * 1. (Id)
+                      1. (Split Id Summand) [7 <{(d, d), (c, c), (a, a)}/{}>]
+            7: [d < c; c < a] :  |- [a' < b'] :  (Id)
     3:
     [d < c; c < a] : nil!=x * nil!=w * x!=w * x->w * w->a * ListE[d](a, y) *
                      ListO[b](y, z) * 1. |-
@@ -800,9 +792,8 @@ nil!=x * x!=z * x->y * ls[a](y, z) * 1. |- ls[a'](x, z) * 1. (ls R.Unf./Simplify
 1 <{(a, a)}/{}>]
   1:
   nil!=x * x!=z * x->y * ls[a](y, z) * 1. |-
-  [b' < a'] : x->w' * ls[b'](w', z) * 1. (UBound Intro) [2 <{(a, a)}/{}>]
-    2:
-    nil!=x * x!=z * x->y * ls[a](y, z) * 1. |- x->w' * ls[b'](w', z) * 1. (Id)
+  [b' < a'] : x->w' * ls[b'](w', z) * 1. (Split Id Summand) [2 <{}/{}>]
+    2:  |- [b' < a'] :  (Ex Falso)
  
  
  -----------------------NEEXT------------------------- 
