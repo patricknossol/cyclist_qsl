@@ -129,3 +129,16 @@ let partition_summands seq mappings =
     (((lc1, [ls1]), (rc1, [rs1])), ((lc2, [ls2]), (rc2, [rs2])))*)
     (((lc, [ls1]), (rc, [rs1])), ((lc, [ls2]), (rc, [rs2])))
   with Form.Not_symheap_sum -> ((Form.empty, Form.empty), seq)
+
+let tag_summands ((lc, lss), (rc, rss)) =
+  let cur_tag = ref 0 in
+  let (lss', rss') = Pair.map (fun hss ->
+    Blist.map (fun hs ->
+      Blist.map (fun h ->
+        let h' = Heap.with_tracking_tag h !cur_tag in
+        cur_tag := !cur_tag + 1;
+        h'
+      ) hs
+    ) hss
+  ) (lss, rss) in
+  ((lc, lss'), (rc, rss'))

@@ -84,6 +84,7 @@ let () =
     
     let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp !cl_sequent in
     let seq = Seq.split_sum seq in
+    let seq = Seq.tag_summands seq in
 
     let res =
       F.gather_stats (fun () ->
@@ -141,6 +142,7 @@ let () =
 
           let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp test in
           let seq = Seq.split_sum seq in
+          let seq = Seq.tag_summands seq in
           
           let res =
             F.gather_stats (fun () ->

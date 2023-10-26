@@ -1,3 +1,6 @@
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 nil!=x * x->y * RList[a](y, z) |- RList[a'](x, z) (RList R.Unf.) [1 <
                                                                   {(a, a)}/
@@ -39,6 +42,9 @@ nil!=x * x->y * RList[a](y, z) |- RList[a'](x, z) (RList R.Unf.) [1 <
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 RList[b](x, y) * RList[a](y, z) |- RList[a'](x, z) (RList R.Unf.) [1 <
                                                                    {(b, b),
@@ -78,6 +84,9 @@ RList[b](x, y) * RList[a](y, z) |- RList[a'](x, z) (RList R.Unf.) [1 <
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 nil!=y * y->z * List[a](x, y) |- List[a'](x, z) (List R.Unf.) [1 <{(a, a)}/
                                                                {}>]
@@ -116,6 +125,9 @@ nil!=y * y->z * List[a](x, y) |- List[a'](x, z) (List R.Unf.) [1 <{(a, a)}/
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 List[b](x, y) * List[a](y, z) |- List[a'](x, z) (List R.Unf.) [1 <{(b, b),
                                                                   (a, a)}/
@@ -152,6 +164,9 @@ List[b](x, y) * List[a](y, z) |- List[a'](x, z) (List R.Unf.) [1 <{(b, b),
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 nil!=y * y->z * PeList[a](x, y) |- PeList[a'](x, z) (PeList R.Unf.) [
 1 <{(a, a)}/{}>]
@@ -187,6 +202,9 @@ nil!=y * y->z * PeList[a](x, y) |- PeList[a'](x, z) (PeList R.Unf.) [
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 PeList[b](x, y) * PeList[a](y, z) |- PeList[a'](x, z) (PeList L.Unf./LHS Inst.,LHS Inst./Simplify) [
 1 <{(b, b), (a, a)}/{(b, c)}>, 2 <{(b, b), (a, a)}/{(b, c)}>]
@@ -221,6 +239,9 @@ PeList[b](x, y) * PeList[a](y, z) |- PeList[a'](x, z) (PeList L.Unf./LHS Inst.,L
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 DLL[a](x, y, z, w) |- SLL[a'](x, y) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
 1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>]
@@ -251,6 +272,9 @@ DLL[a](x, y, z, w) |- SLL[a'](x, y) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 DLL[a](x, y, z, w) |- BSLL[a'](z, w) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
 1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>]
@@ -282,6 +306,9 @@ DLL[a](x, y, z, w) |- BSLL[a'](z, w) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 DLL[b](x, y, z, w) * DLL[a](a, x, w, b) |- DLL[a'](a, y, z, b) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
 1 <{(b, b), (a, a)}/{(a, c)}>, 2 <{(b, b), (a, a)}/{(a, c)}>]
@@ -317,6 +344,12 @@ DLL[b](x, y, z, w) * DLL[a](a, x, w, b) |- DLL[a'](a, y, z, b) (DLL L.Unf./LHS I
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
+DEPTH 4
+DEPTH 5
+DEPTH 6
 0:
 ListO[b](x, y) * ListO[a](y, z) |- ListE[a'](x, z) (ListE R.Unf.) [1 <
                                                                    {(b, b),
@@ -374,6 +407,11 @@ ListO[b](x, y) * ListO[a](y, z) |- ListE[a'](x, z) (ListE R.Unf.) [1 <
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
+DEPTH 4
+DEPTH 5
 0:
 ListE[b](x, y) * ListE[a](y, z) |- ListE[a'](x, z) (ListE L.Unf./LHS Inst.) [
 1 <{(b, b), (a, a)}/{(b, c)}>]
@@ -447,6 +485,11 @@ ListE[b](x, y) * ListE[a](y, z) |- ListE[a'](x, z) (ListE L.Unf./LHS Inst.) [
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
+DEPTH 4
+DEPTH 5
 0:
 ListO[b](y, z) * ListE[a](x, y) |- ListO[a'](x, z) (ListE L.Unf./LHS Inst.) [
 1 <{(b, b), (a, a)}/{(a, c)}>]
@@ -520,6 +563,10 @@ ListO[b](y, z) * ListE[a](x, y) |- ListO[a'](x, z) (ListE L.Unf./LHS Inst.) [
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
+DEPTH 4
 0:
 BinListFirst[a](x) |- BinTree[a'](x) (BinListFirst L.Unf./LHS Inst.,LHS Inst.) [
 1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>]
@@ -556,6 +603,10 @@ BinListFirst[a](x) |- BinTree[a'](x) (BinListFirst L.Unf./LHS Inst.,LHS Inst.) [
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
+DEPTH 4
 0:
 BinListSecond[a](x) |- BinTree[a'](x) (BinListSecond L.Unf./LHS Inst.,LHS Inst.) [
 1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>]
@@ -593,6 +644,9 @@ BinListSecond[a](x) |- BinTree[a'](x) (BinListSecond L.Unf./LHS Inst.,LHS Inst.)
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 BinPath[b](x, z) * BinPath[a](z, y) |- BinPath[a'](x, y) (BinPath L.Unf./LHS Inst.,LHS Inst.,LHS Inst./Simplify) [
 1 <{(b, b), (a, a)}/{(b, c)}>, 2 <{(b, b), (a, a)}/{(b, c)}>,
@@ -657,6 +711,10 @@ BinPath[b](x, z) * BinPath[a](z, y) |- BinPath[a'](x, y) (BinPath L.Unf./LHS Ins
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
+DEPTH 4
 0:
 BinPath[a](x, y) |- BinTreeSeg[a'](x, y) (BinPath L.Unf./LHS Inst.,LHS Inst.,LHS Inst./Simplify) [
 1 <{(a, a)}/{(a, b)}>, 2 <{(a, a)}/{(a, b)}>, 3 <{(a, a)}/{(a, b)}>]
@@ -726,12 +784,19 @@ BinPath[a](x, y) |- BinTreeSeg[a'](x, y) (BinPath L.Unf./LHS Inst.,LHS Inst.,LHS
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
+DEPTH 4
+DEPTH 5
+DEPTH 6
 NOT proved: BinTree[b](y) * BinTreeSeg[a](x, z) |- BinTree[a'](x) [TIMEOUT]
  
  
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
 0:
 nil!=x * x!=z * x->y * ls[a](y, z) |- ls[a'](x, z) (ls R.Unf./Simplify) [
 1 <{(a, a)}/{}>]
@@ -744,6 +809,9 @@ nil!=x * x!=z * x->y * ls[a](y, z) |- ls[a'](x, z) (ls R.Unf./Simplify) [
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
 0:
 ls[b](x, y) * ls[a](y, nil) |- ls[a'](x, nil) (ls L.Unf./LHS Inst.,LHS Inst./Simplify) [
 1 <{(b, b), (a, a)}/{(b, c)}>, 2 <{(b, b), (a, a)}/{(b, c)}>]
@@ -778,6 +846,10 @@ ls[b](x, y) * ls[a](y, nil) |- ls[a'](x, nil) (ls L.Unf./LHS Inst.,LHS Inst./Sim
  -----------------------NEEXT------------------------- 
  
  
+DEPTH 1
+DEPTH 2
+DEPTH 3
+DEPTH 4
 0:
 ListE[b](x, y) \/ ListO[a](x, y) |- List[a'](x, y) (L. Or) [1 <{(b, b)}/{}>,
 2 <{(a, a)}/{}>]

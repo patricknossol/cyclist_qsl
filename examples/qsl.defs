@@ -23,7 +23,7 @@ List {
 	x->x' * List(x',y) => List(x,y) 
 } ;
 
-ListLen { 
+ListLen conform { 
 	x->y => ListLen(x,y) | 
 	x->x' * ListLen(x',y) + x->y' * List(y',y) => ListLen(x,y) 
 } ;

@@ -56,3 +56,5 @@ val partition_summands : t -> (int * int) list -> t * t
     respective entries in the pair, the other containing the rest of the summands.
     The summands on the right side of the first returned sequence are ordered, so that they appear in
     the same order as the summands they match with on the left hand side.*)
+
+val tag_summands : t -> t

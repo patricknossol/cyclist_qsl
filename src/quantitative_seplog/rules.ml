@@ -570,6 +570,9 @@ let ruf_rl defs seq =
               (Ord_constraints.generate ~avoid:seq_tags ~augment:false tag (Heapsum.tags f))
           in
           let r' = Heapsum.star [r'] f in
+          let r' = Blist.map (fun r2 ->
+            Heap.with_increased_tracking_tags r2 r._unfold_tracking
+          ) r' in
           let tps =
             Tagpairs.union (Heapsum.tag_pairs ls) (Ord_constraints.tag_pairs cs)
           in
@@ -623,6 +626,9 @@ let luf defs =
             in
             let vts = Tagpairs.union vts (Tagpairs.mk (Heapsum.tags ls)) in 
             let l' = Heapsum.star [l'] f in
+            let l' = Blist.map (fun l2 ->
+              Heap.with_increased_tracking_tags l2 l._unfold_tracking
+            ) l' in
             let ls' = Blist.flatten (Blist.map (fun l'' -> if l'' == l then l' else [l'']) ls) in
             (((new_cs, [ls']), (cs', [rs])), vts, pts)
           in
@@ -895,6 +901,47 @@ let right_transform_rule ((lhs', rhs') as seq') (lhs, rhs) =
 let split_sum_rule ((lhs1', rhs1') as seq1') ((lhs2', rhs2') as seq2') seq = 
   [([(seq1', Seq.tag_pairs seq1', Tagpairs.empty); (seq2', Seq.tag_pairs seq2', Tagpairs.empty)], "Split Sum")]
 
+(* Remove summands that resubeginlted of an unfolding when the originating summand was proven
+  and the unfolding predicate was conform.*)
+let remove_tracked_summands seq tracking = (*TODO REMOVE ONLY BOOLEAN THINGS*)
+  Pair.map (fun (cs, hss) ->
+    (cs, Blist.map (fun hs -> 
+      Blist.filter (fun h ->
+        let found = Blist.find_opt (fun ttag ->
+          Blist.exists (fun ttag2 -> ttag = snd ttag2) h.Heap._unfold_tracking
+        ) tracking in
+        Option.is_some found
+      ) hs
+    ) hss)
+  ) seq
+
+let split_id_summand seq =
+  let (lcs, ls), (rcs, rs) = Seq.dest_sum seq in
+  let constraint_tags = Seq.tags seq in
+  (*let lcs = Ord_constraints.close lcs in*)
+  let state = 
+    Heapsum.classical_unify ~match_whole:false ~update_check:Unify.Unidirectional.modulo_entl
+      constraint_tags rs ls
+      Unification.trivial_continuation Unify.Unidirectional.empty_state
+  in
+  match state with
+    | None -> []
+    | Some((_, _, mapping)) ->
+        let (seq_split, seq_rest) = Seq.partition_summands (Pair.swap seq) mapping in
+        let seq_rest = Pair.swap seq_rest in
+        let tracking1 = Blist.foldr (fun hs res -> 
+          Blist.flatten (Blist.map (fun h ->
+            Blist.map (fun ttag -> snd ttag) h.Heap._unfold_tracking
+          ) hs)
+        ) (Pair.right (Pair.left seq_split)) [] in
+        let tracking2 = Blist.foldr (fun hs res -> 
+          Blist.flatten (Blist.map (fun h ->
+            Blist.map (fun ttag -> snd ttag) h.Heap._unfold_tracking
+          ) hs)
+        ) (Pair.right (Pair.right seq_split)) [] in
+        let ((lhs, _) as seq_rest) = remove_tracked_summands seq_rest (tracking1 @ tracking2) in
+        [ ( [ seq_rest, Form.tag_pairs lhs, Tagpairs.empty ] , "Split Id Summand")]
+
 (**
     Apply lemma to seq lhs'=hs' |- rhs'
     Lemma: ls |- rs
@@ -1117,13 +1164,23 @@ let mk_lemma_rule_seq (trm_subst, tag_subst, _) (mapped_src_lhs, _)
     ((cs, [subst_hs]), subst_rhs)
   in
   (* let () = debug (fun _ -> (Heap.to_string subst_h') ^ " * " ^ (Heap.to_string frame) ^ " = " ^ (Heap.to_string (Heap.star subst_h' frame))) in *)
-  let cont_seq = (Form.star (cs, [frames]) subst_rhs, rest_src_rhs) in
+  let ((cont_seq_lc, cont_seq_lss), cont_seq_r) as cont_seq = (Form.star (cs, [frames]) subst_rhs, rest_src_rhs) in
+  let cont_seq = 
+    if Blist.length frames <> 1 then cont_seq else
+    ((cont_seq_lc, 
+    Blist.map (fun cont_seq_ls ->
+      Blist.map (fun cont_seq_l ->
+        let heap = Blist.nth frames 0 in
+        Heap.with_tracking_tags cont_seq_l heap._unfold_tracking
+      ) cont_seq_ls
+    ) cont_seq_lss)
+    , cont_seq_r) in
   let () = debug (fun _ -> "Rest: " ^ Seq.to_string rest_src_seq) in
   (* Construct the rule sequence *)
   Rule.compose_pairwise
     (Rule.mk_infrule (apply_lemma defs (lemma_seq, cont_seq, rest_src_lhs)))
     [ mk_backlink_rule_seq (trm_theta, tag_theta) lemma_seq (Form.empty, Form.empty) false (targ_idx, targ_seq)
-    ; Rule.identity ]
+    ; Rule.attempt (Rule.mk_infrule split_id_summand)]
 
 type backlink_t = FULL of Rule.t | PARTIAL of Rule.t
 
@@ -1230,6 +1287,10 @@ let sort_rule (l, r) =
   TODO optimize calls of unify/subsumed, maybe store in sum or something
   TODO optimize unify/subsumed with General Assignment Problem? Make time measurements of calls
   TODO try new proof call after lemma app. (or maybe even split sum?) for speed up?
+  TODO Ubound intro not own nil!=a * nil!=b * a!=b * a->w * b->c *
+                       ListLen[b](w, b) * 1rule to reduce depth?
+  TODO Preddef also OR (max)
+  TODO Bug with tracking (left unfold)
 *)
 let split_sum_rule ((l, r) as seq) =
   try
@@ -1240,22 +1301,6 @@ let split_sum_rule ((l, r) as seq) =
       [ ( [ Seq.split_sum seq, Form.tag_pairs l, Tagpairs.empty ] , "Split Sum")])
     else []
   with Not_symheap_sum -> []
-
-let split_id_summand seq =
-  let (lcs, ls), (rcs, rs) = Seq.dest_sum seq in
-  let constraint_tags = Seq.tags seq in
-  (*let lcs = Ord_constraints.close lcs in*)
-  let state = 
-    Heapsum.classical_unify ~match_whole:false constraint_tags rs ls
-      Unification.trivial_continuation Unify.Unidirectional.empty_state
-  in
-  match state with
-    | None -> []
-    | Some((_, _, mapping)) ->
-        let (_, seq_rest) = Seq.partition_summands (Pair.swap seq) mapping in
-        let ((lhs, _) as seq_rest) = Pair.swap seq_rest in
-        [ ( [ seq_rest, Form.tag_pairs lhs, Tagpairs.empty ] , "Split Id Summand")]
-
 
 (* let axioms = ref (Rule.first [id_axiom ; ex_falso_axiom]) *)
 let axioms = ref Rule.fail
@@ -1299,3 +1344,9 @@ let setup defs =
   rules := Rule.combine_axioms axioms !rules ;
   (*if !use_invalidity_heuristic then
     rules := Rule.conditional (fun s -> not (Invalid.check defs s)) !rules*)
+
+(*
+    begin: tag all summands
+    unfold: track tagging
+    lemma: if prove a number summand, then also the bool summands true => leave away
+*)

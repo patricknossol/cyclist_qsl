@@ -19,7 +19,8 @@ type symheap =
   ; num: Num.t
   ; mutable _terms: Term.Set.t option
   ; mutable _vars: Term.Set.t option
-  ; mutable _tags: Tags.t option }
+  ; mutable _tags: Tags.t option 
+  ; mutable _unfold_tracking: (int * int) list }
 
 type t = symheap
 
@@ -127,12 +128,13 @@ let has_untagged_preds h = not (Tpreds.for_all Tpred.is_tagged h.inds)
 
 let to_string f =
   let res =
-    String.concat symb_star.sep
+    (String.concat symb_star.sep
       ( Uf.to_string_list f.eqs
       @ Deqs.to_string_list f.deqs
       @ Ptos.to_string_list f.ptos
       @ Tpreds.to_string_list f.inds
-      @ [Num.to_string f.num] )
+      @ [Num.to_string f.num] ))
+      ^ " [TRACK " ^ (Blist.to_string "," (fun t -> string_of_int(snd t)) f._unfold_tracking) ^ "]"
   in
   if String.equal res "" then keyw_emp.str else res
 
@@ -143,6 +145,7 @@ let pp fmt h =
     @ Ptos.to_string_list h.ptos
     @ Tpreds.to_string_list h.inds
     @ [Num.to_string h.num]
+    @ ([" [TRACK " ^ (Blist.to_string "," (fun t -> string_of_int(snd t)) h._unfold_tracking) ^ "]"])
   in
   Format.fprintf fmt "@[%a@]"
     (Blist.pp pp_star Format.pp_print_string)
@@ -180,15 +183,15 @@ let subsumed ?(total = true) ?(with_num = true) h h' =
 
 (* Constructors *)
 
-let empty = {eqs=Uf.empty; deqs=Deqs.empty; ptos=Ptos.empty; inds=Tpreds.empty; num=Num.empty; _terms= None; _vars= None; _tags= None}
+let empty = {eqs=Uf.empty; deqs=Deqs.empty; ptos=Ptos.empty; inds=Tpreds.empty; num=Num.empty; _terms= None; _vars= None; _tags= None; _unfold_tracking=[]}
 
 let fix_empty_num h =
   if not (equal h empty) && Num.is_empty h.num then
-    {eqs=h.eqs; deqs=h.deqs; ptos=h.ptos; inds=h.inds; num=1.; _terms=h._terms; _vars=h._vars; _tags=h._tags}
+    {eqs=h.eqs; deqs=h.deqs; ptos=h.ptos; inds=h.inds; num=1.; _terms=h._terms; _vars=h._vars; _tags=h._tags; _unfold_tracking=h._unfold_tracking}
   else h
 
 let mk eqs deqs ptos inds num =
-  fix_empty_num {eqs; deqs; ptos; inds; num; _terms= None; _vars= None; _tags= None}
+  fix_empty_num {eqs; deqs; ptos; inds; num; _terms= None; _vars= None; _tags= None; _unfold_tracking=[]}
 
 let dest h = (h.eqs, h.deqs, h.ptos, h.inds, h.num)
 
@@ -202,7 +205,8 @@ let subst theta h =
   ; num= h.num
   ; _terms= None
   ; _vars= None
-  ; _tags= None }
+  ; _tags= None
+  ; _unfold_tracking=h._unfold_tracking }
 
 let with_eqs h eqs = fix_empty_num {h with eqs; _terms= None; _vars= None; _tags= None}
 
@@ -213,6 +217,16 @@ let with_ptos h ptos = fix_empty_num {h with ptos; _terms= None; _vars= None; _t
 let with_inds h inds = fix_empty_num (mk h.eqs h.deqs h.ptos inds h.num)
 
 let with_num h num = fix_empty_num (mk h.eqs h.deqs h.ptos h.inds num)
+
+let with_tracking_tag h num = {h with _unfold_tracking= [(0, num)]}
+
+let with_tracking_tags h ttags = {h with _unfold_tracking= ttags}
+
+let with_increased_tracking_tags h ttags = 
+  let ttags' = Blist.map ( fun (depth, ttag) ->
+    (depth + 1, ttag)
+  ) ttags in
+  {h with _unfold_tracking= ttags'}
 
 let del_deq h deq = with_deqs h (Deqs.del_first (fun deq' -> deq = deq') h.deqs)
 

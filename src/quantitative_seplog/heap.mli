@@ -1,4 +1,6 @@
-(** Symbolic heaps. *)
+(** Symbolic heaps. 
+    Unfold tracking tracks from which summands this heap was unfolded,
+    used in skipping proof parts for conform predicates (int pairs: depth, index). *)
 
 open Lib
 open Generic
@@ -15,7 +17,8 @@ type symheap = private
   ; num: Num.t
   ; mutable _terms: abstract1
   ; mutable _vars: abstract1
-  ; mutable _tags: abstract2 }
+  ; mutable _tags: abstract2
+  ; mutable _unfold_tracking: (int * int) list }
 
 include BasicType with type t = symheap
 
@@ -125,6 +128,12 @@ val with_ptos : t -> Ptos.t -> t
 val with_inds : t -> Tpreds.t -> t
 
 val with_num : t -> Num.t -> t
+
+val with_tracking_tag : t -> int -> t
+
+val with_tracking_tags : t -> (int * int) list -> t
+
+val with_increased_tracking_tags : t -> (int * int) list -> t
 
 val del_deq : t -> Tpair.t -> t
 

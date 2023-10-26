@@ -49,7 +49,3 @@ val unfold :
         unless the optional argument [gen_tags=true] is set to false.
     NB. This assumes that all predicates in the rules bodies are untagged.
 *)
-
-val of_formula : t -> Form.t -> t
-(** Convert a formula to a set of rules and add it to the provided set of
-    definitions.  The head of the return definition list contains these rules. *)

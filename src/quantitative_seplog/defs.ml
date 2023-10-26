@@ -53,24 +53,6 @@ module Defs = struct
       (Indrule.unfold ~gen_tags (vars, tags) pred)
       (get_def ident defs)
 
-  let of_formula defs ((_, hs) as f) =
-    let counter = ref 0 in
-    let get_ident () = Predsym.of_string (Printf.sprintf "P%d" !counter) in
-    let () =
-      while mem (get_ident ()) defs do
-        incr counter
-      done
-    in
-    let predsym = get_ident () in
-    let formals =
-      Term.Set.to_list
-        (Term.Set.filter Term.is_free_var (Form.vars f))
-    in
-    let pred = (predsym, formals) in
-    let rules = Blist.map (fun h -> Indrule.mk h pred) hs in
-    let def = Preddef.mk (rules, predsym) in
-    def :: defs
-
   let rule_fold f v defs =
     let f' v' def = Blist.foldl f v' (Preddef.rules def) in
     Blist.foldl f' v defs

@@ -86,7 +86,7 @@ val unify_partial :
 (** [unify_partial avoid_tags hs hs' cont init_state]
     Unify two heapsums (substitute vars and tags), such that every summand h of hs matches with one summand h' of hs',
     where h' can be matched by at most one h. h needs to be a subformula of h'.
-    This is used for backlinking (matching LHS, hs' is target, hs is source).
+    This is used for backlinking (matching LHS, hs is target, hs' is source).
     This requires the factor of summands to be exactly 1*)
 
 val classical_unify :
@@ -112,5 +112,5 @@ val classical_biunify :
     Unify two heapsums (substitute vars and tags), such that every summand h' of hs' matches with one summand h of hs,
     where h can be matched by at most one h'.
     The pure part of h needs to be a subformula of h' whilst the spatial part needs to be equal.
-    This is used for backlinking (matching RHS, hs is target, hs' is source).
+    This is used for backlinking (matching RHS, hs' is target, hs is source).
     This requires the factor of summands to be exactly 1*)

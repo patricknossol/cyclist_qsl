@@ -36,6 +36,7 @@ module Make (Seq : Sequent.S) = struct
   let rec idfs bound maxbound ax r seq =
     if Int.( > ) bound maxbound then None
     else
+      (print_endline ("DEPTH " ^ string_of_int bound);
       let rec dfs bound idx prf =
         if Int.( < ) bound 0 then None
         else
@@ -61,7 +62,7 @@ module Make (Seq : Sequent.S) = struct
       | None -> idfs (bound + 1) maxbound ax r seq
       | res ->
           last_search_depth := bound ;
-          res
+          res)
 
   let print_proof_stats proof =
     let size = Proof.size proof in
