@@ -1279,17 +1279,9 @@ let sort_rule (l, r) =
                          and in unify(?)
   TODO test if both w' in ListLen also works
   TODO rewoek domain exact impl -> preds not domain exact at all ??
-  TODO impl domain exact for sums? (same ptos/preds, only dom.exact preds, same pred vars)
-  TODO if you define predicates lslen + ls then can you trivially assume ls proof? bzw. can you automatically generate a + predicate or check if this is the case?
-  TODO make summands completely indifferent from each other (no shared vars, tags)
-      NO does not work, but when substituting vars, do it only for the relevant summands, not whole formula!
-      (check for rules) ODER DOCH?
+  XX TODO impl domain exact for sums? (same ptos/preds, only dom.exact preds, same pred vars)
   TODO optimize calls of unify/subsumed, maybe store in sum or something
   TODO optimize unify/subsumed with General Assignment Problem? Make time measurements of calls
-  TODO try new proof call after lemma app. (or maybe even split sum?) for speed up?
-  TODO Ubound intro not own nil!=a * nil!=b * a!=b * a->w * b->c *
-                       ListLen[b](w, b) * 1rule to reduce depth?
-  TODO Preddef also OR (max)
   TODO Bug with tracking (left unfold)
 *)
 let split_sum_rule ((l, r) as seq) =
