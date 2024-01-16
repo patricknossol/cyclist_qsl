@@ -24,7 +24,8 @@
 //3*a->b*b=d + a->b |- 2*a->b + 2*a->b*b=d
 //backlinking
 //ListLen(a,b)*b->c |- ListLen(a,c)
+List(a,b)*b->c |- a->z' * List(z',c)
 //0:12 (vm) -> 0:2,5 (linux) -> 0:0,75 (split id summand)
-ListLen(a,b)*List(b,c) |- ListLen(a,c)
+//ListLen(a,b)*List(b,c) |- ListLen(a,c)
 //7:00 (vm) ->  1:20 (linux) -> 0:30 (split id summand)
 //ListLen(a,b)*List(b,c) + List(a,b)*ListLen(b,c) |- ListLen(a,c)
