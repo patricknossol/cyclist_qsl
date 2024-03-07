@@ -1,13 +1,9 @@
-(** Symbolic heaps. 
-    Unfold tracking tracks from which summands this heap was unfolded,
-    used in skipping proof parts for conform predicates (int pairs: depth, index). *)
+(** Symbolic heaps. *)
 
 open Lib
 open Generic
 
 type abstract1
-
-type abstract2
 
 type symheap = private
   { eqs: Uf.t
@@ -16,39 +12,18 @@ type symheap = private
   ; inds: Tpreds.t
   ; num: Num.t
   ; mutable _terms: abstract1
-  ; mutable _vars: abstract1
-  ; mutable _tags: abstract2
-  ; mutable _unfold_tracking: (int * int) list }
+  ; mutable _vars: abstract1 }
 
 include BasicType with type t = symheap
 
 val empty : t
+(*emp. Not the same as [] = 0]*)
 
 (** Accessor functions. *)
 
 val vars : t -> Term.Set.t
 
 val terms : t -> Term.Set.t
-
-val tags : t -> Tags.t
-(** Return set of tags assigned to predicates in heap. *)
-
-val tag_pairs : t -> Tagpairs.t
-(** Return a set of pairs representing the identity function over the tags
-    of the formula.  This is to be used (as the preserving tag pairs)
-    whenever the inductive predicates
-    of a formula (in terms of occurences) are untouched by an inference rule.
-    This includes rules of substitution, rewriting under equalities and
-    manipulating all other parts apart from [inds].
-*)
-
-val has_untagged_preds : t -> bool
-
-val complete_tags : Tags.t -> t -> t
-(** [complete_tags exist ts h] returns the symbolic heap obtained from [h]
-    by assigning all untagged predicates a fresh existential tag avoiding
-    those in [ts].
-*)
 
 val equates : t -> Term.t -> Term.t -> bool
 (** Does a symbolic heap entail the equality of two terms? *)
@@ -76,30 +51,19 @@ val subsumed : ?total:bool -> ?with_num:bool -> t -> t -> bool
     both pure and spatial parts are subsets of those of [h'] modulo the equalities
     of [h']. *)
 
-val subsumed_upto_tags : ?total:bool -> ?with_num:bool -> t -> t -> bool
-(** Like [subsumed] but ignoring tag assignment.
-    If the optional argument [~total=true] is set to [false] then check whether
-    both pure and spatial parts are subsets of those of [h'] modulo the equalities
-    of [h']. *)
-
 val equal : t -> t -> bool
 (** Checks whether two symbolic heaps are equal. *)
 
-val equal_upto_tags : t -> t -> bool
-(** Like [equal] but ignoring tag assignment. *)
-
 val equal_upto_num : t -> t -> bool
-
-val equal_upto_num_and_tags : t -> t -> bool
 
 val is_empty : t -> bool
 (** [is_empty h] tests whether [h] is equal to the empty heap. *)
 
 (** Constructors. *)
 
-val parse : ?allow_tags:bool -> ?augment_deqs:bool -> (t, 'a) MParser.t
+val parse : ?augment_deqs:bool -> (t, 'a) MParser.t
 
-val of_string : ?allow_tags:bool -> ?augment_deqs:bool -> string -> t
+val of_string : ?augment_deqs:bool -> string -> t
 
 val mk_pto : Pto.t -> t
 
@@ -109,7 +73,7 @@ val mk_deq : Tpair.t -> t
 
 val mk_ind : Tpred.t -> t
 
-val mk_num : float -> t
+val mk_num : int * int -> t
 
 val mk : Uf.t -> Deqs.t -> Ptos.t -> Tpreds.t -> Num.t -> t
 
@@ -129,12 +93,6 @@ val with_inds : t -> Tpreds.t -> t
 
 val with_num : t -> Num.t -> t
 
-val with_tracking_tag : t -> int -> t
-
-val with_tracking_tags : t -> (int * int) list -> t
-
-val with_increased_tracking_tags : t -> (int * int) list -> t
-
 val del_deq : t -> Tpair.t -> t
 
 val del_pto : t -> Pto.t -> t
@@ -151,12 +109,6 @@ val add_pto : t -> Pto.t -> t
 
 val add_ind : t -> Tpred.t -> t
 
-val add_num : t -> Num.t -> t
-
-val sub_num : t -> Num.t -> t
-
-val mul_num : t -> Num.t -> t
-
 val explode_deqs : t -> t
 
 val star : ?augment_deqs:bool -> t -> t -> t
@@ -171,26 +123,16 @@ val univ : Term.Set.t -> t -> t
 val subst_existentials : t -> t
 (** For all equalities x'=t, remove the equality and do the substitution [t/x'] *)
 
-val freshen_tags : t -> t -> t
-(** [freshen_tags f g] will rename all tags in [g] such that they are disjoint
-    from those of [f]. *)
-
-val copy_fresh_heap : Subst.var_container * Tags.t -> t -> t
-
-val subst_tags : Tagpairs.t -> t -> t
-(** Substitute tags according to the function represented by the set of
-    tag pairs provided. *)
+val copy_fresh_heap : Subst.var_container -> t -> t
 
 val unify_partial :
-     ?tagpairs:bool
-  -> ?update_check:Unify.Unidirectional.update_check
+     ?update_check:Unify.Unidirectional.update_check
   -> ?with_num:bool
   -> t Unify.Unidirectional.unifier
 (** Unify two heaps such that the first becomes a subformula of the second. *)
 
 val classical_unify :
      ?inverse:bool
-  -> ?tagpairs:bool
   -> ?update_check:Unify.Unidirectional.update_check
   -> ?with_num:bool
   -> t Unify.Unidirectional.unifier
@@ -200,8 +142,7 @@ val classical_unify :
   required substitution for the *second* argument as opposed to the first. *)
 
 val classical_biunify :
-     ?tagpairs:bool
-  -> ?update_check:Unify.Bidirectional.update_check
+     ?update_check:Unify.Bidirectional.update_check
   -> ?with_num:bool
   -> t Unify.Bidirectional.unifier
 
@@ -219,3 +160,6 @@ val all_subheaps : t -> t list
         done by using [Uf.remove] to remove subsets of variables from
         [h.eqs];
     and forming all possible combinations *)
+
+val calc_spatial_frame : t -> t -> t * t
+(* h' - h *)

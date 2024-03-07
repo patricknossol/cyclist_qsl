@@ -68,32 +68,27 @@ let subst_tags tagpairs (l, r) =
 
 let subsumed (l, r) (l', r') = Form.subsumed l' l && Form.subsumed r r'
 
-let subsumed_upto_tags (l, r) (l', r') =
-  Form.subsumed_upto_tags l' l && Form.subsumed_upto_tags r r'
-
 let norm s = Pair.map Form.norm s
 
-let split_sum (((lc, lss), (rc, rss)) as seq) =
+let split_sum (((tl, (lc, lss)), (tr, (rc, rss))) as seq) =
   let seq_vars = ref (vars seq) in
-  let seq_tags = ref (tags seq) in
   let (lss', rss') = Pair.map (fun hss ->
     Blist.map (fun hs ->
       Blist.flatten (Blist.map (fun h ->
-        let h_single = Heap.with_num h 1. in
+        let h_single = Heap.with_num h (1,0) in
         let hs' = Blist.foldl (fun hs' r ->
-          let h' = Heap.copy_fresh_heap (!seq_vars, !seq_tags) h_single in
+          let h' = Heap.copy_fresh_heap !seq_vars h_single in
           seq_vars := Term.Set.union !seq_vars (Heap.vars h');
-          seq_tags := Tags.union !seq_tags (Heap.tags h');
           hs' @ [h']
-        ) [h_single] (Blist.init ((int_of_float h.Heap.num) - 1) (fun i -> Heap.empty))
+        ) [h_single] (Blist.init ((Num.get_int h.Heap.num) - 1) (fun i -> Heap.empty))
         in
         hs'
       ) hs)
     ) hss
   ) (lss, rss) in
-  ((lc, lss'), (rc, rss'))
+  ((tl, (lc, lss')), (tr, (rc, rss')))
 
-let partition_summands seq mappings =
+let partition_summands (((tl, _), (tr, _)) as seq) mappings =
   try
     let (lc, ls), (rc, rs) = dest_sum seq in
     let mappings_sorted_l = Blist.sort (fun (a1, _) (a2, _) -> a1 - a2) mappings in
@@ -127,18 +122,62 @@ let partition_summands seq mappings =
     let lc2 = filter_constraints lc ls2 in
     let rc2 = filter_constraints rc rs2 in
     (((lc1, [ls1]), (rc1, [rs1])), ((lc2, [ls2]), (rc2, [rs2])))*)
-    (((lc, [ls1]), (rc, [rs1])), ((lc, [ls2]), (rc, [rs2])))
+    (((tl, (lc, [ls1])), (tr, (rc, [rs1]))), ((tl, (lc, [ls2])), (tr, (rc, [rs2]))))
   with Form.Not_symheap_sum -> ((Form.empty, Form.empty), seq)
 
-let tag_summands ((lc, lss), (rc, rss)) =
-  let cur_tag = ref 0 in
-  let (lss', rss') = Pair.map (fun hss ->
-    Blist.map (fun hs ->
+let set_precise_preds defs (l, r) =
+  let l = Form.set_precise_preds defs l in
+  let r = Form.set_precise_preds defs r in
+  (l, r)
+
+let reduce_zeros (l, r) =
+  let l = Form.reduce_zeros l in
+  let r = Form.reduce_zeros r in
+  (l, r)
+
+let rec gcd a = function
+   0 -> a
+ | b -> gcd b (a mod b)
+
+let gcd_list = List.fold_left gcd 0
+
+let rec pow a = function
+  | 0 -> 1
+  | 1 -> a
+  | n -> 
+    let b = pow a (n / 2) in
+    b * b * (if n mod 2 = 0 then 1 else a)
+
+let scale_float_to_int (i, f) power =
+  if f <= 0 then i * (pow 10 power) else
+  let amount = String.length (string_of_int f) in
+  (int_of_string ((string_of_int i) ^ (string_of_int f))) * (pow 10 (power - amount))
+
+let scale_floats_to_ints float_list =
+  let power = Blist.fold_left (fun max (i,f) ->
+    let amount = String.length (string_of_int f) in
+    if f > 0 && amount > max then amount else max
+  ) 0 float_list in
+  let list = Blist.map (fun num -> 
+    scale_float_to_int num power
+  ) float_list in
+  (list, power)
+
+let rational_to_natural_nums ((lt, (lc, lss)), (rt, (rc, rss))) =
+  let lnums, rnums = Pair.map (fun hss ->
+    Blist.flatten (Blist.map (fun hs ->
       Blist.map (fun h ->
-        let h' = Heap.with_tracking_tag h !cur_tag in
-        cur_tag := !cur_tag + 1;
-        h'
+        h.Heap.num
       ) hs
-    ) hss
+    ) hss )
   ) (lss, rss) in
-  ((lc, lss'), (rc, rss'))
+  let scaled_floats, power = scale_floats_to_ints (lnums @ rnums) in
+  let factor = gcd_list scaled_floats in
+  let lss, rss = Pair.map (fun hss ->
+    Blist.map (fun hs ->
+      Blist.map (fun h -> 
+        Heap.with_num h (((scale_float_to_int h.Heap.num power) / factor),0)
+      ) hs
+    ) hss  
+  ) (lss, rss) in
+  ((lt, (lc, lss)), (rt, (rc, rss)))

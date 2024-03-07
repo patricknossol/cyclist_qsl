@@ -1,3 +1,11 @@
+P {
+	a->b * P(a,b) => P(a,b)
+} ;
+
+Q {
+	a->b * Q(a,b) => Q(a,b)
+} ;
+
 RList { 
 	x->y => RList(x,y) | 
 	RList(x,x') * x'->y => RList(x,y) 

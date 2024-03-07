@@ -28,7 +28,7 @@ for ((i=0; i < ${#Sequents[@]}; i++))
 do
     Sequent="${Sequents[$i]}"
     #echo "${Sequent}"
-    qsl_res+=$(qsl_prove -S "${Sequent}" -p -t 1)
+    qsl_res+=$(qsl_prove -S "${Sequent}" -D examples/sl.defs -p -t 1)
     sl_res+=$(sl_prove -S "${Sequent}" -p -t 1)
     qsl_res+=$'\n \n \n -----------------------NEEXT------------------------- \n \n \n'
     sl_res+=$'\n \n \n -----------------------NEEXT------------------------- \n \n \n'

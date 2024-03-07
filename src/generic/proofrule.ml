@@ -197,6 +197,9 @@ module Make (Seq : Sequent.S) = struct
   (*     (L.singleton ([], prf))                                               *)
   (*     subgoals                                                              *)
 
+  let strr r =
+    Blist.to_string " | " (fun s -> snd s) r
+
   let apply_to_subgoals_pairwise rules (subgoals, prf) =
     try
       Blist.fold_left2
@@ -206,12 +209,15 @@ module Make (Seq : Sequent.S) = struct
             (fun (opened, oldprf) ->
               (* add new subgoals to the list of opened ones *)
               L.map
-                (fun (newsubgoals, newprf) -> (opened @ newsubgoals, newprf))
-                (r idx oldprf) )
+                (fun (newsubgoals, newprf) -> 
+                  (opened @ newsubgoals, newprf)
+                ) (r idx oldprf)
+            )
             apps )
         (L.singleton ([], prf))
         rules subgoals
-    with Invalid_argument _ -> L.empty
+    with Invalid_argument _ -> 
+      L.empty
 
   let compose r r' idx prf =
     L.bind

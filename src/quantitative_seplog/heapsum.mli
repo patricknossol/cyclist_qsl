@@ -15,44 +15,23 @@ val is_empty: t -> bool
 val dest : t -> Heap.t
 (** Return the single summand, if there is exactly one, else raise [Not_symheap]. *)
 
-val equal_upto_tags : t -> t -> bool
-(** Whilst [equal] demands syntactic equality including tags, this version
-    ignores tag assignment. *)
+val equal : t -> t -> bool
 
 val terms : t -> Term.Set.t
 
 val vars : t -> Term.Set.t
 
-val tags : t -> Tags.t
-(** NB no attempt is made to ensure that tags are disjoint between disjuncts.
-    This is not necessarily unsound. *)
-
-val tag_pairs : t -> Tagpairs.t
-(** The proviso on tags applies here too. *)
-
-val complete_tags : Tags.t -> t -> t
-(** [complete_tags ts f] returns the formula obtained from f by assigning
-    all untagged predicates a fresh existential tag, avoiding those in [ts].
-*)
-
-val has_untagged_preds : t -> bool
-
 val inconsistent : t -> bool
-(** Do all disjuncts entail false in the sense of [Heap.inconsistent]
-    or are the tag constraints inconsistent? *)
+(** Do all disjuncts entail false in the sense of [Heap.inconsistent]? *)
 
-val subsumed : ?total:bool -> ?upto_tags:bool -> t -> t -> bool
-(** Works similar to the unify functions but without renaming of vars and tags *)
-
-val subsumed_upto_tags : ?total:bool -> t -> t -> bool
-(** As above but ignoring tags.
+val subsumed : ?total:bool -> t -> t -> bool
+(** Works similar to the unify functions but without renaming of vars 
     If the optional argument [~total=true] is set to [false] then relax the
     check on the spatial part so that it is included rather than equal to that
-    of [b]. *)
+    of [b].*)
 
 val parse :
-  ?allow_tags:bool
-  -> ?augment_deqs:bool
+    ?augment_deqs:bool
   -> (t, 'a) MParser.t
 
 val of_string : string -> t
@@ -65,9 +44,6 @@ val subst : Subst.t -> t -> t
 val subst_existentials : t -> t
 (** Like [Heap.subst_existentials] applied to all disjuncts. *)
 
-val subst_tags : Tagpairs.t -> t -> t
-(** Like [Heap.subst_tags] applied to all disjuncts. *)
-
 val univ : Term.Set.t -> t -> t
 (** univ(avoid, repl) Replace all existential variables with fresh universal variables. *)
 
@@ -79,9 +55,8 @@ val equates : t -> Term.t -> Term.t -> bool
 val disequates : t -> Term.t -> Term.t -> bool
 
 val unify_partial :
-     ?tagpairs:bool
-  -> ?update_check:Unify.Unidirectional.update_check
-  -> Tags.t
+     ?update_check:Unify.Unidirectional.update_check
+  -> ((t * Pred.t) list * (Predsym.t * (Int.t * (Predsym.t list)))) list
   -> t Unify.Unidirectional.unifier
 (** [unify_partial avoid_tags hs hs' cont init_state]
     Unify two heapsums (substitute vars and tags), such that every summand h of hs matches with one summand h' of hs',
@@ -91,9 +66,7 @@ val unify_partial :
 
 val classical_unify :
      ?match_whole:bool
-  -> ?tagpairs:bool
   -> ?update_check:Unify.Unidirectional.update_check
-  -> Tags.t
   -> t Unify.Unidirectional.unifier
 (** [classical_unify ?match_whole avoid_tags hs hs' cont init_state]
     Unify two heapsums (substitute vars and tags), such that every summand h' of hs' matches with one summand h of hs,
@@ -104,9 +77,7 @@ val classical_unify :
     This requires the factor of summands to be exactly 1*)
 
 val classical_biunify :
-     ?tagpairs:bool
-  -> ?update_check:Unify.Bidirectional.update_check
-  -> Tags.t
+     ?update_check:Unify.Bidirectional.update_check
   -> t Unify.Bidirectional.unifier
 (** [classical_biunify avoid_tags hs hs' cont init_state]
     Unify two heapsums (substitute vars and tags), such that every summand h' of hs' matches with one summand h of hs,
@@ -114,3 +85,13 @@ val classical_biunify :
     The pure part of h needs to be a subformula of h' whilst the spatial part needs to be equal.
     This is used for backlinking (matching RHS, hs' is target, hs is source).
     This requires the factor of summands to be exactly 1*)
+
+val is_precise : (((t * Pred.t) list) * (Predsym.t * (Int.t * (Predsym.t list)))) list -> t -> bool
+(** [is_precise defs f] calculates if every existential var of f 
+    on a left side of a points to predicate is fixed. If f consists of multiple
+    disjuncts or summands it is not considered precise. Predicates are considered
+    precise if they are marked so in the definitions and if they use existential
+    vars as arguments the predicates are only precise if they are marked so in the
+    proof tree. A predicate loses its precise marking if the formula changed by
+    a change other than just predicate unfolding.
+    The function uses defs for predicate definitions.*)

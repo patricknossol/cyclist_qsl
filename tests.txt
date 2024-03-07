@@ -1,31 +1,17 @@
-//eq_subst_rule
-//b->c*b=a + b->c |- 2*a->c
-//b->c*b=a + b->c*a=b |- 2*a->c
-//eq_ex_subst_rule
-//b->c |- a'=b*a'->c + b->d
-//(d)eq_simplify
-//constraint_simplify if constr sum works
-//pto_intro_rule
-//x->y*y=z + x->y*y=z |- x->z + x->z
-//pred_intro_rule TODO
-//List[a](a,c)*a->b |- List[a](a,c)*a->b
-//instantiate_pto OK
-//x->y1,y2*y1=z1 |- a'->z1,z2
 //predicates
-//List(b,c)*a->b + List(b,c)*a->b |- List(a,c) + List(a,c)
-//List(b,c)*a->b + List(b,c)*a->b |- 2*List(a,c)
-//List(b,c)*a->b + List(b,c)*a->b |- 2*List(a,c)
-//List(b,c)*a->b + a->c |- 2*List(a,c)
-//ListLen(b,c)*a->b + List(b,c)*a->b |- 2*ListLen(a,c)
-//ListLen(b,c)*a->b*x->a + 2*List(b,c)*a->b*x->a |- ListLen(x,c)
+//List(b,c)*a->b*a!=c + List(b,c)*a->b*a!=c |- List(a,c) + List(a,c)
+//List(b,c)*a->b*a!=c + List(b,c)*a->b*a!=c |- 2*List(a,c)
+//List(b,c)*a->b*a!=c + a->c*a!=c |- 2*List(a,c)
+//ListLen(b,c)*a->b*a!=c + List(b,c)*a->b*a!=c |- 2*ListLen(a,c)
+//ListLen(b,c)*a->b*x->a*a!=c*x!=c + 2*List(b,c)*a->b*x->a*a!=c*x!=c |- ListLen(x,c)
 //matching
 //2*a->c |- a->c + a->c
 //2*a->c + 2*a->c |- a->c + 3*a->c
 //3*a->b*b=d + a->b |- 2*a->b + 2*a->b*b=d
 //backlinking
-//ListLen(a,b)*b->c |- ListLen(a,c)
-List(a,b)*b->c |- a->z' * List(z',c)
-//0:12 (vm) -> 0:2,5 (linux) -> 0:0,75 (split id summand)
-//ListLen(a,b)*List(b,c) |- ListLen(a,c)
-//7:00 (vm) ->  1:20 (linux) -> 0:30 (split id summand)
-//ListLen(a,b)*List(b,c) + List(a,b)*ListLen(b,c) |- ListLen(a,c)
+//ListTmp(a,b)*b->c |- a->z' * ListTmp(z',c)
+//ListLenTmp(a,b)*b->c |- ListLenTmp(a,c)
+//0:2,5 (linux) -> 0:0,75 (split id summand) -> 11,9 (new) -> (split conform summand)
+//ListLenTmp(a,b)*ListTmp(b,c) |- ListLenTmp(a,c)
+//1:20 (linux) -> 0:30 (split id summand) -> 11,9 (new) -> 0,02 (split conform summand)
+ListLenTmp(a,b)*ListTmp(b,c) + ListTmp(a,b)*ListLenTmp(b,c) |- ListLenTmp(a,c)

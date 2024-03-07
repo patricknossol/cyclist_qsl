@@ -121,13 +121,15 @@ module Unidirectional = struct
          (Term.Map.bindings trm_subst_new)
 
   let is_substitution (_, (trm_subst, tag_subst, _)) =
-    Term.Map.for_all
+    let r = Term.Map.for_all
       (fun x y ->
         Term.is_free_var x && (Term.is_nil y || Term.is_free_var y) )
       trm_subst
     && Tagpairs.for_all
          (fun tp -> Pair.both (Pair.map Tags.is_free_var tp))
-         tag_subst
+         tag_subst in
+    (*print_endline ("is_subst: " ^ (string_of_bool r) ^ " var subst " ^ (Term.Map.to_string (fun trm -> Term.to_string trm) trm_subst));*)
+    r
 
   let trm_check ((theta, _, _), (theta', _, _)) =
     let test sub (x, y) =

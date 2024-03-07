@@ -34,6 +34,9 @@ module Defs = struct
 
   let is_undefined defs pred = not (is_defined defs pred)
 
+  let get_preddef ident defs =
+    Blist.find (fun def -> Predsym.equal ident (Preddef.predsym def)) defs
+
   let get_def ident defs =
     Preddef.rules
       (Blist.find
@@ -48,9 +51,9 @@ module Defs = struct
       ) (Preddef.rules def)
     ) [] defs
 
-  let unfold ?(gen_tags = true) (vars, tags) ((_, (ident, _)) as pred) defs =
+  let unfold vars ((_, (ident, _)) as pred) defs =
     Blist.map
-      (Indrule.unfold ~gen_tags (vars, tags) pred)
+      (Indrule.unfold vars pred)
       (get_def ident defs)
 
   let rule_fold f v defs =
@@ -88,7 +91,7 @@ module Defs = struct
       (fun pred defs -> add (Preddef.mk (get_def pred all_defs, pred)) defs)
       relevant_preds empty*)
 
-  let check_form_wf defs (_, f) =
+  let check_form_wf defs (_, (_, f)) =
     let check_pred p =
       let predsym = Tpred.predsym p in
       let pname = Predsym.to_string predsym in
@@ -115,7 +118,7 @@ module Defs = struct
   let check_consistency defs =
     rule_iter
       (fun rl ->
-        try check_form_wf defs (Ord_constraints.empty, [Indrule.body rl])
+        try check_form_wf defs (Tags.anonymous, (Ord_constraints.empty, [Indrule.body rl]))
         with Invalid_argument s ->
           failwith
             ( "Error in definition of "

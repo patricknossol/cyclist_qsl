@@ -67,6 +67,9 @@ let () =
           , Arg.Set do_testing
           , ": test qsl" ) ];;
         
+let of_string str parse_fun =
+  handle_reply (MParser.parse_string parse_fun str ())
+
 
 let () =
   gc_setup () ;
@@ -75,6 +78,16 @@ let () =
     (fun _ -> raise (Arg.Bad "Stray argument found."))
     !F.usage ;
   let defs = Defs.of_channel (open_in !defs_path) in
+  let defs_list = Blist.map (fun preddef ->
+    let (rules, r) = Preddef.dest preddef in 
+    Preddef.mk (Blist.map (fun indrule -> 
+      let (hs, pred) = Indrule.dest indrule in
+      let ((_, (_, hss)), _) = Seq.split_sum (Form.reduce_zeros (Form.mk_heapsums [hs]), Form.empty) in
+      if Blist.length hss = 0 then Indrule.mk [Heap.mk_num (0,0)] pred
+      else Indrule.mk (Blist.nth hss 0) pred
+    ) rules, r)
+  ) (Defs.to_list defs) in
+  let defs = Defs.of_list defs_list in
   Rules.setup defs ;
 
   if(not !do_testing) then
@@ -83,8 +96,10 @@ let () =
       F.die "-S must be specified." spec_list !F.usage ;) in
     
     let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp !cl_sequent in
+    let seq = Seq.reduce_zeros seq in
+    let seq = Seq.set_precise_preds defs_list seq in
+    let seq = Seq.rational_to_natural_nums seq in
     let seq = Seq.split_sum seq in
-    let seq = Seq.tag_summands seq in
 
     let res =
       F.gather_stats (fun () ->
@@ -103,24 +118,78 @@ let () =
   (*-----------TESTING------------*)
   else
 
-    let list_equality_test = false in
+    if false then
 
-    if list_equality_test then
-      
-      let list = [1;2;3;4] in
-      let dofold (r, r2) =
-        Blist.foldr
-          (fun element res -> 
-            if element == r then true else res
-          ) list false
+      let rec do_test_rec seq rs =
+        match rs with
+        | r :: rs ->
+          let seqs' = r seq in
+          let _ = Blist.fold_left (fun res seq' ->
+            print_endline ((snd seq') ^ "---------------------") ;
+            Blist.map (fun (seq, tags1, tags2) -> 
+              print_endline (Seq.to_string seq);
+              do_test_rec seq rs
+            ) (fst seq')
+          ) [] seqs' in
+          print_endline "---------------------" ;
+          print_endline "" ;
+          seq
+        | _ -> seq
       in
-      let heap_preds = 
-        Blist.foldr ( fun r list ->
-          list @ [(r, r)]
-        ) list [] in
-      let res = Blist.for_all dofold heap_preds in
-      print_endline ("Equality: " ^ string_of_bool res);
-    
+
+      let do_test title s rs = 
+        print_endline title ;
+        let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp s in
+        let seq = Seq.reduce_zeros seq in
+        let seq = Seq.set_precise_preds defs_list seq in
+        let seq = Seq.rational_to_natural_nums seq in
+        let seq = Seq.split_sum seq in
+        print_endline "" ;
+        print_endline (Seq.to_string seq) ;
+        do_test_rec seq rs
+      in
+
+      (*
+      let _ = do_test "0" "0 * x->y + 0.28 * c->d |- 0.4 * x->y + 0.14 * a->b" [Rules.identity] in
+      let _ = do_test "1" "x'->y * z'=y + h'->y |- a'->b" [Rules.lhs_instantiate_ex_vars] in
+      let _ = do_test "2" "x->y * x=y + x->y |- z->y" [Rules.eq_subst_rule] in
+      let _ = do_test "3" "x->y * x=y + x->y * x=y |- z->y" [Rules.eq_subst_rule] in
+      let _ = do_test "4" "x'->y |- x'->y + x'->y * x'=y" [Rules.eq_ex_subst_rule] in
+      let _ = do_test "5" "x->y * x=y * y=z + x->y |- x->y + x->y * x=z" [Rules.eq_simplify] in
+      let _ = do_test "6" "x->y * x=y * y=z + x->y * x=y * y=z |- x->y + x->y * x=z" [Rules.eq_simplify] in
+      (*let s = do_test "x->y |- x->y" Rules.norm in*)
+      let _ = do_test "7" "x->y * a->b |- x->y * c->d" [Rules.pto_intro] in
+      let _ = do_test "7" "x->y * a->b + x->z |- x->w * c->d + x->m" [Rules.pto_intro] in
+      let _ = do_test "8" "x'=w' * x'->y * a->b |- w'->y * c->d" [Rules.pto_intro] in
+      let _ = do_test "9" "x->y' * a->b |- x->y' * c->d" [Rules.pto_intro] in
+      let _ = do_test "10" "x->y * a->b |- x->z' * c->z'" [Rules.pto_intro] in
+      let _ = do_test "12" "x'->y |- e'->y' * c->e'" [Rules.instantiate_pto_wo_rule] in
+      let _ = do_test "13" "ListLen(x,y) * a->b |- ListLen(x,y) * a->c" [(Rules.pred_intro defs)] in
+      let _ = do_test "14" "ListLen(x,y) * a->b |- ListLen(x,z) * a->c" [(Rules.pred_intro defs)] in
+      let _ = do_test "14" "ListLen(x,y) * a->b + ListLen(x,z) * a->b |- ListLen(x,y) * a->c + ListLen(x,y) * a->c" [(Rules.pred_intro defs)] in
+      let _ = do_test "14" "ListLen(x,y) * a->b + ListLen(x,y) * a->b |- ListLen(x,y) * a->c + ListLen(x,y) * a->c" [(Rules.pred_intro defs)] in
+      let _ = do_test "15" "a->b * ListLen(x,y) + c->d |- x->y" [(Rules.luf_rl defs)] in
+      let _ = do_test "16" "x->y |- a->b * ListLen(x,y) + c->d" [(Rules.ruf_rl defs)] in
+      let _ = do_test "17" "x->y |- ListLen(a,b) * ListLen(x,y) + c->d" [(Rules.ruf_rl defs)] in
+      let _ = do_test "18" "x->y |- ListLen(a,nil) * ListLen(x,nil) + c->d" [(Rules.ruf_rl defs)] in
+      let _ = do_test "19" "x->y |- ListLen(a',nil) * ListLen(x',nil) + c->d" [(Rules.ruf_rl defs)] in
+      let _ = do_test "20" "x->y |- a->b' * ListLen(x',y) + c->d" [(Rules.ruf_rl defs)] in
+      let _ = do_test "21" "x->y |- a'=y * a'->b' * ListLen(x',y) + c->d" [(Rules.ruf_rl defs)] in
+      let _ = do_test "22" "x->y |- h->y' * a'=y' * a'->b' * ListLen(x',y) + c->d" [(Rules.ruf_rl defs)] in
+      let _ = do_test "23" "x->y |- a'->b * ListLen(x',y) + c->d" [(Rules.ruf_rl defs)] in
+      let _ = do_test "24" "a->b * b=z + c->d |- a->b + x->z" [Rules.split_id_summand] in
+      let _ = do_test "25" "ListLen(a,b) + List(a,b) |- RListLen(x,z) + RList(x,z)" [(Rules.split_conform_predicate_summands defs)] in
+      let _ = do_test "26" "x->y * ListLen(a,b) + x->y * List(a,b) |- y->z * RListLen(x,z) + y->z * RList(x,z)" [(Rules.split_conform_predicate_summands defs)] in
+      let _ = do_test "27" "x->y * ListLen(a,b) + x->z * List(a,b) |- y->z * RListLen(x,z) + y->z * RList(x,z)" [(Rules.split_conform_predicate_summands defs)] in
+      let _ = do_test "28" "ListLen(a,b) + List(a,c) |- RListLen(x,z) + RList(x,z)" [(Rules.split_conform_predicate_summands defs)] in
+      let _ = do_test "29" "x->y' * ListLen(a,b) + x->z' * List(a,b) |- y->z * RListLen(x,z) + y->z * RList(x,z)" [(Rules.split_conform_predicate_summands defs)] in
+      let _ = do_test "30" "x->y' * ListLen(a,b') + x->z' * List(a,c') |- RListLen(x,z) + RList(x,z)" [(Rules.split_conform_predicate_summands defs)] in
+      [a] nil!=a * nil!=b * a!=b * a->w * b->c * ListLenTmp(w, b) + nil!=a * nil!=b * a!=b * a->x * b->c * ListTmp(x, b) |- [a'] a->w' * ListLenTmp(w', c) + a->w' * ListTmp(w', c)
+      *)
+      let _ = do_test "30" "nil!=a * nil!=b * a!=b * a->w * b->c * ListLenTmp(w, b) + nil!=a * nil!=b * a!=b * a->x * b->c * ListTmp(x, b) |- a->w' * ListLenTmp(w', c) + a->w' * ListTmp(w', c)" [(Rules.split_conform_predicate_summands defs)] in
+
+      print_endline("FINISH")
+      
     else 
 
       let read_file filename =
@@ -138,11 +207,13 @@ let () =
 
       Blist.iter (fun test ->
 
-        if not (String.get test 0 = '/' || test = "") then
-
+        if String.get test 0 = '/' || test = "" then
+          ()
+        else
           let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp test in
+          let seq = Seq.reduce_zeros seq in
+          let seq = Seq.set_precise_preds defs_list seq in
           let seq = Seq.split_sum seq in
-          let seq = Seq.tag_summands seq in
           
           let res =
             F.gather_stats (fun () ->

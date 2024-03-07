@@ -17,6 +17,8 @@ val is_defined : t -> Tpred.t -> bool
 
 val is_undefined : t -> Tpred.t -> bool
 
+val get_preddef : Predsym.t -> t -> Preddef.t
+
 val get_def : Predsym.t -> t -> Indrule.t list
 
 val get_def_forms : t -> (Predsym.t * Form.t) list
@@ -40,12 +42,9 @@ val of_channel : in_channel -> t
 val of_string : string -> t
 
 val unfold :
-  ?gen_tags:bool -> Term.Set.t * Tags.t -> Tpred.t -> t -> Heapsum.t list
+  Term.Set.t -> Tpred.t -> t -> Heapsum.t list
 (** [unfold (vs, ts) p defs] returns a list containing the bodies of all the
     inductive rules for [p] in [defs] where, for each rule body:
       the formal parameters have been replaced by the arguments of [p];
-      the remaining variables have been freshened, avoiding those in [vs]; and
-      the predicates have been assigned fresh existential tags avoiding those in [ts],
-        unless the optional argument [gen_tags=true] is set to false.
-    NB. This assumes that all predicates in the rules bodies are untagged.
+      the remaining variables have been freshened, avoiding those in [vs]
 *)

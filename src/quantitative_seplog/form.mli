@@ -7,7 +7,7 @@
 open Lib
 open Generic
 
-include BasicType with type t = Ord_constraints.t * Heapsum.t list
+include BasicType with type t = Tags.Elt.t * (Ord_constraints.t * Heapsum.t list)
 
 val empty : t
 (** The formula [emp]. NB this is not the same as [[]], which is equivalent to
@@ -36,11 +36,14 @@ val terms : t -> Term.Set.t
 val vars : t -> Term.Set.t
 
 val tags : t -> Tags.t
-(** NB no attempt is made to ensure that tags are disjoint between disjuncts.
-    This is not necessarily unsound. *)
+
+val tags_wo_constraints : t -> Tags.t
 
 val tag_pairs : t -> Tagpairs.t
-(** The proviso on tags applies here too. *)
+
+val tag_pairs_wo_constraints : t -> Tagpairs.t
+
+val tag_pairs_custom : Tags.Elt.t -> Tagpairs.t
 
 val complete_tags : Tags.t -> t -> t
 (** [complete_tags ts f] returns the formula obtained from f by assigning
@@ -64,12 +67,6 @@ val subsumed : ?total:bool -> t -> t -> bool
 
 val subsumed_upto_constraints : ?total:bool -> t -> t -> bool
 (** As above but does not check subsumption of constraints *)
-
-val subsumed_upto_tags : ?total:bool -> t -> t -> bool
-(** As above but ignoring tags.
-    If the optional argument [~total=true] is set to [false] then relax the
-    check on the spatial part so that it is included rather than equal to that
-    of [b]. *)
 
 val parse :
      ?null_is_emp:bool
@@ -113,9 +110,39 @@ val get_tracepairs : t -> t -> Tagpairs.t * Tagpairs.t
     (t, t') specified by the constraints of [f'] such that [t] occurs in [f]
 *)
 
-val is_domain_exact : ?covered:Predsym.t list -> (Predsym.t * t) list -> t -> bool
-(** [is_domain_exact covered defs f] calculates if f is domain_exact considering
-    that the predicate symbols in covered have already been analyzed*)
+val is_boolean : ?covered:Predsym.t list -> Preddef.t list -> t -> bool
+(** [is_boolean covered defs f] calculates if f(s,h) in {0,1} for all stack-
+    heap pairs (s,h) using defs for recursive predicate 
+    definitions and considering that the predicate symbols in covered have already
+    been analyzed.*)
+
+val is_natural_least_one : ?covered:Predsym.t list -> Preddef.t list -> t -> bool
+(** [is_natural_least_one covered defs f] calculates if f(s,h) in the natural numbers 
+    or = 0 or >= 1 for all stack-heap pairs (s,h) using defs for recursive predicate 
+    definitions and considering that the predicate symbols in covered have already
+    been analyzed.*)
+
+val is_non_empty_derivable : ?covered:Predsym.t list -> Preddef.t list -> t -> bool
+(** [is_non_empty covered defs f] calculates if all disjuncts and summands of f 
+    contain a non-empty predicate or are 0 using defs for recursive predicate 
+    definitions and considering that the predicate symbols in covered have already
+    been analyzed.*)
+
+val is_precise : Preddef.t list -> t -> bool
+(** [is_precise defs f] calculates if every existential var of f 
+    on a left side of a points to predicate is fixed. If f consists of multiple
+    disjuncts or summands it is not considered precise. Predicates are considered
+    precise if they are marked so in the definitions and if they use existential
+    vars as arguments the predicates are only precise if they are marked so in the
+    proof tree. A predicate loses its precise marking if the formula changed by
+    a change other than just predicate unfolding.
+    The function uses defs for predicate definitions.*)
+
+val set_precise_preds : Preddef.t list -> t -> t
+(** [set_precise_preds defs f] sets all appropiate predicates to be precise*)
+
+val reduce_zeros : t -> t
+(** [reduce_zeros f] sets 0 * ... to 0 and 0 + a to a*)
 
 val mk_heap : Heap.t -> t
 

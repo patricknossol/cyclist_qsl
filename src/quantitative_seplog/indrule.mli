@@ -28,11 +28,8 @@ val subst : Subst.t -> t -> t
 val parse : (t, 'a) MParser.t
 
 val unfold :
-  ?gen_tags:bool -> Term.Set.t * Tags.t -> Tpred.t -> t -> Heapsum.t
+  Term.Set.t -> Tpred.t -> t -> Heapsum.t
 (** [unfold (vs, ts) p r] returns the body of the inductive rule [r] with:
       the formal parameters replaced by the arguments of [p]; 
-      the remaining variables freshened, avoiding those in [vs]; and
-      the predicates assigned fresh existential tags avoiding those in [ts],
-        unless the optional argument [gen_tags=true] is set to false.
-    NB. This assumes that all predicates in the body of [r] are untagged.
+      the remaining variables freshened, avoiding those in [vs];
 *)

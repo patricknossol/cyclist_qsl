@@ -41,9 +41,6 @@ val subsumed : t -> t -> bool
 (** [subsumed (l,r) (l',r')] is true iff both [Form.subsumed l' l] and
     [Form.subsumed r r'] are true. *)
 
-val subsumed_upto_tags : t -> t -> bool
-(** Like [subsumed] but ignoring all tags. *)
-
 val norm : t -> t
 (** Replace all terms with their UF representatives in the respective formulas.` *)
 
@@ -57,4 +54,10 @@ val partition_summands : t -> (int * int) list -> t * t
     The summands on the right side of the first returned sequence are ordered, so that they appear in
     the same order as the summands they match with on the left hand side.*)
 
-val tag_summands : t -> t
+val set_precise_preds : Preddef.t list -> t -> t
+(** [set_precise_preds defs f] sets all appropiate predicates to be precise*)
+
+val reduce_zeros : t -> t
+(** [reduce_zeros f] sets 0 * ... to 0 and 0 + a to a*)
+
+val rational_to_natural_nums : t -> t

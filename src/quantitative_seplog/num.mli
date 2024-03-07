@@ -1,7 +1,9 @@
 (* A number designed for multiplication with a symbolic heap 
    Syntanctically, it is defined as [number] ^ empty *)
 
-type t = float
+type t = int * int
+
+val get_int : t -> int
 
 val parse : (t, 'a) MParser.parser
 
@@ -18,9 +20,5 @@ val hash : t -> int
 val empty : t
 
 val is_empty : t -> bool
-
-val add : t -> t -> t
-
-val sub : t -> t -> t
 
 val mul : t -> t -> t

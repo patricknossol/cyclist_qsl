@@ -62,7 +62,7 @@ let pp fmt (f, (ident, vs)) =
 let to_string c = mk_to_string pp c
 
 let parse st =
-  ( Heapsum.parse ~allow_tags:false
+  ( Heapsum.parse
   >>= (fun h ->
         parse_symb symb_ind_implies
         >> Pred.parse << spaces
@@ -70,11 +70,9 @@ let parse st =
   <?> "case" )
     st
 
-let unfold ?(gen_tags = true) (vars, tags) (tag, (ident, args)) case =
+let unfold vars (_, (ident, args)) case =
   let f, (ident', formals) = dest (freshen vars case) in
   assert (Predsym.equal ident ident') ;
   assert (Blist.length args == Blist.length formals) ;
-  assert (Tags.is_empty (Heapsum.tags f)) ;
-  let f = if gen_tags then Heapsum.complete_tags tags f else f in
   let theta = Term.Map.of_list (Blist.combine formals args) in
   Heapsum.subst theta f
