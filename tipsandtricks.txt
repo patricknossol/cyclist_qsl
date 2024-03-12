@@ -56,6 +56,8 @@ Trying to close node: (?=([^](?!\n\n))*L.Unf.([^](?!\n\n))*R.Unf.([^](?!\n\n))*R
 Need to do:
 proof pto intro and other rule for supremum not replace
 proof figure out tags and constraints -> lhs why existential? rhs at all? + lemma rename tag and constr
+proof eqs/deqs equal cut for suprema
+
 test on server
 
 maybe with higher prio depending on testing:

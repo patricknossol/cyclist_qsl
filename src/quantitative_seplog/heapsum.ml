@@ -182,7 +182,8 @@ let do_frames_match frame frame' =
   let free_vars' = Term.Set.filter (fun t -> not (Term.is_exist_var t)) (Heap.vars frame') in
   let upd_chk = Unify.Unidirectional.avoid_replacing_trms (Term.Set.union free_vars free_vars') in
   let state = Heap.classical_unify ~update_check:upd_chk ~with_num:false frame frame' Unification.trivial_continuation Unify.Unidirectional.empty_state in
-  Option.is_some state
+  let state' = Heap.classical_unify ~update_check:upd_chk ~with_num:false frame' frame Unification.trivial_continuation Unify.Unidirectional.empty_state in
+  Option.is_some state && Option.is_some state'
 
 let rec unify_partial_rec ?(frame = None) ?(update_check = Fun._true) ?(matched_hs' = []) defs avoid_vars hs hs' cont init_state =
   match hs with

@@ -188,6 +188,7 @@ let () =
       *)
       let _ = do_test "30" "nil!=a * nil!=b * a!=b * a->w * b->c * ListLenTmp(w, b) + nil!=a * nil!=b * a!=b * a->x * b->c * ListTmp(x, b) |- a->w' * ListLenTmp(w', c) + a->w' * ListTmp(w', c)" [(Rules.split_conform_predicate_summands defs)] in
 
+
       print_endline("FINISH")
       
     else 
