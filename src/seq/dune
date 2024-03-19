@@ -1,0 +1,3 @@
+(library
+ (name seq)
+ (public_name cyclist.seq))

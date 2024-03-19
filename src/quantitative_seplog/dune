@@ -1,7 +1,7 @@
 (library 
  (name quantitative_seplog)
  (public_name cyclist.quantitative_seplog)
- (libraries lib generic mparser-re)
+ (libraries lib generic mparser_re)
  (modules
    (:standard 
       \ slinit

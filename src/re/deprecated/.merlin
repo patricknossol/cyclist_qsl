@@ -1,0 +1,13 @@
+EXCLUDE_QUERY_DIR
+B /usr/lib64/ocaml
+B ../../../_build/default/src/re/deprecated/.re_emacs.objs/byte
+B ../../../_build/default/src/re/deprecated/.re_glob.objs/byte
+B ../../../_build/default/src/re/deprecated/.re_pcre.objs/byte
+B ../../../_build/default/src/re/deprecated/.re_perl.objs/byte
+B ../../../_build/default/src/re/deprecated/.re_posix.objs/byte
+B ../../../_build/default/src/re/deprecated/.re_str.objs/byte
+B ../../../_build/default/src/re/lib/.re.objs/byte
+S /usr/lib64/ocaml
+S .
+S ../lib
+FLG -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -50 -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -50 -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -50 -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -50 -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -50 -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -50

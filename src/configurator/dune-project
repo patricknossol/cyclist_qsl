@@ -1,0 +1,4 @@
+(lang dune 2.7)
+
+(name configurator)
+(version 1.11.0)

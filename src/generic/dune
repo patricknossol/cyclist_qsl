@@ -11,7 +11,7 @@
   (names proof proof_aut trace soundness)
   (flags :standard -xc++ -std=c++17 (:include c_flags.sexp))
   (include_dirs %{ocaml_where}/caml))
- (c_library_flags (:include c_library_flags.sexp) -lstdc++))
+ (c_library_flags (:include c_library_flags.sexp) -lstdc++ -I$HOME/spot/include -Wl,--copy-dt-needed-entries -L$HOME/spot/lib -lspot))
 
 (executable
  (name checkproof)

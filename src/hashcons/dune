@@ -1,0 +1,3 @@
+(library
+ (name hashcons)
+ (public_name cyclist.hashcons))

@@ -1,0 +1,3 @@
+(library
+ (name hashset)
+ (public_name cyclist.hashset))
