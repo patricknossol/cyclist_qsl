@@ -1,8 +1,9 @@
-(** predicate tagged with -1: not precise in defs, 0: not precise but precise in defs, 1: precise*)
+(** predicate tagged with -1: not precise in defs, 0: not precise but precise in defs, 1: precise
+    List is list of predicate symbols conform with pred *)
 open Lib
 open Generic
 
-include BasicType with type t = (int * Pred.t)
+include BasicType with type t = (int * (Pred.t * (Predsym.t list)))
 
 val equal : t -> t -> bool
 (** Compare for equality two predicates. *)
@@ -19,6 +20,8 @@ val arity : t -> int
 
 val args : t -> Term.t list
 
+val conform_list : t -> Predsym.t list
+
 val terms : t -> Term.Set.t
 
 val vars : t -> Term.Set.t
@@ -30,7 +33,8 @@ val parse : (t, 'a) MParser.parser
 val of_string : string -> t
 
 val unify :
-     ?update_check:Unify.Unidirectional.update_check
+     ?allow_conform:bool
+  -> ?update_check:Unify.Unidirectional.update_check
   -> t Unify.Unidirectional.unifier
 (** Unify two predicates. *)
 

@@ -138,6 +138,8 @@ val is_precise : Preddef.t list -> t -> bool
     a change other than just predicate unfolding.
     The function uses defs for predicate definitions.*)
 
+val set_conform_lists : Preddef.t list -> t -> t
+
 val set_precise_preds : Preddef.t list -> t -> t
 (** [set_precise_preds defs f] sets all appropiate predicates to be precise*)
 

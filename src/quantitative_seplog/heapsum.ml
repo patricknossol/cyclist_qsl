@@ -151,7 +151,7 @@ let rec calc_fixed_vars fixed_vars h =
 let is_precise defs' hs =
   match hs with
     | h :: [] ->
-      let precise_preds = Tpreds.for_all ( fun ((_, (ident, _)) as pred) ->
+      let precise_preds = Tpreds.for_all ( fun ((_, ((ident, _), _)) as pred) ->
         let precise_def = Blist.filter_map (fun (_, (sym, (precise, _))) -> if sym = ident then Some(precise > 0) else None) defs' in
         Tpred.precise_tag pred
         || (
@@ -248,7 +248,7 @@ let unify_partial ?(update_check = Fun._true) defs hs hs' cont init_state =
     | None -> None
     | Some(res) -> cont res
 
-let rec classical_unify_rec ?(match_whole = true) ?(update_check = Fun._true) avoid_vars hs hs' cont init_state =
+let rec classical_unify_rec ?(allow_conform = false) ?(match_whole = true) ?(update_check = Fun._true) avoid_vars hs hs' cont init_state =
   (*hs' = ls, hs = rs*)
   match hs' with
     | [] -> Some(init_state)
@@ -256,7 +256,7 @@ let rec classical_unify_rec ?(match_whole = true) ?(update_check = Fun._true) av
       let state = Blist.foldl
         (fun res (h, index) ->
           if Option.is_some res then res else
-          let state = Heap.classical_unify ~update_check ~with_num:false h h' Unification.trivial_continuation init_state in
+          let state = Heap.classical_unify ~allow_conform ~update_check ~with_num:false h h' Unification.trivial_continuation init_state in
           if Option.is_some state then
             let (v, t, mapping) = Option.get state in
             let mapping = mapping @ [(index, index')] in
@@ -284,7 +284,7 @@ let rec classical_unify_rec ?(match_whole = true) ?(update_check = Fun._true) av
         ) None hs in
       state
 
-let classical_unify ?(match_whole = true) ?(update_check = Fun._true) hs hs' cont init_state =
+let classical_unify ?(allow_conform = false) ?(match_whole = true) ?(update_check = Fun._true) hs hs' cont init_state =
   let time = if !Stats.do_statistics then Stats.now() else 0. in
   let avoid_vars = (Term.Set.union (vars hs) (vars hs')) in
   let hs, hs' = Pair.map (fun hs -> 
@@ -293,7 +293,7 @@ let classical_unify ?(match_whole = true) ?(update_check = Fun._true) hs hs' con
     ) (0, []) hs in
     res
   ) (hs, hs') in
-  let res = classical_unify_rec ~match_whole ~update_check
+  let res = classical_unify_rec ~allow_conform ~match_whole ~update_check
     avoid_vars
     hs hs' cont init_state
   in

@@ -10,8 +10,29 @@
 //3*a->b*b=d + a->b |- 2*a->b + 2*a->b*b=d
 //backlinking
 //ListTmp(a,b)*b->c |- a->z' * ListTmp(z',c)
+//
+//
 //ListLenTmp(a,b)*b->c |- ListLenTmp(a,c)
 //0:2,5 (linux) -> 0:0,75 (split id summand) -> 11,9 (new) -> (split conform summand)
-ListLenTmp(a,b)*ListTmp(b,c) |- ListLenTmp(a,c)
+//ListLenTmp(a,b)*ListTmp(b,c) |- ListLenTmp(a,c)
 //1:20 (linux) -> 0:30 (split id summand) -> 11,9 (new) -> 0,02 (split conform summand)
+//
+//
 //ListLenTmp(a,b)*ListTmp(b,c) + ListTmp(a,b)*ListLenTmp(b,c) |- ListLenTmp(a,c)
+
+
+//List Extend by 1 pointer
+
+ListLenTmp(a,b)*b->c |- ListLenTmp(a,c)
+a->b*ListLenTmp(b,c) |- ListLenTmp(a,c)
+
+a->b*RListLenTmp(b,c) |- RListLenTmp(a,c)
+RListLenTmp(a,b)*b->c |- RListLenTmp(a,c)
+
+//List Extend by List
+
+ListLenTmp(a,b)*ListTmp(b,c) |- ListLenTmp(a,c)
+ListTmp(a,b)*ListLenTmp(b,c) |- ListLenTmp(a,c)
+
+RListTmp(a,b)*RListLenTmp(b,c) |- RListLenTmp(a,c)
+RListLenTmp(a,b)*RList(b,c) |- RListLenTmp(a,c)

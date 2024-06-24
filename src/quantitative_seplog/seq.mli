@@ -54,6 +54,8 @@ val partition_summands : t -> (int * int) list -> t * t
     The summands on the right side of the first returned sequence are ordered, so that they appear in
     the same order as the summands they match with on the left hand side.*)
 
+val set_conform_lists : Preddef.t list -> t -> t
+
 val set_precise_preds : Preddef.t list -> t -> t
 (** [set_precise_preds defs f] sets all appropiate predicates to be precise*)
 

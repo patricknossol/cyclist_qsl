@@ -316,13 +316,13 @@ let unify_partial ?(update_check = Fun._true) ?(with_num = true) h h' cont
     init_state
   else None
 
-let classical_unify ?(inverse = false) 
+let classical_unify ?(allow_conform = false) ?(inverse = false) 
   ?(update_check = Fun._true)  ?(with_num = true) h h' cont init_state =  
   if not with_num || Num.subsumed h.num h'.num then
     let h_inv, h'_inv = Fun.direct inverse Pair.mk h h' in
 (* NB how we don't need an "inverse" version for ptos and inds, since *)
 (* we unify the whole multiset, not a subformula *)
-    (Tpreds.unify ~update_check h_inv.inds h'_inv.inds
+    (Tpreds.unify ~allow_conform ~update_check h_inv.inds h'_inv.inds
       (Ptos.unify ~update_check h_inv.ptos h'_inv.ptos
           (Deqs.unify_partial ~inverse ~update_check h.deqs h'.deqs
             (Uf.unify_partial ~inverse ~update_check h.eqs h'.eqs cont))))

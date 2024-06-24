@@ -84,7 +84,15 @@ let () =
       let (hs, pred) = Indrule.dest indrule in
       let ((_, (_, hss)), _) = Seq.split_sum (Form.reduce_zeros (Form.mk_heapsums [hs]), Form.empty) in
       if Blist.length hss = 0 then Indrule.mk [Heap.mk_num (0,0)] pred
-      else Indrule.mk (Blist.nth hss 0) pred
+      else 
+      let hs = Blist.nth hss 0 in
+      let hs = Blist.map (fun h -> 
+        Heap.with_inds h (Tpreds.map (fun (tag, (pred, conform_list)) ->
+          let (_, (_, (_, conform_predsym_list))) = Preddef.dest (Defs.get_preddef (Pred.predsym pred) defs) in
+          (tag, (pred, conform_predsym_list))
+        ) (h.Heap.inds))
+      ) hs in
+      Indrule.mk hs pred
     ) rules, r)
   ) (Defs.to_list defs) in
   let defs = Defs.of_list defs_list in
@@ -97,6 +105,7 @@ let () =
     
     let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp !cl_sequent in
     let seq = Seq.reduce_zeros seq in
+    let seq = Seq.set_conform_lists defs_list seq in
     let seq = Seq.set_precise_preds defs_list seq in
     let seq = Seq.rational_to_natural_nums seq in
     let seq = Seq.split_sum seq in
@@ -141,6 +150,7 @@ let () =
         print_endline title ;
         let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp s in
         let seq = Seq.reduce_zeros seq in
+        let seq = Seq.set_conform_lists defs_list seq in
         let seq = Seq.set_precise_preds defs_list seq in
         let seq = Seq.rational_to_natural_nums seq in
         let seq = Seq.split_sum seq in
@@ -208,11 +218,12 @@ let () =
 
       Blist.iter (fun test ->
 
-        if String.get test 0 = '/' || test = "" then
+        if test = "" || String.get test 0 = '/' then
           ()
         else
           let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp test in
           let seq = Seq.reduce_zeros seq in
+          let seq = Seq.set_conform_lists defs_list seq in
           let seq = Seq.set_precise_preds defs_list seq in
           let seq = Seq.split_sum seq in
           

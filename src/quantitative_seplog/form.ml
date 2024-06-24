@@ -169,7 +169,7 @@ let rec is_boolean ?(covered = []) defs (_, (_, hss)) =
     match hs with
       | h :: [] ->
         (h.Heap.num = (0,0) || h.Heap.num = (1,0))
-        && Tpreds.for_all (fun (_, (ident, _)) ->
+        && Tpreds.for_all (fun (_, ((ident, _), _)) ->
           if Blist.mem ident covered then true else
             let cases = Blist.flatten (Blist.filter_map (fun (def, (sym, _)) -> if sym = ident then Some(Preddef.rules_heapsums def) else None) defs') in
             let covered = covered @ [ident] in
@@ -186,7 +186,7 @@ let rec is_natural_least_one ?(covered = []) defs (_, (_, hss)) =
   Blist.for_all (fun hs -> 
     Blist.for_all (fun h -> 
       (snd h.Heap.num <= 0 || Num.get_int h.Heap.num >= 1)
-      && Tpreds.for_all (fun (_, (ident, _)) ->
+      && Tpreds.for_all (fun (_, ((ident, _), _)) ->
         if Blist.mem ident covered then true else
           let cases = Blist.flatten (Blist.filter_map (fun (def, (sym, _)) -> if sym = ident then Some(Preddef.rules_heapsums def) else None) defs') in
           let covered = covered @ [ident] in
@@ -203,7 +203,7 @@ let rec is_non_empty_derivable ?(covered = []) defs (_, (_, hss)) =
     Blist.for_all (fun h ->
       h.Heap.num = (0,0)
       || not (Ptos.is_empty h.Heap.ptos)
-      || (not (Tpreds.is_empty h.Heap.inds) && Tpreds.for_all (fun (_, (ident, _)) -> 
+      || (not (Tpreds.is_empty h.Heap.inds) && Tpreds.for_all (fun (_, ((ident, _), _)) -> 
         if Blist.mem ident covered then true else
           let cases = Blist.flatten (Blist.filter_map (fun (def, (sym, _)) -> if sym = ident then Some(Preddef.rules_heapsums def) else None) defs') in
           let covered = covered @ [ident] in
@@ -225,16 +225,27 @@ let is_precise defs (_, (_, hss)) =
     | [] -> true
     | _ -> false
 
+let set_conform_lists defs (tag, (cs, hss)) =
+  let defs' = Blist.map (fun def -> Preddef.dest def) defs in
+  (tag, (cs, Blist.map (fun hs ->
+    Blist.map (fun h ->
+      Heap.with_inds h (Tpreds.map (fun (precise, ((ident, args), conform_list)) ->
+        let (_, (_, (_, conform_predsym_list))) = Blist.find (fun (_, (sym, _)) -> sym = ident) defs' in
+        (precise, ((ident, args), conform_predsym_list))
+      ) h.Heap.inds)
+    ) hs  
+  ) hss ))
+
 let set_precise_preds defs (tag, (cs, hss)) =
   let defs' = Blist.map (fun def -> Preddef.dest def) defs in
   (tag, (cs, Blist.map (fun hs ->
     Blist.map (fun h ->
-      Heap.with_inds h (Tpreds.map (fun (precise, (ident, args)) ->
+      Heap.with_inds h (Tpreds.map (fun (precise, ((ident, args), conforms)) ->
         let precise_def = Blist.filter_map (fun (_, (sym, (precise, _))) -> if sym = ident then Some(precise > 0) else None) defs' in
         if Blist.for_all (fun b -> b) precise_def then
-          if Blist.for_all (fun arg -> not (Term.is_exist_var arg)) args then (1, (ident, args))
-          else (0, (ident, args))
-        else (-1, (ident, args))
+          if Blist.for_all (fun arg -> not (Term.is_exist_var arg)) args then (1, ((ident, args), conforms))
+          else (0, ((ident, args), conforms))
+        else (-1, ((ident, args), conforms))
       ) h.Heap.inds)
     ) hs  
   ) hss ))

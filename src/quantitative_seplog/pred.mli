@@ -24,7 +24,10 @@ val parse : (t, 'a) MParser.parser
 val of_string : string -> t
 
 val unify :
-     ?update_check:Unify.Unidirectional.update_check
+     ?allow_conform:bool
+  -> ?conform_list:Predsym.t list
+  -> ?conform_list':Predsym.t list
+  -> ?update_check:Unify.Unidirectional.update_check
   -> t Unify.Unidirectional.unifier
 (** Compute substitution that unifies two predicates. *)
 

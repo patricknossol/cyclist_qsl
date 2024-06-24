@@ -5,36 +5,38 @@ open Generic
 
 open MParser
 
-module TPred = Pair.Make (Int) (Pred)
+module TPred = Pair.Make (Int) (Pair.Make (Pred) (Flist.Make (Predsym)))
 include TPred
 
-let subst theta (precise, pred) = (precise, Pred.subst theta pred)
+let subst theta (precise, (pred, conforms)) = (precise, (Pred.subst theta pred, conforms))
 
-let equal (_, p1) (_, p2) = Pred.equal p1 p2
+let equal (_, (p1, _)) (_, (p2, _)) = Pred.equal p1 p2
 
-let compare (_, p1) (_, p2) = Pred.compare p1 p2
+let compare (_, (p1, _)) (_, (p2, _)) = Pred.compare p1 p2
 
-let unify ?(update_check = Fun._true) (_, pred) (_, pred')
+let unify ?(allow_conform = false) ?(update_check = Fun._true) (_, (pred, conform_list)) (_, (pred', conform_list'))
     cont init_state =
-  Pred.unify ~update_check pred pred' cont init_state
+  Pred.unify ~allow_conform ~conform_list:conform_list ~conform_list':conform_list' ~update_check pred pred' cont init_state
 
-let biunify ?(update_check = Fun._true) (_, pred)
-    (_, pred') cont init_state =
+let biunify ?(update_check = Fun._true) (_, (pred, _))
+    (_, (pred', _)) cont init_state =
   Pred.biunify ~update_check pred pred' cont init_state
 
 let precise_tag (precise, _) = precise > 0
 
-let predsym (_, tpred) = Pred.predsym tpred
+let predsym (_, (tpred, _)) = Pred.predsym tpred
 
-let args (_, tpred) = Pred.args tpred
+let args (_, (tpred, _)) = Pred.args tpred
 
-let arity (_, tpred) = Pred.arity tpred
+let conform_list (_, (_, l)) = l
 
-let terms (_, tpred) = Pred.terms tpred
+let arity (_, (tpred, _)) = Pred.arity tpred
+
+let terms (_, (tpred, _)) = Pred.terms tpred
 
 let vars tpred = Term.filter_vars (terms tpred)
 
-let to_string (_, (pred, args)) =
+let to_string (_, ((pred, args), _)) =
   Predsym.to_string pred
   ^ bracket (Term.FList.to_string_sep symb_comma.sep args)
 
@@ -46,15 +48,15 @@ let parse st =
         Tokens.parens (Tokens.comma_sep Term.parse)
         << spaces
         >>= fun arg_list ->
-        return (0, (pred, arg_list)) )
+        return (0, ((pred, arg_list), [])) )
   <?> "ind" )
     st
 
-let norm eqs (precise, pred) = (precise, Pred.norm eqs pred)
+let norm eqs (precise, (pred, conforms)) = (precise, (Pred.norm eqs pred, conforms))
 
 let of_string = mk_of_string parse
 
-let pp fmt (_, pred) =
+let pp fmt (_, (pred, _)) =
   Format.fprintf fmt "@[%a%s%s%s%s@]" Predsym.pp (Pred.predsym pred)
     ("")
     symb_lp.str

@@ -18,11 +18,11 @@ end
 
 include IndSubf
 
-let unify ?(update_check = Fun._true) (p, args) (p', args') cont init_state =
-  if not (Predsym.equal p p') then None
-  else
+let unify ?(allow_conform = false) ?(conform_list = []) ?(conform_list' = []) ?(update_check = Fun._true) (p, args) (p', args') cont init_state =
+  if Predsym.equal p p' || (allow_conform && (Blist.mem p conform_list' || Blist.mem p' conform_list)) then
     Unify.Unidirectional.unify_trm_list ~update_check args args' cont
       init_state
+  else None
 
 let biunify ?(update_check = Fun._true) (p, args) (p', args') cont init_state =
   if not (Predsym.equal p p') then None

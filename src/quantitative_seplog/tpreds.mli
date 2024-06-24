@@ -25,7 +25,8 @@ val subsumed : ?total:bool -> Uf.t -> t -> t -> bool
     check if the first multiset is a subset of the second modulo equalities. *)
 
 val unify :
-     ?total:bool
+     ?allow_conform:bool
+  -> ?total:bool
   -> ?update_check:Unify.Unidirectional.update_check
   -> t Unify.Unidirectional.unifier
 (** Compute substitution that makes the two multisets equal up to tags.

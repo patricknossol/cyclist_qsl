@@ -125,6 +125,11 @@ let partition_summands (((tl, _), (tr, _)) as seq) mappings =
     (((tl, (lc, [ls1])), (tr, (rc, [rs1]))), ((tl, (lc, [ls2])), (tr, (rc, [rs2]))))
   with Form.Not_symheap_sum -> ((Form.empty, Form.empty), seq)
 
+let set_conform_lists defs (l, r) =
+  let l = Form.set_conform_lists defs l in
+  let r = Form.set_conform_lists defs r in
+  (l, r)
+
 let set_precise_preds defs (l, r) =
   let l = Form.set_precise_preds defs l in
   let r = Form.set_precise_preds defs r in
