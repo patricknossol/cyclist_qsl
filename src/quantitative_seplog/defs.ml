@@ -30,7 +30,7 @@ module Defs = struct
 
   let pp fmt d = Format.fprintf fmt "%s" (to_string d)
 
-  let is_defined defs (_, (ident, _)) = mem ident defs
+  let is_defined defs (_, ((ident, _), _)) = mem ident defs
 
   let is_undefined defs pred = not (is_defined defs pred)
 
@@ -51,7 +51,7 @@ module Defs = struct
       ) (Preddef.rules def)
     ) [] defs
 
-  let unfold vars ((_, (ident, _)) as pred) defs =
+  let unfold vars ((_, ((ident, _), _)) as pred) defs =
     Blist.map
       (Indrule.unfold vars pred)
       (get_def ident defs)

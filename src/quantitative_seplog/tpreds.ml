@@ -16,7 +16,7 @@ let vars inds = Term.filter_vars (terms inds)
 
 let idents inds =
   map_to Predsym.MSet.add Predsym.MSet.empty
-    (fun (_, (id, _)) -> id)
+    (fun (_, ((id, _), _)) -> id)
     inds
 
 let to_string_list v = Blist.map Tpred.to_string (elements v)
@@ -24,12 +24,12 @@ let to_string_list v = Blist.map Tpred.to_string (elements v)
 let to_string v = Blist.to_string symb_star.sep Tpred.to_string (elements v)
 
 let equal inds inds' =
-  Pred.MSet.equal (map_to Pred.MSet.add Pred.MSet.empty (fun (_, ind) -> ind) inds) (map_to Pred.MSet.add Pred.MSet.empty (fun (_, ind) -> ind) inds')
+  Pred.MSet.equal (map_to Pred.MSet.add Pred.MSet.empty (fun (_, (ind, _)) -> ind) inds) (map_to Pred.MSet.add Pred.MSet.empty (fun (_, (ind, _)) -> ind) inds')
 
-let unify ?(total = true) ?(update_check = Fun._true) inds
+let unify ?(allow_conform = false) ?(total = true) ?(update_check = Fun._true) inds
     inds' cont init_state =
   mk_unifier total true
-    (Tpred.unify ~update_check)
+    (Tpred.unify ~allow_conform ~update_check)
     inds inds' cont init_state
 
 let biunify ?(total = true) ?(update_check = Fun._true) inds

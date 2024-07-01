@@ -65,7 +65,8 @@ val unify_partial :
     This requires the factor of summands to be exactly 1*)
 
 val classical_unify :
-     ?match_whole:bool
+    ?allow_conform:bool
+  -> ?match_whole:bool
   -> ?update_check:Unify.Unidirectional.update_check
   -> t Unify.Unidirectional.unifier
 (** [classical_unify ?match_whole avoid_tags hs hs' cont init_state]

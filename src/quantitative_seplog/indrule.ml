@@ -70,7 +70,7 @@ let parse st =
   <?> "case" )
     st
 
-let unfold vars (_, (ident, args)) case =
+let unfold vars (_, ((ident, args), _)) case =
   let f, (ident', formals) = dest (freshen vars case) in
   assert (Predsym.equal ident ident') ;
   assert (Blist.length args == Blist.length formals) ;

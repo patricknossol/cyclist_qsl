@@ -56,6 +56,16 @@ RListLen precise {
 	x!=y * RListLenStep(x,x',y) * x'->y + RListStep(x,x',y) * x'->y => RListLen(x,y)
 } ;
 
+RListTmp conform RListLenTmp {
+	x->y => RListTmp(x,y) |
+	RListTmp(x,x') * x'->y => RListTmp(x,y)
+} ;
+
+RListLenTmp {
+	x->y => RListLenTmp(x,y) |
+	RListLenTmp(x,x') * x'->y + RListTmp(x,x') * x'->y => RListLenTmp(x,y)
+} ;
+
 ListNilEmpty precise {
 	x=nil => ListNilEmpty(x) |
 	x->y' * ListNil(y') => ListNilEmpty(x)

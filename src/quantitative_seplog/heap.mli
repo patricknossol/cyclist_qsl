@@ -132,7 +132,8 @@ val unify_partial :
 (** Unify two heaps such that the first becomes a subformula of the second. *)
 
 val classical_unify :
-     ?inverse:bool
+    ?allow_conform:bool
+  -> ?inverse:bool
   -> ?update_check:Unify.Unidirectional.update_check
   -> ?with_num:bool
   -> t Unify.Unidirectional.unifier
