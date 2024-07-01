@@ -75,6 +75,7 @@ let split_sum (((tl, (lc, lss)), (tr, (rc, rss))) as seq) =
   let (lss', rss') = Pair.map (fun hss ->
     Blist.map (fun hs ->
       Blist.flatten (Blist.map (fun h ->
+        if Num.get_int h.Heap.num = 0 then [h] else
         let h_single = Heap.with_num h (1,0) in
         let hs' = Blist.foldl (fun hs' r ->
           let h' = Heap.copy_fresh_heap !seq_vars h_single in
@@ -178,6 +179,7 @@ let rational_to_natural_nums ((lt, (lc, lss)), (rt, (rc, rss))) =
   ) (lss, rss) in
   let scaled_floats, power = scale_floats_to_ints (lnums @ rnums) in
   let factor = gcd_list scaled_floats in
+  if factor = 0 then ((lt, (lc, lss)), (rt, (rc, rss))) else
   let lss, rss = Pair.map (fun hss ->
     Blist.map (fun hs ->
       Blist.map (fun h -> 

@@ -225,6 +225,7 @@ let () =
           let seq = Seq.reduce_zeros seq in
           let seq = Seq.set_conform_lists defs_list seq in
           let seq = Seq.set_precise_preds defs_list seq in
+          let seq = Seq.rational_to_natural_nums seq in
           let seq = Seq.split_sum seq in
           
           let res =

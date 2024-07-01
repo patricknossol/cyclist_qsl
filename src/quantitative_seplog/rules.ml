@@ -670,7 +670,8 @@ let ruf_rl defs ((((tag_l, _) as l), (tag_r, _)) as seq) =
         let do_case f =
           let r' = Heapsum.star [r'] f in
           let rs' = Blist.flatten (Blist.map (fun r'' -> if r'' == r then r' else [r'']) rs) in
-          let rf' = Form.reduce_zeros (tag_r, (cs', [rs'])) in
+          let (tag_rf', (cs_rf', rfs')) as rf' = Form.reduce_zeros (tag_r, (cs', [rs'])) in
+          let rf' = if Blist.length rfs' > 0 then rf' else (tag_rf', (cs_rf', [[Heap.mk_num (0,0)]])) in
           let seq' = ((tag_l, (cs, [ls])), rf') in
           let seq' = Seq.rational_to_natural_nums seq' in
           let seq' = Seq.split_sum seq' in

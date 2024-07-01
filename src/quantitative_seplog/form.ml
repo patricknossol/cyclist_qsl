@@ -20,6 +20,7 @@ let dest : t -> Ord_constraints.t * Heap.t = function
 
 let dest_sum : t -> Ord_constraints.t * Heapsum.t = function
   | _, (cs, [s]) -> (cs, s)
+  | _, (cs, []) -> (cs, [])
   | _ -> raise Not_symheap_sum
 
 let constraints_sep cs =

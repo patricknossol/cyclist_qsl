@@ -206,25 +206,25 @@ BinPathLen {
 	x->x',y' * BinPathLen(y',y) + x->x',y' * BinPath(y',y) => BinPathLen(x,y)
 } ;
 
-BinTree { 
+BinTree conform BinTreeHeight { 
 	emp => BinTree(x) | 
 	x->y',x' * BinTree(y') * BinTree(x') => BinTree(x) 
 } ;
 
 BinTreeHeight { 
-	0 => BinTreeHeight(x) | 
+	emp => BinTreeHeight(x) | 
 	x->y',x' * BinTreeHeight(y') * BinTree(x') + x->y',x' * BinTree(y') * BinTree(x') => BinTreeHeight(x) |
 	x->y',x' * BinTree(y') * BinTreeHeight(x') + x->y',x' * BinTree(y') * BinTree(x') => BinTreeHeight(x) 
 } ;
 
-BinTreeSeg {
+BinTreeSeg conform BinTreeSegHeight {
 	x=y => BinTreeSeg(x,y) |
 	x->x',y' * BinTreeSeg(x',y) * BinTree(y') => BinTreeSeg(x,y) | 
 	x->x',y' * BinTree(x') * BinTreeSeg(y',y) => BinTreeSeg(x,y)
 } ;
 
 BinTreeSegHeight {
-	0 => BinTreeSegHeight(x,y) |
+	x=y => BinTreeSegHeight(x,y) |
 	x->x',y' * BinTreeSegHeight(x',y) * BinTree(y') + x->x',y' * BinTreeSeg(x',y) * BinTree(y') => BinTreeSegHeight(x,y) | 
 	x->x',y' * BinTree(x') * BinTreeSegHeight(y',y) + x->x',y' * BinTree(x') * BinTreeSeg(y',y) => BinTreeSegHeight(x,y)
 } ;
