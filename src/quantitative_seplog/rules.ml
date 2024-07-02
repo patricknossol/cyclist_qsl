@@ -670,7 +670,8 @@ let ruf_rl defs ((((tag_l, _) as l), (tag_r, _)) as seq) =
         let do_case f =
           let r' = Heapsum.star [r'] f in
           let rs' = Blist.flatten (Blist.map (fun r'' -> if r'' == r then r' else [r'']) rs) in
-          let rf' = Form.reduce_zeros (tag_r, (cs', [rs'])) in
+          let (tag_rf', (cs_rf', rfs')) as rf' = Form.reduce_zeros (tag_r, (cs', [rs'])) in
+          let rf' = if Blist.length rfs' > 0 then rf' else (tag_rf', (cs_rf', [[Heap.mk_num (0,0)]])) in
           let seq' = ((tag_l, (cs, [ls])), rf') in
           let seq' = Seq.rational_to_natural_nums seq' in
           let seq' = Seq.split_sum seq' in
@@ -1511,6 +1512,266 @@ let wrap_scps r defs =
 
 (*let sort_rule_seq = [Rule.mk_infrule sort_rule]*)
 
+let wrap_test r = Seqtactics.compose r (Seqtactics.attempt simplify_seq)
+let wrap_scps_test defs r = Seqtactics.compose r (Seqtactics.attempt (split_conform_predicate_summands defs))
+let ruf_test defs = wrap_scps_test defs (wrap_test (ruf_rl defs))
+let luf_test defs = wrap_test (Seqtactics.compose 
+(Seqtactics.compose (luf_rl defs) (Seqtactics.attempt (split_conform_predicate_summands defs)))
+(Seqtactics.attempt lhs_instantiate_seq))
+let pto_test = wrap_test (Seqtactics.first [pto_intro; instantiate_pto_wo_rule])
+let pred_test defs = wrap_test (pred_intro defs)
+
+let id_seq seq =
+  [([(seq, Seq.tag_pairs seq, Tagpairs.empty)], "Identity")]
+
+let mk_backlink_rule_seq_test (trm_subst, tag_subst) ((mapped_src_lhs, mapped_src_rhs) as mapped_src_seq) 
+    (((_, (_, rest_src_lss)), _) as rest_src_seq) do_split (_targ_idx, targ_seq) =
+  let ((subst_lhs, subst_rhs) as subst_seq) =
+    Seq.subst trm_subst (Seq.subst_tags tag_subst targ_seq)
+  in
+  let (subst_lhs_cs, subst_lhs_hs), (subst_rhs_cs, subst_rhs_hs) =
+    Seq.dest_sum subst_seq
+  in
+  let (src_lhs_cs, src_lhs_hs), (src_rhs_cs, src_rhs_hs) = Seq.dest_sum mapped_src_seq in
+  let src_lhs_cs = Ord_constraints.close src_lhs_cs in
+  let subst_rhs_cs = Ord_constraints.close subst_rhs_cs in
+  let lhs_transform = 
+    Unify.Unidirectional.realize
+      ((Heapsum.classical_unify
+          ~update_check:Unify.Unidirectional.modulo_entl subst_lhs_hs
+          src_lhs_hs)
+         (Unify.Unidirectional.unify_tag_constraints (*Left: theta(Backlink target node) subset of leaf node*)
+            ~update_check:Unify.Unidirectional.modulo_entl subst_lhs_cs
+            src_lhs_cs Unification.trivial_continuation))
+  in
+  let rhs_transform =
+    Unify.Unidirectional.realize
+      ((Heapsum.classical_unify
+          ~update_check:Unify.Unidirectional.modulo_entl src_rhs_hs
+          subst_rhs_hs)
+         (Unify.Unidirectional.unify_tag_constraints (*Right: Leaf node subset of theta(Backlink target node)*)
+            ~update_check:Unify.Unidirectional.modulo_entl src_rhs_cs
+            subst_rhs_cs Unification.trivial_continuation))
+  in
+  let () =
+    debug (fun _ ->
+        "Checking transform for LHS:\n\t"
+        ^ Form.to_string subst_lhs
+        ^ "\n\t" ^ Form.to_string mapped_src_lhs )
+  in
+  assert (Option.is_some lhs_transform) ;
+  let () =
+    debug (fun _ ->
+        "Checking transform for RHS:\n\t"
+        ^ Form.to_string subst_rhs
+        ^ "\n\t" ^ Form.to_string mapped_src_rhs )
+  in
+  assert (Option.is_some rhs_transform) ;
+  let lhs_trm_transform, lhs_tag_transform, _ = Option.get lhs_transform in
+  let rhs_trm_transform, rhs_tag_transform, _ = Option.get rhs_transform in
+  let transformed_lhs =
+    Form.subst_tags lhs_tag_transform
+      (Form.subst lhs_trm_transform subst_lhs)
+  in
+  let transformed_rhs =
+    Form.subst_tags rhs_tag_transform
+      (Form.subst rhs_trm_transform mapped_src_rhs)
+  in
+  let _left_transformed_seq = (transformed_lhs, subst_rhs) in
+  let _right_transformed_seq = (mapped_src_lhs, transformed_rhs) in
+  let split_rule = split_sum_rule mapped_src_seq rest_src_seq in
+  let backl_seq = id_seq in
+  if do_split && Blist.length rest_src_lss > 0 && Blist.length (Blist.nth rest_src_lss 0) > 0 then
+    split_rule
+  else
+    backl_seq
+
+
+
+let mk_lemma_rule_seq_test (trm_subst, tag_subst, _) (((tag_src_l, _) as mapped_src_lhs), _)
+  ((rest_src_lhs, rest_src_rhs) as rest_src_seq) defs
+    (targ_idx, ((lhs, rhs) as _targ_seq)) =
+  let cs, hs = Form.dest_sum mapped_src_lhs in
+  let defs_list = Defs.to_list defs in
+  let trm_theta, _ = Subst.partition trm_subst in
+  let tag_theta, _ = Tagpairs.partition_subst tag_subst in
+  let ((tag_subst_l, _) as subst_lhs) = Form.subst trm_subst (Form.subst_tags tag_subst lhs) in
+  let subst_rhs = Form.subst trm_theta (Form.subst_tags tag_theta rhs) in
+  let subst_seq = (subst_lhs, subst_rhs) in
+  let () = debug (fun _ -> "substituted seq is " ^ (Seq.to_string subst_seq)) in
+  let subst_cs, subst_hs = Form.dest_sum subst_lhs in
+  (* Calculate the common spatial frame*)(*h(src_lhs) - subst_h(target_lhs)*)
+  let frame =
+    if Blist.length subst_hs > 0 && Blist.length hs > 0 then
+      let (f, _) = Heap.calc_spatial_frame (Blist.nth subst_hs 0) (Blist.nth hs 0) in
+      lose_precise_preds f
+    else Heap.empty in
+  if Blist.length hs > 1
+    && not (Form.is_precise defs_list (Form.mk_heap frame))
+    && not (Form.is_precise defs_list (Form.mk_heapsums [ snd (Blist.foldl (fun (subst_hs, res) h -> (*Rest precise*)
+      match subst_hs with
+      | [] -> ([], res)
+      | subst_h :: subst_hs ->
+        let (_, rest) = Heap.calc_spatial_frame subst_h h in
+        (subst_hs, res @ [lose_precise_preds rest])
+    ) (subst_hs, []) hs )]))
+  then (fun s -> []) else
+  (* Calculate whether eqs and deqs of matched source summands are equal (ordering of the sums is consistent to matching) *)
+  let (eqs_deqs_sum, eqs_deqs_equal) = 
+    Blist.foldl (fun (eqs_deqs, eqs_deqs_equal) h ->
+      let h_eqs_deqs = Heap.with_eqs (Heap.with_deqs Heap.empty h.Heap.deqs) h.Heap.eqs in
+      if Blist.length eqs_deqs = 0 then ([h_eqs_deqs], true)
+      else if not eqs_deqs_equal then (eqs_deqs @ [h_eqs_deqs], false)
+      else 
+        let first_eqs_deqs = Blist.nth eqs_deqs 0 in
+        let free_vars = Term.Set.filter (fun t -> not (Term.is_exist_var t)) (Heap.vars h_eqs_deqs) in
+        let free_vars' = Term.Set.filter (fun t -> not (Term.is_exist_var t)) (Heap.vars first_eqs_deqs) in
+        let upd_chk = Unify.Unidirectional.avoid_replacing_trms (Term.Set.union free_vars free_vars') in
+        let eqs_deqs_equal = Option.is_some (Heap.classical_unify ~update_check:upd_chk h_eqs_deqs first_eqs_deqs Unification.trivial_continuation Unify.Unidirectional.empty_state) 
+                          && Option.is_some (Heap.classical_unify ~update_check:upd_chk first_eqs_deqs h_eqs_deqs Unification.trivial_continuation Unify.Unidirectional.empty_state) in
+        (eqs_deqs @ [h_eqs_deqs], eqs_deqs_equal) 
+    ) ([], true) hs
+  in
+  let () = debug (fun _ ->
+    "src_lhs: " ^ Heapsum.to_string hs
+    ^ "\ntarget_lhs: " ^ Heapsum.to_string subst_hs
+    ^ "\nframe=src-target: " ^ Heap.to_string frame
+    ^ "\neqs_deqs equal: " ^ (string_of_bool eqs_deqs_equal)
+  ) in
+  (* Alpha-rename any clashing existential variables in the succedent of the lemma *)
+  let ctxt_vars =
+    Term.Set.union (Heapsum.terms eqs_deqs_sum) (Term.Set.union (Heap.terms frame) (Form.terms rest_src_rhs))
+  in
+  let ctxt_tags =
+    Tags.union_of_list
+      [Ord_constraints.tags cs; Form.tags rest_src_rhs]
+  in
+  let clashed_tags =
+    Tags.inter ctxt_tags
+      (Tags.filter Tags.is_exist_var (Form.tags subst_rhs))
+  in
+  let clashed_vars =
+    Term.Set.inter ctxt_vars
+      (Term.Set.filter Term.is_exist_var (Form.terms subst_rhs))
+  in
+  let all_tags = Tags.union ctxt_tags (Seq.tags subst_seq) in
+  let all_vars = Term.Set.union ctxt_vars (Seq.vars subst_seq) in
+  let tag_subst' = Tagpairs.mk_ex_subst all_tags clashed_tags in
+  let trm_subst' = Subst.mk_ex_subst all_vars clashed_vars in
+  let subst_rhs =
+    Form.subst trm_subst' (Form.subst_tags tag_subst' subst_rhs)
+  in
+  (* Construct the new subgoals *)
+  let lemma_seq =
+    let (_, subst_hs) = 
+      Blist.foldl (fun (subst_hs, reslist) h ->
+        match subst_hs with
+        | [] -> ([], reslist)
+        | subst_h :: subst_hs ->
+          let res = Heap.with_eqs (Heap.with_deqs subst_h h.SH.deqs) h.SH.eqs in
+          (subst_hs, reslist @ [res])
+      ) (subst_hs, []) hs
+    in
+    ((tag_subst_l, (cs, [subst_hs])), subst_rhs)
+  in
+  (* let () = debug (fun _ -> (Heap.to_string subst_h') ^ " * " ^ (Heap.to_string frame) ^ " = " ^ (Heap.to_string (Heap.star subst_h' frame))) in *)
+  let () = debug (fun _ -> "Rest: " ^ Seq.to_string rest_src_seq) in
+  let is_left_progressing = Form.is_non_empty_derivable defs_list (Form.mk_heap frame) in
+  let split_sum_rules = Seqtactics.compose (Seqtactics.attempt (split_conform_predicate_summands defs)) (Seqtactics.attempt split_id_summand) in
+  let _backlink_rule = 
+    if not is_left_progressing then id_seq
+    else
+      rule_subst_lemma tag_subst_l
+  in
+  if eqs_deqs_equal then
+    let eqs_deqs_heap = if Blist.length eqs_deqs_sum > 0 then Blist.nth eqs_deqs_sum 0 else Heap.empty in
+    let (_, (cont_cs, cont_f)), cont_r = (Form.star (Form.mk_heap eqs_deqs_heap) (Form.star (Tags.anonymous, (cs, [[frame]])) subst_rhs), rest_src_rhs) in
+    let cont_seq = ((tag_src_l, (cont_cs, cont_f)), cont_r) in
+    let lemma_rule = apply_lemma defs (lemma_seq, cont_seq, rest_src_lhs) is_left_progressing in
+    Seqtactics.compose lemma_rule (Seqtactics.attempt split_sum_rules)
+  else
+    let (_, (cont1_cs, cont1_f)), cont1_r = (Form.star (Tags.anonymous, (cs, [[frame]])) subst_rhs, rest_src_rhs) in
+    let (_, (cont2_cs, cont2_f)), cont2_r = (Form.star (Form.mk_heapsums [eqs_deqs_sum]) (Form.star (Tags.anonymous, (cs, [[frame]])) subst_rhs), rest_src_rhs) in
+    let cont1_seq = ((tag_src_l, (cont1_cs, cont1_f)), cont1_r) in
+    let cont2_seq = ((tag_src_l, (cont2_cs, cont2_f)), cont2_r) in
+    let cont_seqs = Seqtactics.choice [
+      apply_lemma defs (lemma_seq, cont1_seq, rest_src_lhs) is_left_progressing ;
+      apply_lemma defs (lemma_seq, cont2_seq, rest_src_lhs) is_left_progressing] in
+    Seqtactics.compose cont_seqs (Seqtactics.attempt split_sum_rules)
+
+
+type backlink_test_t = FT of Seqtactics.t | PT of Seqtactics.t | NT
+let dest_taggedrule_test = function FT r -> r | PT r -> r | NT -> (fun seq -> [])
+let cmp_taggedrule_test r r' =
+  match (r, r') with
+  | FT _, PT _ -> -1
+  | PT _, FT _ -> 1
+  | _ -> 0
+
+let dobackl_test defs target seq =
+  let ((src_lhs, src_rhs) as src_seq) = seq in
+  let () = debug (fun _ -> "dobackl_rule") in
+  let matches = matches defs src_seq in
+  let targets = [target] in
+  let apps =
+    Blist.bind
+      (fun target -> Blist.map (fun f -> f) (matches target))
+      targets
+  in
+  (*print_endline ("Apps " ^ (string_of_bool (Blist.length apps > 0)));*)
+  let f ((theta, tagpairs, mappings) as subst) =
+    let () = debug (fun _ -> "Constructing backlink") in
+    let ((targ_lhs, targ_rhs) as targ_seq) = target in
+    let () =
+      debug (fun _ ->
+          "Target seq is: "
+          ^ Seq.to_string targ_seq )
+    in
+    let () =
+      debug (fun _ ->
+          "Term Subst: " ^ Term.Map.to_string Term.to_string theta )
+    in
+    let () = debug (fun _ -> "Tag Subst: " ^ Tagpairs.to_string tagpairs) in
+    let (_, mapping_l, mapping_r) = Blist.foldl (fun (left, mapping_l, mapping_r) mapping ->
+      if left then
+        if fst mapping = -2 then (false, mapping_l, mapping_r)
+        else (true, mapping_l @ [mapping], mapping_r)
+      else (false, mapping_l, mapping_r @ [mapping])
+    ) (true, [], []) mappings in
+    let ((_, mapped_src_lhs), (_, rest_src_lhs)) = Seq.partition_summands (targ_lhs, src_lhs) mapping_l in
+    let ((mapped_src_rhs, _), (rest_src_rhs, _)) = Seq.partition_summands (src_rhs, targ_rhs) mapping_r in
+    let subst_targ_lhs, _ =
+      Seq.subst theta (Seq.subst_tags tagpairs targ_seq)
+    in
+    let () =
+      debug (fun _ ->
+          "\t" ^ "Checking for subsumption:" ^ "\n\t\t" ^ "subst_targ_lhs: "
+          ^ Form.to_string subst_targ_lhs
+          ^ "\n\t\t" ^ "src_lhs: " ^ Form.to_string src_lhs )
+    in
+    if Form.subsumed subst_targ_lhs mapped_src_lhs then
+      let (_, mapped_src_rs) = Form.dest_sum mapped_src_rhs in
+      let (_, rest_src_rs) = Form.dest_sum rest_src_rhs in
+      if not (is_sup_sum_splittable mapped_src_rs rest_src_rs) then NT else
+      let () = debug (fun _ -> "\t\t" ^ "FULL") in
+      let theta, _ = Subst.partition theta in
+      let tagpairs, _ = Tagpairs.partition_subst tagpairs in
+      FT
+        (mk_backlink_rule_seq_test (theta, tagpairs) (mapped_src_lhs, mapped_src_rhs) (rest_src_lhs, rest_src_rhs) true (0, targ_seq))
+    else
+      let () = debug (fun _ -> "\t\t" ^ "PARTIAL") in
+      PT (mk_lemma_rule_seq_test subst (mapped_src_lhs, mapped_src_rhs) (rest_src_lhs, rest_src_rhs) defs (0, targ_seq))
+  in
+  (* Although application of all the constructed rule sequences will *)
+  (* succeed by construction the backlinking may fail to satisfy the *)
+  (* soundness condition, and so we pick the first one that is sound *)
+  (* and we also prefer full backlinking to lemma application        *)
+  let rules =
+    Blist.map dest_taggedrule_test
+      (Blist.stable_sort cmp_taggedrule_test (Blist.filter (fun app -> match app with | NT -> false | _ -> true) (Blist.map f apps)))
+  in
+  (Seqtactics.first rules) seq
+
 let identity_name name ((l, _) as seq) = 
   print_endline ("DEB " ^ name);
   let tps = Form.tag_pairs l in
@@ -1542,7 +1803,7 @@ let setup defs =
           ; (*wrap_scps ( *)luf defs(* ) defs*) ] ]) ;
   let axioms = Rule.first [id_axiom; ex_falso_axiom] in
   rules := Rule.combine_axioms axioms !rules ;
-  
+
 (*let setup defs =
   preddefs := defs ;
   rules :=

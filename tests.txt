@@ -23,16 +23,19 @@
 
 //List Extend by 1 pointer
 
-ListLenTmp(a,b)*b->c |- ListLenTmp(a,c)
-a->b*ListLenTmp(b,c) |- ListLenTmp(a,c)
+//ListLenTmp(a,b)*b->c |- ListLenTmp(a,c)
+//a->b*ListLenTmp(b,c) |- ListLenTmp(a,c)
 
-a->b*RListLenTmp(b,c) |- RListLenTmp(a,c)
-RListLenTmp(a,b)*b->c |- RListLenTmp(a,c)
+//a->b*RListLenTmp(b,c) |- RListLenTmp(a,c)
+//RListLenTmp(a,b)*b->c |- RListLenTmp(a,c)
 
 //List Extend by List
 
-ListLenTmp(a,b)*ListTmp(b,c) |- ListLenTmp(a,c)
-ListTmp(a,b)*ListLenTmp(b,c) |- ListLenTmp(a,c)
+//ListLenTmp(a,b)*ListTmp(b,c) |- ListLenTmp(a,c)
+//ListTmp(a,b)*ListLenTmp(b,c) |- ListLenTmp(a,c)
 
-RListTmp(a,b)*RListLenTmp(b,c) |- RListLenTmp(a,c)
-RListLenTmp(a,b)*RList(b,c) |- RListLenTmp(a,c)
+//RListTmp(a,b)*RListLenTmp(b,c) |- RListLenTmp(a,c)
+//RListLenTmp(a,b)*RList(b,c) |- RListLenTmp(a,c)
+
+//BinTree
+BinTreeSeg(a,b) * BinTreeSegHeight(b,c) |- BinTreeHeight(a)

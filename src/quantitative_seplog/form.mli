@@ -84,9 +84,6 @@ val disj : t -> t -> t
 
 val subst : Subst.t -> t -> t
 
-val subst_existentials : t -> t
-(** Like [Heap.subst_existentials] applied to all disjuncts. *)
-
 val subst_tags : Tagpairs.t -> t -> t
 (** Like [Heap.subst_tags] applied to all disjuncts. *)
 

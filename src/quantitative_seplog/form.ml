@@ -20,6 +20,7 @@ let dest : t -> Ord_constraints.t * Heap.t = function
 
 let dest_sum : t -> Ord_constraints.t * Heapsum.t = function
   | _, (cs, [s]) -> (cs, s)
+  | _, (cs, []) -> (cs, [])
   | _ -> raise Not_symheap_sum
 
 let constraints_sep cs =
@@ -129,8 +130,6 @@ let star ?(augment_deqs = true) (_, (cs, f)) (_, (cs', g)) =
 let disj (_, (cs, f)) (_, (cs', g)) = (Tags.anonymous, (Ord_constraints.union cs cs', f @ g))
 
 let subst theta (t, (cs, hs)) = (t, (cs, Blist.map (fun h -> Heapsum.subst theta h) hs))
-
-let subst_existentials (t, (cs, hs)) = (t, (cs, Blist.map Heapsum.subst_existentials hs))
 
 let subst_tags tagpairs (t, (cs, hs)) =
   (Tagpairs.apply_to_tag tagpairs t, ( Ord_constraints.subst_tags tagpairs cs, hs ))

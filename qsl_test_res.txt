@@ -1,6 +1,43 @@
 DEPTH 1
 DEPTH 2
-NOT proved: [a] nil!=x * x->y * RList(y, z) * 1.0 |- [a'] RList(x, z) * 1.0 [TIMEOUT]
+0:
+[a] nil!=x * x->y * RList(y, z) * 1.0 |- [a'] RList(x, z) * 1.0 (RList R.Unf.) [
+1 <{(a, a)}/{}>]
+  1:
+  [a] nil!=x * x->y * RList(y, z) * 1.0 |-
+  [a'] nil!=w' * w'->z * RList(x, w') * 1.0 (RList L.Unf./LHS Inst.) [
+  2 <{(a, a)}/{}>, 3 <{(a, a)}/{}>]
+    2:
+    [a] nil!=x * nil!=y * x!=y * x->y * y->z * 1.0 |-
+    [a'] nil!=w' * w'->z * RList(x, w') * 1.0 (RList R.Unf./Simplify) [
+    4 <{(a, a)}/{}>]
+      4:
+      [a] nil!=x * nil!=y * x!=y * x->y * y->z * 1.0 |-
+      [a'] nil!=w' * x!=w' * x->w' * w'->z * 1.0 (Id)
+    3:
+    [a] nil!=x * nil!=w * x!=w * x->y * w->z * RList(y, w) * 1.0 |-
+    [a'] nil!=w' * w'->z * RList(x, w') * 1.0 (Lemma.App) [5 <{(a, a)}/
+                                                           {(a, b)}>,
+    6 <{(a, a)}/{}>]
+      5:
+      [b < a] : [b] nil!=x * nil!=w * x!=w * x->y * RList(y, w) * 1.0 |-
+      [b'] RList(x, w) * 1.0 (Weaken/Subst LHS Tag) [7 <{(b, a)}/{}>]
+        7:
+        [a] nil!=x * nil!=w * x!=w * x->y * RList(y, w) * 1.0 |-
+        [b'] RList(x, w) * 1.0 (Weaken) [8 <{(a, a)}/{}>]
+          8:
+          [a] nil!=x * x->y * RList(y, w) * 1.0 |- [a'] RList(x, w) * 1.0 (Subst) [
+          9 <{(a, a)}/{}>]
+            9:
+            [a] nil!=x * x->y * RList(y, z) * 1.0 |- [a'] RList(x, z) * 1.0 (Backl) [0] <pre=
+            {(a, a)}>
+      6:
+      [a] nil!=x * nil!=w * x!=w * w->z * RList(x, w) * 1.0 |-
+      [a'] nil!=w' * w'->z * RList(x, w') * 1.0 (Split Id Summand) [10 <
+                                                                    {
+                                                                    (a, a)}/
+                                                                    {}>]
+        10: [a]  |- [a']  (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -8,8 +45,40 @@ NOT proved: [a] nil!=x * x->y * RList(y, z) * 1.0 |- [a'] RList(x, z) * 1.0 [TIM
  
 DEPTH 1
 DEPTH 2
-DEPTH 3
-NOT proved: [a] RList(x, y) * RList(y, z) * 1.0 |- [a'] RList(x, z) * 1.0 [TIMEOUT]
+0:
+[a] RList(x, y) * RList(y, z) * 1.0 |- [a'] RList(x, z) * 1.0 (RList R.Unf.) [
+1 <{(a, a)}/{}>]
+  1:
+  [a] RList(x, y) * RList(y, z) * 1.0 |-
+  [a'] nil!=w' * w'->z * RList(x, w') * 1.0 (RList L.Unf./LHS Inst.) [
+  2 <{(a, a)}/{}>, 3 <{(a, a)}/{}>]
+    2:
+    [a] nil!=y * y->z * RList(x, y) * 1.0 |-
+    [a'] nil!=w' * w'->z * RList(x, w') * 1.0 (Id)
+    3:
+    [a] nil!=w * w->z * RList(x, y) * RList(y, w) * 1.0 |-
+    [a'] nil!=w' * w'->z * RList(x, w') * 1.0 (Lemma.App) [4 <{(a, a)}/
+                                                           {(a, b)}>,
+    5 <{(a, a)}/{}>]
+      4:
+      [b < a] : [b] nil!=w * RList(x, y) * RList(y, w) * 1.0 |-
+      [b'] RList(x, w) * 1.0 (Weaken/Subst LHS Tag) [6 <{(b, a)}/{}>]
+        6:
+        [a] nil!=w * RList(x, y) * RList(y, w) * 1.0 |-
+        [b'] RList(x, w) * 1.0 (Weaken) [7 <{(a, a)}/{}>]
+          7:
+          [a] RList(x, y) * RList(y, w) * 1.0 |- [a'] RList(x, w) * 1.0 (Subst) [
+          8 <{(a, a)}/{}>]
+            8:
+            [a] RList(x, y) * RList(y, z) * 1.0 |- [a'] RList(x, z) * 1.0 (Backl) [0] <pre=
+            {(a, a)}>
+      5:
+      [a] nil!=w * w->z * RList(x, w) * 1.0 |-
+      [a'] nil!=w' * w'->z * RList(x, w') * 1.0 (Split Id Summand) [9 <
+                                                                    {
+                                                                    (a, a)}/
+                                                                    {}>]
+        9: [a]  |- [a']  (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -17,8 +86,39 @@ NOT proved: [a] RList(x, y) * RList(y, z) * 1.0 |- [a'] RList(x, z) * 1.0 [TIMEO
  
 DEPTH 1
 DEPTH 2
-DEPTH 3
-NOT proved: [a] nil!=y * y->z * List(x, y) * 1.0 |- [a'] List(x, z) * 1.0 [TIMEOUT]
+0:
+[a] nil!=y * y->z * List(x, y) * 1.0 |- [a'] List(x, z) * 1.0 (List R.Unf.) [
+1 <{(a, a)}/{}>]
+  1:
+  [a] nil!=y * y->z * List(x, y) * 1.0 |-
+  [a'] nil!=x * x->w' * List(w', z) * 1.0 (List L.Unf./LHS Inst./Simplify,Simplify) [
+  2 <{(a, a)}/{}>, 3 <{(a, a)}/{}>]
+    2:
+    [a] nil!=x * nil!=y * x!=y * x->y * y->z * 1.0 |-
+    [a'] x->w' * List(w', z) * 1.0 (List R.Unf./Simplify) [4 <{(a, a)}/{}>]
+      4:
+      [a] nil!=x * nil!=y * x!=y * x->y * y->z * 1.0 |-
+      [a'] nil!=w' * x!=w' * x->w' * w'->z * 1.0 (Id)
+    3:
+    [a] nil!=x * nil!=y * x!=y * x->w * y->z * List(w, y) * 1.0 |-
+    [a'] x->w' * List(w', z) * 1.0 (Lemma.App) [5 <{(a, a)}/{(a, b)}>,
+    6 <{(a, a)}/{}>]
+      5:
+      [b < a] : [b] nil!=x * nil!=y * x!=y * y->z * List(w, y) * 1.0 |-
+      [b'] List(w, z) * 1.0 (Weaken/Subst LHS Tag) [7 <{(b, a)}/{}>]
+        7:
+        [a] nil!=x * nil!=y * x!=y * y->z * List(w, y) * 1.0 |-
+        [b'] List(w, z) * 1.0 (Weaken) [8 <{(a, a)}/{}>]
+          8:
+          [a] nil!=y * y->z * List(w, y) * 1.0 |- [a'] List(w, z) * 1.0 (Subst) [
+          9 <{(a, a)}/{}>]
+            9:
+            [a] nil!=y * y->z * List(x, y) * 1.0 |- [a'] List(x, z) * 1.0 (Backl) [0] <pre=
+            {(a, a)}>
+      6:
+      [a] nil!=x * nil!=y * x!=y * x->w * List(w, z) * 1.0 |-
+      [a'] x->w' * List(w', z) * 1.0 (Split Id Summand) [10 <{(a, a)}/{}>]
+        10: [a]  |- [a']  (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -26,8 +126,35 @@ NOT proved: [a] nil!=y * y->z * List(x, y) * 1.0 |- [a'] List(x, z) * 1.0 [TIMEO
  
 DEPTH 1
 DEPTH 2
-DEPTH 3
-NOT proved: [a] List(x, y) * List(y, z) * 1.0 |- [a'] List(x, z) * 1.0 [TIMEOUT]
+0:
+[a] List(x, y) * List(y, z) * 1.0 |- [a'] List(x, z) * 1.0 (List R.Unf.) [
+1 <{(a, a)}/{}>]
+  1:
+  [a] List(x, y) * List(y, z) * 1.0 |-
+  [a'] nil!=x * x->w' * List(w', z) * 1.0 (List L.Unf./LHS Inst./Simplify,Simplify) [
+  2 <{(a, a)}/{}>, 3 <{(a, a)}/{}>]
+    2:
+    [a] nil!=x * x->y * List(y, z) * 1.0 |- [a'] x->w' * List(w', z) * 1.0 (Id)
+    3:
+    [a] nil!=x * x->w * List(y, z) * List(w, y) * 1.0 |-
+    [a'] x->w' * List(w', z) * 1.0 (Lemma.App) [4 <{(a, a)}/{(a, b)}>,
+    5 <{(a, a)}/{}>]
+      4:
+      [b < a] : [b] nil!=x * List(y, z) * List(w, y) * 1.0 |-
+      [b'] List(w, z) * 1.0 (Weaken/Subst LHS Tag) [6 <{(b, a)}/{}>]
+        6:
+        [a] nil!=x * List(y, z) * List(w, y) * 1.0 |- [b'] List(w, z) * 1.0 (Weaken) [
+        7 <{(a, a)}/{}>]
+          7:
+          [a] List(y, z) * List(w, y) * 1.0 |- [a'] List(w, z) * 1.0 (Subst) [
+          8 <{(a, a)}/{}>]
+            8:
+            [a] List(x, y) * List(y, z) * 1.0 |- [a'] List(x, z) * 1.0 (Backl) [0] <pre=
+            {(a, a)}>
+      5:
+      [a] nil!=x * x->w * List(w, z) * 1.0 |- [a'] x->w' * List(w', z) * 1.0 (Split Id Summand) [
+      9 <{(a, a)}/{}>]
+        9: [a]  |- [a']  (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -35,8 +162,37 @@ NOT proved: [a] List(x, y) * List(y, z) * 1.0 |- [a'] List(x, z) * 1.0 [TIMEOUT]
  
 DEPTH 1
 DEPTH 2
-DEPTH 3
-NOT proved: [a] nil!=y * y->z * PeList(x, y) * 1.0 |- [a'] PeList(x, z) * 1.0 [TIMEOUT]
+0:
+[a] nil!=y * y->z * PeList(x, y) * 1.0 |- [a'] PeList(x, z) * 1.0 (PeList R.Unf.) [
+1 <{(a, a)}/{}>]
+  1:
+  [a] nil!=y * y->z * PeList(x, y) * 1.0 |-
+  [a'] nil!=x * x->w' * PeList(w', z) * 1.0 (PeList L.Unf./LHS Inst./Simplify,Simplify) [
+  2 <{(a, a)}/{}>, 3 <{(a, a)}/{}>]
+    2:
+    [a] nil!=y * y->z * 1.0 |- [a'] y->w' * PeList(w', z) * 1.0 (PeList R.Unf./Simplify) [
+    4 <{(a, a)}/{}>]
+      4: [a] nil!=y * y->z * 1.0 |- [a'] y->z * 1.0 (Id)
+    3:
+    [a] nil!=x * nil!=y * x!=y * x->w * y->z * PeList(w, y) * 1.0 |-
+    [a'] x->w' * PeList(w', z) * 1.0 (Lemma.App) [5 <{(a, a)}/{(a, b)}>,
+    6 <{(a, a)}/{}>]
+      5:
+      [b < a] : [b] nil!=x * nil!=y * x!=y * y->z * PeList(w, y) * 1.0 |-
+      [b'] PeList(w, z) * 1.0 (Weaken/Subst LHS Tag) [7 <{(b, a)}/{}>]
+        7:
+        [a] nil!=x * nil!=y * x!=y * y->z * PeList(w, y) * 1.0 |-
+        [b'] PeList(w, z) * 1.0 (Weaken) [8 <{(a, a)}/{}>]
+          8:
+          [a] nil!=y * y->z * PeList(w, y) * 1.0 |- [a'] PeList(w, z) * 1.0 (Subst) [
+          9 <{(a, a)}/{}>]
+            9:
+            [a] nil!=y * y->z * PeList(x, y) * 1.0 |- [a'] PeList(x, z) * 1.0 (Backl) [0] <pre=
+            {(a, a)}>
+      6:
+      [a] nil!=x * nil!=y * x!=y * x->w * PeList(w, z) * 1.0 |-
+      [a'] x->w' * PeList(w', z) * 1.0 (Split Id Summand) [10 <{(a, a)}/{}>]
+        10: [a]  |- [a']  (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -44,8 +200,32 @@ NOT proved: [a] nil!=y * y->z * PeList(x, y) * 1.0 |- [a'] PeList(x, z) * 1.0 [T
  
 DEPTH 1
 DEPTH 2
-DEPTH 3
-NOT proved: [a] PeList(x, y) * PeList(y, z) * 1.0 |- [a'] PeList(x, z) * 1.0 [TIMEOUT]
+0:
+[a] PeList(x, y) * PeList(y, z) * 1.0 |- [a'] PeList(x, z) * 1.0 (PeList L.Unf./LHS Inst./Simplify) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>]
+  1: [a] PeList(y, z) * 1.0 |- [a'] PeList(y, z) * 1.0 (Id)
+  2:
+  [a] nil!=x * x->w * PeList(y, z) * PeList(w, y) * 1.0 |-
+  [a'] PeList(x, z) * 1.0 (Lemma.App) [3 <{(a, a)}/{(a, b)}>,
+  4 <{(a, a)}/{}>]
+    3:
+    [b < a] : [b] nil!=x * PeList(y, z) * PeList(w, y) * 1.0 |-
+    [b'] PeList(w, z) * 1.0 (Weaken/Subst LHS Tag) [5 <{(b, a)}/{}>]
+      5:
+      [a] nil!=x * PeList(y, z) * PeList(w, y) * 1.0 |-
+      [b'] PeList(w, z) * 1.0 (Weaken) [6 <{(a, a)}/{}>]
+        6:
+        [a] PeList(y, z) * PeList(w, y) * 1.0 |- [a'] PeList(w, z) * 1.0 (Subst) [
+        7 <{(a, a)}/{}>]
+          7:
+          [a] PeList(x, y) * PeList(y, z) * 1.0 |- [a'] PeList(x, z) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    4:
+    [a] nil!=x * x->w * PeList(w, z) * 1.0 |- [a'] PeList(x, z) * 1.0 (PeList R.Unf./Simplify) [
+    8 <{(a, a)}/{}>]
+      8:
+      [a] nil!=x * x->w * PeList(w, z) * 1.0 |-
+      [a'] x->w' * PeList(w', z) * 1.0 (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -53,8 +233,33 @@ NOT proved: [a] PeList(x, y) * PeList(y, z) * 1.0 |- [a'] PeList(x, z) * 1.0 [TI
  
 DEPTH 1
 DEPTH 2
-DEPTH 3
-NOT proved: [a] DLL(x, y, z, w) * 1.0 |- [a'] SLL(x, y) * 1.0 [TIMEOUT]
+0:
+[a] DLL(x, y, z, w) * 1.0 |- [a'] SLL(x, y) * 1.0 (DLL L.Unf./LHS Inst./Simplify) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>]
+  1: [a] 1.0 |- [a'] SLL(y, y) * 1.0 (SLL R.Unf.) [3 <{(a, a)}/{}>]
+    3: [a] 1.0 |- [a'] 1.0 (Id)
+  2:
+  [a] nil!=x * x->a, w * DLL(a, y, z, x) * 1.0 |- [a'] SLL(x, y) * 1.0 (Lemma.App) [
+  4 <{(a, a)}/{(a, b)}>, 5 <{(a, a)}/{}>]
+    4:
+    [b < a] : [b] nil!=x * DLL(a, y, z, x) * 1.0 |- [b'] SLL(a, y) * 1.0 (Weaken/Subst LHS Tag) [
+    6 <{(b, a)}/{}>]
+      6:
+      [a] nil!=x * DLL(a, y, z, x) * 1.0 |- [b'] SLL(a, y) * 1.0 (Weaken) [
+      7 <{(a, a)}/{}>]
+        7:
+        [a] DLL(a, y, z, x) * 1.0 |- [a'] SLL(a, y) * 1.0 (Subst) [8 <
+                                                                   {(a, a)}/
+                                                                   {}>]
+          8:
+          [a] DLL(x, y, z, w) * 1.0 |- [a'] SLL(x, y) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    5:
+    [a] nil!=x * x->a, w * SLL(a, y) * 1.0 |- [a'] SLL(x, y) * 1.0 (SLL R.Unf./Simplify) [
+    9 <{(a, a)}/{}>]
+      9:
+      [a] nil!=x * x->a, w * SLL(a, y) * 1.0 |-
+      [a'] x->w', z' * SLL(w', y) * 1.0 (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -62,8 +267,34 @@ NOT proved: [a] DLL(x, y, z, w) * 1.0 |- [a'] SLL(x, y) * 1.0 [TIMEOUT]
  
 DEPTH 1
 DEPTH 2
-DEPTH 3
-NOT proved: [a] DLL(x, y, z, w) * 1.0 |- [a'] BSLL(z, w) * 1.0 [TIMEOUT]
+0:
+[a] DLL(x, y, z, w) * 1.0 |- [a'] BSLL(z, w) * 1.0 (DLL L.Unf./LHS Inst./Simplify) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>]
+  1: [a] 1.0 |- [a'] BSLL(w, w) * 1.0 (BSLL R.Unf.) [3 <{(a, a)}/{}>]
+    3: [a] 1.0 |- [a'] 1.0 (Id)
+  2:
+  [a] nil!=x * x->a, w * DLL(a, y, z, x) * 1.0 |- [a'] BSLL(z, w) * 1.0 (Lemma.App) [
+  4 <{(a, a)}/{(a, b)}>, 5 <{(a, a)}/{}>]
+    4:
+    [b < a] : [b] nil!=x * DLL(a, y, z, x) * 1.0 |- [b'] BSLL(z, x) * 1.0 (Weaken/Subst LHS Tag) [
+    6 <{(b, a)}/{}>]
+      6:
+      [a] nil!=x * DLL(a, y, z, x) * 1.0 |- [b'] BSLL(z, x) * 1.0 (Weaken) [
+      7 <{(a, a)}/{}>]
+        7:
+        [a] DLL(a, y, z, x) * 1.0 |- [a'] BSLL(z, x) * 1.0 (Subst) [8 <
+                                                                    {
+                                                                    (a, a)}/
+                                                                    {}>]
+          8:
+          [a] DLL(x, y, z, w) * 1.0 |- [a'] BSLL(z, w) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    5:
+    [a] nil!=x * x->a, w * BSLL(z, x) * 1.0 |- [a'] BSLL(z, w) * 1.0 (BSLL R.Unf.) [
+    9 <{(a, a)}/{}>]
+      9:
+      [a] nil!=x * x->a, w * BSLL(z, x) * 1.0 |-
+      [a'] nil!=w' * w'->z', w * BSLL(z, w') * 1.0 (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -71,71 +302,32 @@ NOT proved: [a] DLL(x, y, z, w) * 1.0 |- [a'] BSLL(z, w) * 1.0 [TIMEOUT]
  
 DEPTH 1
 DEPTH 2
-DEPTH 3
-NOT proved: [a] DLL(x, y, z, w) * DLL(a, x, w, b) * 1.0 |- [a'] DLL(a, y, z, b) * 1.0 [TIMEOUT]
- 
- 
- -----------------------NEEXT------------------------- 
- 
- 
-DEPTH 1
-DEPTH 2
-DEPTH 3
-NOT proved: [a] ListO(x, y) * ListO(y, z) * 1.0 |- [a'] ListE(x, z) * 1.0 [TIMEOUT]
- 
- 
- -----------------------NEEXT------------------------- 
- 
- 
-DEPTH 1
-DEPTH 2
-DEPTH 3
-NOT proved: [a] ListE(x, y) * ListE(y, z) * 1.0 |- [a'] ListE(x, z) * 1.0 [TIMEOUT]
- 
- 
- -----------------------NEEXT------------------------- 
- 
- 
-DEPTH 1
-DEPTH 2
-DEPTH 3
-NOT proved: [a] ListO(y, z) * ListE(x, y) * 1.0 |- [a'] ListO(x, z) * 1.0 [TIMEOUT]
- 
- 
- -----------------------NEEXT------------------------- 
- 
- 
-DEPTH 1
-DEPTH 2
-DEPTH 3
-NOT proved: [a] BinListFirst(x) * 1.0 |- [a'] BinTree(x) * 1.0 [TIMEOUT]
- 
- 
- -----------------------NEEXT------------------------- 
- 
- 
-DEPTH 1
-DEPTH 2
-DEPTH 3
-NOT proved: [a] BinListSecond(x) * 1.0 |- [a'] BinTree(x) * 1.0 [TIMEOUT]
- 
- 
- -----------------------NEEXT------------------------- 
- 
- 
-DEPTH 1
-DEPTH 2
-DEPTH 3
-NOT proved: [a] BinPath(x, z) * BinPath(z, y) * 1.0 |- [a'] BinPath(x, y) * 1.0 [TIMEOUT]
- 
- 
- -----------------------NEEXT------------------------- 
- 
- 
-DEPTH 1
-DEPTH 2
-DEPTH 3
-NOT proved: [a] BinPath(x, y) * 1.0 |- [a'] BinTreeSeg(x, y) * 1.0 [TIMEOUT]
+0:
+[a] DLL(a, x, w, b) * DLL(x, y, z, w) * 1.0 |- [a'] DLL(a, y, z, b) * 1.0 (DLL L.Unf./LHS Inst./Simplify) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>]
+  1: [a] DLL(x, y, z, w) * 1.0 |- [a'] DLL(x, y, z, w) * 1.0 (Id)
+  2:
+  [a] nil!=a * a->c, b * DLL(x, y, z, w) * DLL(c, x, w, a) * 1.0 |-
+  [a'] DLL(a, y, z, b) * 1.0 (Lemma.App) [3 <{(a, a)}/{(a, b)}>,
+  4 <{(a, a)}/{}>]
+    3:
+    [b < a] : [b] nil!=a * DLL(x, y, z, w) * DLL(c, x, w, a) * 1.0 |-
+    [b'] DLL(c, y, z, a) * 1.0 (Weaken/Subst LHS Tag) [5 <{(b, a)}/{}>]
+      5:
+      [a] nil!=a * DLL(x, y, z, w) * DLL(c, x, w, a) * 1.0 |-
+      [b'] DLL(c, y, z, a) * 1.0 (Weaken) [6 <{(a, a)}/{}>]
+        6:
+        [a] DLL(x, y, z, w) * DLL(c, x, w, a) * 1.0 |-
+        [a'] DLL(c, y, z, a) * 1.0 (Subst) [7 <{(a, a)}/{}>]
+          7:
+          [a] DLL(a, x, w, b) * DLL(x, y, z, w) * 1.0 |-
+          [a'] DLL(a, y, z, b) * 1.0 (Backl) [0] <pre={(a, a)}>
+    4:
+    [a] nil!=a * a->c, b * DLL(c, y, z, a) * 1.0 |-
+    [a'] DLL(a, y, z, b) * 1.0 (DLL R.Unf./Simplify) [8 <{(a, a)}/{}>]
+      8:
+      [a] nil!=a * a->c, b * DLL(c, y, z, a) * 1.0 |-
+      [a'] a->w', b * DLL(w', y, z, a) * 1.0 (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -145,6 +337,350 @@ DEPTH 1
 DEPTH 2
 DEPTH 3
 DEPTH 4
+0:
+[a] ListO(x, y) * ListO(y, z) * 1.0 |- [a'] ListE(x, z) * 1.0 (ListE R.Unf.) [
+1 <{(a, a)}/{}>]
+  1:
+  [a] ListO(x, y) * ListO(y, z) * 1.0 |-
+  [a'] nil!=x * x->w' * ListO(w', z) * 1.0 (ListO L.Unf./LHS Inst./Simplify,Simplify) [
+  2 <{(a, a)}/{}>, 3 <{(a, a)}/{}>]
+    2:
+    [a] nil!=x * x->y * ListO(y, z) * 1.0 |- [a'] x->w' * ListO(w', z) * 1.0 (Id)
+    3:
+    [a] nil!=x * x->w * ListO(y, z) * ListE(w, y) * 1.0 |-
+    [a'] x->w' * ListO(w', z) * 1.0 (ListO R.Unf./Simplify) [4 <{(a, a)}/{}>]
+      4:
+      [a] nil!=x * x->w * ListO(y, z) * ListE(w, y) * 1.0 |-
+      [a'] nil!=w' * x!=w' * x->w' * w'->y' * ListE(y', z) * 1.0 (ListE L.Unf./LHS Inst.) [
+      5 <{(a, a)}/{}>]
+        5:
+        [a] nil!=x * nil!=w * x!=w * x->w * w->a * ListO(a, y) *
+            ListO(y, z) * 1.0 |-
+        [a'] nil!=w' * x!=w' * x->w' * w'->y' * ListE(y', z) * 1.0 (Lemma.App) [
+        6 <{(a, a)}/{(a, b)}>, 7 <{(a, a)}/{}>]
+          6:
+          [b < a] : [b] nil!=x * nil!=w * x!=w * ListO(a, y) * ListO(y, z) *
+                        1.0 |-
+          [b'] ListE(a, z) * 1.0 (Weaken/Subst LHS Tag) [8 <{(b, a)}/{}>]
+            8:
+            [a] nil!=x * nil!=w * x!=w * ListO(a, y) * ListO(y, z) * 1.0 |-
+            [b'] ListE(a, z) * 1.0 (Weaken) [9 <{(a, a)}/{}>]
+              9:
+              [a] ListO(a, y) * ListO(y, z) * 1.0 |- [a'] ListE(a, z) * 1.0 (Subst) [
+              10 <{(a, a)}/{}>]
+                10:
+                [a] ListO(x, y) * ListO(y, z) * 1.0 |- [a'] ListE(x, z) * 1.0 (Backl) [0] <pre=
+                {(a, a)}>
+          7:
+          [a] nil!=x * nil!=w * x!=w * x->w * w->a * ListE(a, z) * 1.0 |-
+          [a'] nil!=w' * x!=w' * x->w' * w'->y' * ListE(y', z) * 1.0 (Split Id Summand) [
+          11 <{(a, a)}/{}>]
+            11: [a]  |- [a']  (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+DEPTH 1
+DEPTH 2
+DEPTH 3
+0:
+[a] ListE(x, y) * ListE(y, z) * 1.0 |- [a'] ListE(x, z) * 1.0 (ListE L.Unf./LHS Inst.) [
+1 <{(a, a)}/{}>]
+  1:
+  [a] nil!=x * x->w * ListO(w, y) * ListE(y, z) * 1.0 |-
+  [a'] ListE(x, z) * 1.0 (ListO L.Unf./LHS Inst.) [2 <{(a, a)}/{}>,
+  3 <{(a, a)}/{}>]
+    2:
+    [a] nil!=x * nil!=w * x!=w * x->w * w->y * ListE(y, z) * 1.0 |-
+    [a'] ListE(x, z) * 1.0 (ListE R.Unf./Simplify) [4 <{(a, a)}/{}>]
+      4:
+      [a] nil!=x * nil!=w * x!=w * x->w * w->y * ListE(y, z) * 1.0 |-
+      [a'] x->w' * ListO(w', z) * 1.0 (ListO R.Unf./Simplify) [5 <{(a, a)}/
+                                                               {}>]
+        5:
+        [a] nil!=x * nil!=w * x!=w * x->w * w->y * ListE(y, z) * 1.0 |-
+        [a'] nil!=w' * x!=w' * x->w' * w'->y' * ListE(y', z) * 1.0 (Id)
+    3:
+    [a] nil!=x * nil!=w * x!=w * x->w * w->a * ListE(a, y) * ListE(y, z) *
+        1.0 |-
+    [a'] ListE(x, z) * 1.0 (Lemma.App) [6 <{(a, a)}/{(a, b)}>,
+    7 <{(a, a)}/{}>]
+      6:
+      [b < a] : [b] nil!=x * nil!=w * x!=w * ListE(a, y) * ListE(y, z) * 1.0 |-
+      [b'] ListE(a, z) * 1.0 (Weaken/Subst LHS Tag) [8 <{(b, a)}/{}>]
+        8:
+        [a] nil!=x * nil!=w * x!=w * ListE(a, y) * ListE(y, z) * 1.0 |-
+        [b'] ListE(a, z) * 1.0 (Weaken) [9 <{(a, a)}/{}>]
+          9:
+          [a] ListE(a, y) * ListE(y, z) * 1.0 |- [a'] ListE(a, z) * 1.0 (Subst) [
+          10 <{(a, a)}/{}>]
+            10:
+            [a] ListE(x, y) * ListE(y, z) * 1.0 |- [a'] ListE(x, z) * 1.0 (Backl) [0] <pre=
+            {(a, a)}>
+      7:
+      [a] nil!=x * nil!=w * x!=w * x->w * w->a * ListE(a, z) * 1.0 |-
+      [a'] ListE(x, z) * 1.0 (Subst) [11 <{(a, a)}/{}>]
+        11:
+        [a] nil!=x * nil!=w * x!=w * x->w * w->y * ListE(y, z) * 1.0 |-
+        [a'] ListE(x, z) * 1.0 (Backl) [2] <pre={(a, a)}>
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+DEPTH 1
+DEPTH 2
+DEPTH 3
+0:
+[a] ListO(y, z) * ListE(x, y) * 1.0 |- [a'] ListO(x, z) * 1.0 (ListE L.Unf./LHS Inst.) [
+1 <{(a, a)}/{}>]
+  1:
+  [a] nil!=x * x->w * ListO(y, z) * ListO(w, y) * 1.0 |-
+  [a'] ListO(x, z) * 1.0 (ListO L.Unf./LHS Inst.) [2 <{(a, a)}/{}>,
+  3 <{(a, a)}/{}>]
+    2:
+    [a] nil!=x * nil!=w * x!=w * x->w * w->y * ListO(y, z) * 1.0 |-
+    [a'] ListO(x, z) * 1.0 (ListO R.Unf./Simplify) [4 <{(a, a)}/{}>]
+      4:
+      [a] nil!=x * nil!=w * x!=w * x->w * w->y * ListO(y, z) * 1.0 |-
+      [a'] x->w' * ListE(w', z) * 1.0 (ListE R.Unf./Simplify) [5 <{(a, a)}/
+                                                               {}>]
+        5:
+        [a] nil!=x * nil!=w * x!=w * x->w * w->y * ListO(y, z) * 1.0 |-
+        [a'] nil!=w' * x!=w' * x->w' * w'->y' * ListO(y', z) * 1.0 (Id)
+    3:
+    [a] nil!=x * nil!=w * x!=w * x->w * w->a * ListO(y, z) * ListE(a, y) *
+        1.0 |-
+    [a'] ListO(x, z) * 1.0 (Lemma.App) [6 <{(a, a)}/{(a, b)}>,
+    7 <{(a, a)}/{}>]
+      6:
+      [b < a] : [b] nil!=x * nil!=w * x!=w * ListO(y, z) * ListE(a, y) * 1.0 |-
+      [b'] ListO(a, z) * 1.0 (Weaken/Subst LHS Tag) [8 <{(b, a)}/{}>]
+        8:
+        [a] nil!=x * nil!=w * x!=w * ListO(y, z) * ListE(a, y) * 1.0 |-
+        [b'] ListO(a, z) * 1.0 (Weaken) [9 <{(a, a)}/{}>]
+          9:
+          [a] ListO(y, z) * ListE(a, y) * 1.0 |- [a'] ListO(a, z) * 1.0 (Subst) [
+          10 <{(a, a)}/{}>]
+            10:
+            [a] ListO(y, z) * ListE(x, y) * 1.0 |- [a'] ListO(x, z) * 1.0 (Backl) [0] <pre=
+            {(a, a)}>
+      7:
+      [a] nil!=x * nil!=w * x!=w * x->w * w->a * ListO(a, z) * 1.0 |-
+      [a'] ListO(x, z) * 1.0 (Subst) [11 <{(a, a)}/{}>]
+        11:
+        [a] nil!=x * nil!=w * x!=w * x->w * w->y * ListO(y, z) * 1.0 |-
+        [a'] ListO(x, z) * 1.0 (Backl) [2] <pre={(a, a)}>
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+DEPTH 1
+DEPTH 2
+DEPTH 3
+0:
+[a] BinListFirst(x) * 1.0 |- [a'] BinTree(x) * 1.0 (BinListFirst L.Unf./LHS Inst.) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>]
+  1: [a] 1.0 |- [a'] BinTree(x) * 1.0 (BinTree R.Unf.) [3 <{(a, a)}/{}>]
+    3: [a] 1.0 |- [a'] 1.0 (Id)
+  2:
+  [a] nil!=x * x->y, w * BinListFirst(y) * 1.0 |- [a'] BinTree(x) * 1.0 (Lemma.App) [
+  4 <{(a, a)}/{(a, b)}>, 5 <{(a, a)}/{}>]
+    4:
+    [b < a] : [b] nil!=x * BinListFirst(y) * 1.0 |- [b'] BinTree(y) * 1.0 (Weaken/Subst LHS Tag) [
+    6 <{(b, a)}/{}>]
+      6:
+      [a] nil!=x * BinListFirst(y) * 1.0 |- [b'] BinTree(y) * 1.0 (Weaken) [
+      7 <{(a, a)}/{}>]
+        7:
+        [a] BinListFirst(y) * 1.0 |- [a'] BinTree(y) * 1.0 (Subst) [8 <
+                                                                    {
+                                                                    (a, a)}/
+                                                                    {}>]
+          8:
+          [a] BinListFirst(x) * 1.0 |- [a'] BinTree(x) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    5:
+    [a] nil!=x * x->y, w * BinTree(y) * 1.0 |- [a'] BinTree(x) * 1.0 (BinTree R.Unf./Simplify) [
+    9 <{(a, a)}/{}>]
+      9:
+      [a] nil!=x * x->y, w * BinTree(y) * 1.0 |-
+      [a'] x->z', w' * BinTree(w') * BinTree(z') * 1.0 (BinTree R.Unf./Simplify) [
+      10 <{(a, a)}/{}>]
+        10:
+        [a] nil!=x * x->y, w * BinTree(y) * 1.0 |-
+        [a'] x->z', w' * BinTree(z') * 1.0 (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+DEPTH 1
+DEPTH 2
+DEPTH 3
+0:
+[a] BinListSecond(x) * 1.0 |- [a'] BinTree(x) * 1.0 (BinListSecond L.Unf./LHS Inst.) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>]
+  1: [a] 1.0 |- [a'] BinTree(x) * 1.0 (BinTree R.Unf.) [3 <{(a, a)}/{}>]
+    3: [a] 1.0 |- [a'] 1.0 (Id)
+  2:
+  [a] nil!=x * x->y, w * BinListSecond(w) * 1.0 |- [a'] BinTree(x) * 1.0 (Lemma.App) [
+  4 <{(a, a)}/{(a, b)}>, 5 <{(a, a)}/{}>]
+    4:
+    [b < a] : [b] nil!=x * BinListSecond(w) * 1.0 |- [b'] BinTree(w) * 1.0 (Weaken/Subst LHS Tag) [
+    6 <{(b, a)}/{}>]
+      6:
+      [a] nil!=x * BinListSecond(w) * 1.0 |- [b'] BinTree(w) * 1.0 (Weaken) [
+      7 <{(a, a)}/{}>]
+        7:
+        [a] BinListSecond(w) * 1.0 |- [a'] BinTree(w) * 1.0 (Subst) [
+        8 <{(a, a)}/{}>]
+          8:
+          [a] BinListSecond(x) * 1.0 |- [a'] BinTree(x) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    5:
+    [a] nil!=x * x->y, w * BinTree(w) * 1.0 |- [a'] BinTree(x) * 1.0 (BinTree R.Unf./Simplify) [
+    9 <{(a, a)}/{}>]
+      9:
+      [a] nil!=x * x->y, w * BinTree(w) * 1.0 |-
+      [a'] x->z', w' * BinTree(w') * BinTree(z') * 1.0 (BinTree R.Unf./Simplify) [
+      10 <{(a, a)}/{}>]
+        10:
+        [a] nil!=x * x->y, w * BinTree(w) * 1.0 |-
+        [a'] x->z', w' * BinTree(w') * 1.0 (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+DEPTH 1
+DEPTH 2
+0:
+[a] BinPath(x, z) * BinPath(z, y) * 1.0 |- [a'] BinPath(x, y) * 1.0 (BinPath L.Unf./LHS Inst.,LHS Inst./Simplify) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>, 3 <{(a, a)}/{}>]
+  1: [a] BinPath(z, y) * 1.0 |- [a'] BinPath(z, y) * 1.0 (Id)
+  2:
+  [a] nil!=x * x->w, a * BinPath(z, y) * BinPath(w, z) * 1.0 |-
+  [a'] BinPath(x, y) * 1.0 (Lemma.App) [4 <{(a, a)}/{(a, b)}>,
+  5 <{(a, a)}/{}>]
+    4:
+    [b < a] : [b] nil!=x * BinPath(z, y) * BinPath(w, z) * 1.0 |-
+    [b'] BinPath(w, y) * 1.0 (Weaken/Subst LHS Tag) [6 <{(b, a)}/{}>]
+      6:
+      [a] nil!=x * BinPath(z, y) * BinPath(w, z) * 1.0 |-
+      [b'] BinPath(w, y) * 1.0 (Weaken) [7 <{(a, a)}/{}>]
+        7:
+        [a] BinPath(z, y) * BinPath(w, z) * 1.0 |- [a'] BinPath(w, y) * 1.0 (Subst) [
+        8 <{(a, a)}/{}>]
+          8:
+          [a] BinPath(x, z) * BinPath(z, y) * 1.0 |- [a'] BinPath(x, y) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    5:
+    [a] nil!=x * x->w, a * BinPath(w, y) * 1.0 |- [a'] BinPath(x, y) * 1.0 (BinPath R.Unf./Simplify) [
+    9 <{(a, a)}/{}>]
+      9:
+      [a] nil!=x * x->w, a * BinPath(w, y) * 1.0 |-
+      [a'] x->w', z' * BinPath(w', y) * 1.0 (Id)
+  3:
+  [a] nil!=x * x->w, a * BinPath(a, z) * BinPath(z, y) * 1.0 |-
+  [a'] BinPath(x, y) * 1.0 (Lemma.App) [10 <{(a, a)}/{(a, b)}>,
+  11 <{(a, a)}/{}>]
+    10:
+    [b < a] : [b] nil!=x * BinPath(a, z) * BinPath(z, y) * 1.0 |-
+    [b'] BinPath(a, y) * 1.0 (Weaken/Subst LHS Tag) [12 <{(b, a)}/{}>]
+      12:
+      [a] nil!=x * BinPath(a, z) * BinPath(z, y) * 1.0 |-
+      [b'] BinPath(a, y) * 1.0 (Weaken) [13 <{(a, a)}/{}>]
+        13:
+        [a] BinPath(a, z) * BinPath(z, y) * 1.0 |- [a'] BinPath(a, y) * 1.0 (Subst) [
+        14 <{(a, a)}/{}>]
+          14:
+          [a] BinPath(x, z) * BinPath(z, y) * 1.0 |- [a'] BinPath(x, y) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    11:
+    [a] nil!=x * x->w, a * BinPath(a, y) * 1.0 |- [a'] BinPath(x, y) * 1.0 (BinPath R.Unf./Simplify) [
+    15 <{(a, a)}/{}>]
+      15:
+      [a] nil!=x * x->w, a * BinPath(a, y) * 1.0 |-
+      [a'] x->w', z' * BinPath(z', y) * 1.0 (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+DEPTH 1
+DEPTH 2
+DEPTH 3
+0:
+[a] BinPath(x, y) * 1.0 |- [a'] BinTreeSeg(x, y) * 1.0 (BinPath L.Unf./LHS Inst.,LHS Inst./Simplify) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>, 3 <{(a, a)}/{}>]
+  1:
+  [a] 1.0 |- [a'] BinTreeSeg(y, y) * 1.0 (BinTreeSeg R.Unf.) [4 <{(a, a)}/{}>]
+    4: [a] 1.0 |- [a'] 1.0 (Id)
+  2:
+  [a] nil!=x * x->w, z * BinPath(w, y) * 1.0 |- [a'] BinTreeSeg(x, y) * 1.0 (Lemma.App) [
+  5 <{(a, a)}/{(a, b)}>, 6 <{(a, a)}/{}>]
+    5:
+    [b < a] : [b] nil!=x * BinPath(w, y) * 1.0 |- [b'] BinTreeSeg(w, y) * 1.0 (Weaken/Subst LHS Tag) [
+    7 <{(b, a)}/{}>]
+      7:
+      [a] nil!=x * BinPath(w, y) * 1.0 |- [b'] BinTreeSeg(w, y) * 1.0 (Weaken) [
+      8 <{(a, a)}/{}>]
+        8:
+        [a] BinPath(w, y) * 1.0 |- [a'] BinTreeSeg(w, y) * 1.0 (Subst) [
+        9 <{(a, a)}/{}>]
+          9:
+          [a] BinPath(x, y) * 1.0 |- [a'] BinTreeSeg(x, y) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    6:
+    [a] nil!=x * x->w, z * BinTreeSeg(w, y) * 1.0 |-
+    [a'] BinTreeSeg(x, y) * 1.0 (BinTreeSeg R.Unf./Simplify) [10 <{(a, a)}/
+                                                              {}>]
+      10:
+      [a] nil!=x * x->w, z * BinTreeSeg(w, y) * 1.0 |-
+      [a'] x->w', z' * BinTree(z') * BinTreeSeg(w', y) * 1.0 (BinTree R.Unf./Simplify) [
+      11 <{(a, a)}/{}>]
+        11:
+        [a] nil!=x * x->w, z * BinTreeSeg(w, y) * 1.0 |-
+        [a'] x->w', z' * BinTreeSeg(w', y) * 1.0 (Id)
+  3:
+  [a] nil!=x * x->w, z * BinPath(z, y) * 1.0 |- [a'] BinTreeSeg(x, y) * 1.0 (Lemma.App) [
+  12 <{(a, a)}/{(a, b)}>, 13 <{(a, a)}/{}>]
+    12:
+    [b < a] : [b] nil!=x * BinPath(z, y) * 1.0 |- [b'] BinTreeSeg(z, y) * 1.0 (Weaken/Subst LHS Tag) [
+    14 <{(b, a)}/{}>]
+      14:
+      [a] nil!=x * BinPath(z, y) * 1.0 |- [b'] BinTreeSeg(z, y) * 1.0 (Weaken) [
+      15 <{(a, a)}/{}>]
+        15:
+        [a] BinPath(z, y) * 1.0 |- [a'] BinTreeSeg(z, y) * 1.0 (Subst) [
+        16 <{(a, a)}/{}>]
+          16:
+          [a] BinPath(x, y) * 1.0 |- [a'] BinTreeSeg(x, y) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    13:
+    [a] nil!=x * x->w, z * BinTreeSeg(z, y) * 1.0 |-
+    [a'] BinTreeSeg(x, y) * 1.0 (BinTreeSeg R.Unf./Simplify) [17 <{(a, a)}/
+                                                              {}>]
+      17:
+      [a] nil!=x * x->w, z * BinTreeSeg(z, y) * 1.0 |-
+      [a'] x->w', z' * BinTree(w') * BinTreeSeg(z', y) * 1.0 (BinTree R.Unf./Simplify) [
+      18 <{(a, a)}/{}>]
+        18:
+        [a] nil!=x * x->w, z * BinTreeSeg(z, y) * 1.0 |-
+        [a'] x->w', z' * BinTreeSeg(z', y) * 1.0 (Id)
+ 
+ 
+ -----------------------NEEXT------------------------- 
+ 
+ 
+DEPTH 1
+DEPTH 2
+DEPTH 3
+DEPTH 4
+DEPTH 5
 NOT proved: [a] BinTree(y) * BinTreeSeg(x, z) * 1.0 |- [a'] BinTree(x) * 1.0 [TIMEOUT]
  
  
@@ -164,8 +700,31 @@ DEPTH 1
  
 DEPTH 1
 DEPTH 2
-DEPTH 3
-NOT proved: [a] ls(x, y) * ls(y, nil) * 1.0 |- [a'] ls(x, nil) * 1.0 [TIMEOUT]
+0:
+[a] ls(x, y) * ls(y, nil) * 1.0 |- [a'] ls(x, nil) * 1.0 (ls L.Unf./LHS Inst./Simplify) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>]
+  1: [a] ls(y, nil) * 1.0 |- [a'] ls(y, nil) * 1.0 (Id)
+  2:
+  [a] nil!=x * x!=y * x->w * ls(y, nil) * ls(w, y) * 1.0 |-
+  [a'] ls(x, nil) * 1.0 (Lemma.App) [3 <{(a, a)}/{(a, b)}>, 4 <{(a, a)}/{}>]
+    3:
+    [b < a] : [b] nil!=x * x!=y * ls(y, nil) * ls(w, y) * 1.0 |-
+    [b'] ls(w, nil) * 1.0 (Weaken/Subst LHS Tag) [5 <{(b, a)}/{}>]
+      5:
+      [a] nil!=x * x!=y * ls(y, nil) * ls(w, y) * 1.0 |-
+      [b'] ls(w, nil) * 1.0 (Weaken) [6 <{(a, a)}/{}>]
+        6:
+        [a] ls(y, nil) * ls(w, y) * 1.0 |- [a'] ls(w, nil) * 1.0 (Subst) [
+        7 <{(a, a)}/{}>]
+          7:
+          [a] ls(x, y) * ls(y, nil) * 1.0 |- [a'] ls(x, nil) * 1.0 (Backl) [0] <pre=
+          {(a, a)}>
+    4:
+    [a] nil!=x * x!=y * x->w * ls(w, nil) * 1.0 |- [a'] ls(x, nil) * 1.0 (ls R.Unf./Simplify) [
+    8 <{(a, a)}/{}>]
+      8:
+      [a] nil!=x * x!=y * x->w * ls(w, nil) * 1.0 |-
+      [a'] x->w' * ls(w', nil) * 1.0 (Id)
  
  
  -----------------------NEEXT------------------------- 
@@ -174,8 +733,65 @@ NOT proved: [a] ls(x, y) * ls(y, nil) * 1.0 |- [a'] ls(x, nil) * 1.0 [TIMEOUT]
 DEPTH 1
 DEPTH 2
 DEPTH 3
-DEPTH 4
-NOT proved: [a] ListE(x, y) * 1.0 \/ ListO(x, y) * 1.0 |- [a'] List(x, y) * 1.0 [TIMEOUT]
+0:
+[a] ListE(x, y) * 1.0 \/ ListO(x, y) * 1.0 |- [a'] List(x, y) * 1.0 (L. Or) [
+1 <{(a, a)}/{}>, 2 <{(a, a)}/{}>]
+  1:
+  [a] ListE(x, y) * 1.0 |- [a'] List(x, y) * 1.0 (List R.Unf.) [3 <{(a, a)}/
+                                                                {}>]
+    3:
+    [a] ListE(x, y) * 1.0 |- [a'] nil!=x * x->w' * List(w', y) * 1.0 (ListE L.Unf./LHS Inst./Simplify) [
+    4 <{(a, a)}/{}>]
+      4:
+      [a] nil!=x * x->w * ListO(w, y) * 1.0 |- [a'] x->w' * List(w', y) * 1.0 (Lemma.App) [
+      5 <{(a, a)}/{(a, b)}>, 6 <{(a, a)}/{}>]
+        5:
+        [b < a] : [b] nil!=x * ListO(w, y) * 1.0 |- [b'] List(w, y) * 1.0 (Weaken/Subst LHS Tag) [
+        7 <{(b, a)}/{}>]
+          7:
+          [a] nil!=x * ListO(w, y) * 1.0 |- [b'] List(w, y) * 1.0 (Weaken) [
+          8 <{(a, a)}/{}>]
+            8:
+            [a] ListO(w, y) * 1.0 |- [a'] List(w, y) * 1.0 (Subst) [9 <
+                                                                    {
+                                                                    (a, a)}/
+                                                                    {}>]
+              9:
+              [a] ListO(x, y) * 1.0 |- [a'] List(x, y) * 1.0 (Backl) [2] <pre=
+              {(a, a)}>
+        6:
+        [a] nil!=x * x->w * List(w, y) * 1.0 |-
+        [a'] x->w' * List(w', y) * 1.0 (Split Id Summand) [10 <{(a, a)}/{}>]
+          10: [a]  |- [a']  (Id)
+  2:
+  [a] ListO(x, y) * 1.0 |- [a'] List(x, y) * 1.0 (ListO L.Unf./LHS Inst.) [
+  11 <{(a, a)}/{}>, 12 <{(a, a)}/{}>]
+    11:
+    [a] nil!=x * x->y * 1.0 |- [a'] List(x, y) * 1.0 (List R.Unf./Simplify) [
+    13 <{(a, a)}/{}>]
+      13: [a] nil!=x * x->y * 1.0 |- [a'] x->y * 1.0 (Id)
+    12:
+    [a] nil!=x * x->w * ListE(w, y) * 1.0 |- [a'] List(x, y) * 1.0 (Lemma.App) [
+    14 <{(a, a)}/{(a, b)}>, 15 <{(a, a)}/{}>]
+      14:
+      [b < a] : [b] nil!=x * ListE(w, y) * 1.0 |- [b'] List(w, y) * 1.0 (Weaken/Subst LHS Tag) [
+      16 <{(b, a)}/{}>]
+        16:
+        [a] nil!=x * ListE(w, y) * 1.0 |- [b'] List(w, y) * 1.0 (Weaken) [
+        17 <{(a, a)}/{}>]
+          17:
+          [a] ListE(w, y) * 1.0 |- [a'] List(w, y) * 1.0 (Subst) [18 <
+                                                                  {(a, a)}/
+                                                                  {}>]
+            18:
+            [a] ListE(x, y) * 1.0 |- [a'] List(x, y) * 1.0 (Backl) [1] <pre=
+            {(a, a)}>
+      15:
+      [a] nil!=x * x->w * List(w, y) * 1.0 |- [a'] List(x, y) * 1.0 (List R.Unf./Simplify) [
+      19 <{(a, a)}/{}>]
+        19:
+        [a] nil!=x * x->w * List(w, y) * 1.0 |-
+        [a'] x->w' * List(w', y) * 1.0 (Id)
  
  
  -----------------------NEEXT------------------------- 

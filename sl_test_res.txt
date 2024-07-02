@@ -310,34 +310,34 @@ DEPTH 1
 DEPTH 2
 DEPTH 3
 0:
-DLL[b](x, y, z, w) * DLL[a](a, x, w, b) |- DLL[a'](a, y, z, b) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
-1 <{(b, b), (a, a)}/{(a, c)}>, 2 <{(b, b), (a, a)}/{(a, c)}>]
-  1: [c < a] : DLL[b](a, y, z, b) |- DLL[a'](a, y, z, b) (Id)
+DLL[b](a, x, w, b) * DLL[a](x, y, z, w) |- DLL[a'](a, y, z, b) (DLL L.Unf./LHS Inst.,LHS Inst./Simplify) [
+1 <{(b, b), (a, a)}/{(b, c)}>, 2 <{(b, b), (a, a)}/{(b, c)}>]
+  1: [c < b] : DLL[a](x, y, z, w) |- DLL[a'](x, y, z, w) (Id)
   2:
-  [c < a] : nil!=a * a->c, b * DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |-
+  [c < b] : nil!=a * a->c, b * DLL[c](c, x, w, a) * DLL[a](x, y, z, w) |-
   DLL[a'](a, y, z, b) (DLL R.Unf./Simplify) [3 <{(c, c), (b, b), (a, a)}/{}>]
     3:
-    [c < a] : nil!=a * a->c, b * DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |-
+    [c < b] : nil!=a * a->c, b * DLL[c](c, x, w, a) * DLL[a](x, y, z, w) |-
     [b' < a'] : a->w', b * DLL[b'](w', y, z, a) (UBound Intro) [4 <{(c, c),
                                                                    (b, b),
                                                                    (a, a)}/
                                                                 {}>]
       4:
-      [c < a] : nil!=a * a->c, b * DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |-
+      [c < b] : nil!=a * a->c, b * DLL[c](c, x, w, a) * DLL[a](x, y, z, w) |-
       a->w', b * DLL[b'](w', y, z, a) (Lemma.App) [5 <{(c, c), (b, b),
                                                       (a, a)}/{}>,
-      6 <{(c, c), (a, a)}/{(a, c)}>]
+      6 <{(c, c), (b, b)}/{(b, c)}>]
         5:
-        [c < a] : nil!=a * DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |-
-        DLL[a'](c, y, z, a) (Weaken) [7 <{(c, c), (b, b)}/{}>]
+        [c < b] : nil!=a * DLL[c](c, x, w, a) * DLL[a](x, y, z, w) |-
+        DLL[a'](c, y, z, a) (Weaken) [7 <{(c, c), (a, a)}/{}>]
           7:
-          DLL[c](c, x, w, a) * DLL[b](x, y, z, w) |- DLL[a'](c, y, z, a) (Subst) [
-          8 <{(c, a), (b, b)}/{}>]
+          DLL[c](c, x, w, a) * DLL[a](x, y, z, w) |- DLL[a'](c, y, z, a) (Subst) [
+          8 <{(c, b), (a, a)}/{}>]
             8:
-            DLL[b](x, y, z, w) * DLL[a](a, x, w, b) |- DLL[a'](a, y, z, b) (Backl) [0] <pre=
+            DLL[b](a, x, w, b) * DLL[a](x, y, z, w) |- DLL[a'](a, y, z, b) (Backl) [0] <pre=
             {(b, b), (a, a)}>
         6:
-        [c < a] : nil!=a * a->c, b * DLL[a'](c, y, z, a) |-
+        [c < b] : nil!=a * a->c, b * DLL[a'](c, y, z, a) |-
         a->w', b * DLL[b'](w', y, z, a) (Id)
  
  
@@ -549,7 +549,7 @@ ListO[b](y, z) * ListE[a](x, y) |- ListO[a'](x, z) (ListE L.Unf./LHS Inst.) [
             {(b, b), (a, a)}>
       9:
       [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->a * ListO[b'](a, z) |-
-      ListO[a'](x, z) (LHS Inst.) [13 <{(b', b), (c, c), (a, a), (d, d)}/{}>]
+      ListO[a'](x, z) (LHS Inst.) [13 <{(c, c), (a, a), (b', b), (d, d)}/{}>]
         13:
         [c < a; d < c] : nil!=x * nil!=w * x!=w * x->w * w->a *
                          ListO[b](a, z) |-

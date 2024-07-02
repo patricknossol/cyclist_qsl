@@ -252,5 +252,16 @@ module Make (Seq : Sequent.S) = struct
   let conditional cond r idx prf =
     if cond (Proof.get_seq idx prf) then r idx prf else []
 
+  (*let repeat rl idx prf =
+
+
+    let repeat r seq =
+      let rec aux app =
+        match apply_to_application r app with
+        | [] -> [app]
+        | apps -> Blist.bind aux apps
+      in
+      Blist.bind aux (r seq)*)
+
   let combine_axioms ax rl = first [ax; compose rl (attempt ax)]
 end
