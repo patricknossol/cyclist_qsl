@@ -131,8 +131,6 @@ let disj (_, (cs, f)) (_, (cs', g)) = (Tags.anonymous, (Ord_constraints.union cs
 
 let subst theta (t, (cs, hs)) = (t, (cs, Blist.map (fun h -> Heapsum.subst theta h) hs))
 
-let subst_existentials (t, (cs, hs)) = (t, (cs, Blist.map Heapsum.subst_existentials hs))
-
 let subst_tags tagpairs (t, (cs, hs)) =
   (Tagpairs.apply_to_tag tagpairs t, ( Ord_constraints.subst_tags tagpairs cs, hs ))
 

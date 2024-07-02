@@ -127,37 +127,72 @@ let () =
   (*-----------TESTING------------*)
   else
 
-    if false then
+    if true then
 
-      let rec do_test_rec seq rs =
+      let rec do_test_rec seq rs indent =
         match rs with
-        | r :: rs ->
+        | (r, k) :: rs ->
           let seqs' = r seq in
-          let _ = Blist.fold_left (fun res seq' ->
-            print_endline ((snd seq') ^ "---------------------") ;
-            Blist.map (fun (seq, tags1, tags2) -> 
-              print_endline (Seq.to_string seq);
-              do_test_rec seq rs
-            ) (fst seq')
-          ) [] seqs' in
-          print_endline "---------------------" ;
+          let (rs, _) = Blist.fold_left (fun (rs, i) seq' ->
+            if not (k = 0 || i = k) then (rs, i + 1) else
+            let () = print_endline (indent ^ ((snd seq') ^ "---------------------")) in
+            let indent = indent ^ "    " in
+            let rs = Blist.fold_left (fun rs (seq, tags1, tags2) -> 
+              print_endline (indent ^ (Seq.to_string seq));
+              do_test_rec seq rs indent
+            ) rs (fst seq') in
+            (rs, i + 1)
+          ) (rs, 1) seqs' in
+          (*print_endline (indent ^ "---------------------") ;*)
           print_endline "" ;
-          seq
-        | _ -> seq
+          rs
+        | _ -> rs
       in
 
       let do_test title s rs = 
         print_endline title ;
+        print_endline "" ;
+        print_endline (Seq.to_string s) ;
+        do_test_rec s rs ""
+      in
+
+      let pseq s =
         let seq = Seq.of_string ~null_is_emp:!parse_null_as_emp s in
         let seq = Seq.reduce_zeros seq in
         let seq = Seq.set_conform_lists defs_list seq in
         let seq = Seq.set_precise_preds defs_list seq in
         let seq = Seq.rational_to_natural_nums seq in
         let seq = Seq.split_sum seq in
-        print_endline "" ;
-        print_endline (Seq.to_string seq) ;
-        do_test_rec seq rs
+        seq
       in
+
+      let _inst = (Rules.lhs_instantiate_seq, 0) in
+      let _simplify = (Rules.simplify_seq, 0) in
+      let _ruf k = (Rules.ruf_test defs, k) in
+      let _luf_solo k = (Rules.luf_rl defs, k) in
+      let _luf k = (Rules.luf_test defs, k) in
+      let _pto = (Rules.pto_test, 0) in
+      let _pred = (Rules.pred_test defs, 0) in
+      let _backl k s = (Rules.dobackl_test defs s, k) in
+      let _none = ((fun seq -> []), 0) in
+
+      let s = pseq "BinTreeSeg(a,b) * BinTreeSegHeight(b,c) |- BinTreeHeight(a)" in
+      let s2 = pseq "BinTreeSegHeight(b,c) |- BinTreeHeight(b)" in
+      let _ = do_test "0" s [
+        _luf 1 ;
+          _luf 0 ;
+            _ruf 1 ; _none ;
+            _ruf 2 ; _backl 0 s2;
+              _none ;
+              _none ;
+            _ruf 3 ; _backl 0 s2 ;
+              _none ;
+              _none ;
+          _ruf 2 ; _pto ; _backl 0 s;
+            _none ;
+            _none ;
+          _ruf 3 ; _pto ; _backl 0 s
+      ] in
 
       (*
       let _ = do_test "0" "0 * x->y + 0.28 * c->d |- 0.4 * x->y + 0.14 * a->b" [Rules.identity] in
@@ -195,9 +230,8 @@ let () =
       let _ = do_test "29" "x->y' * ListLen(a,b) + x->z' * List(a,b) |- y->z * RListLen(x,z) + y->z * RList(x,z)" [(Rules.split_conform_predicate_summands defs)] in
       let _ = do_test "30" "x->y' * ListLen(a,b') + x->z' * List(a,c') |- RListLen(x,z) + RList(x,z)" [(Rules.split_conform_predicate_summands defs)] in
       [a] nil!=a * nil!=b * a!=b * a->w * b->c * ListLenTmp(w, b) + nil!=a * nil!=b * a!=b * a->x * b->c * ListTmp(x, b) |- [a'] a->w' * ListLenTmp(w', c) + a->w' * ListTmp(w', c)
-      *)
       let _ = do_test "30" "nil!=a * nil!=b * a!=b * a->w * b->c * ListLenTmp(w, b) + nil!=a * nil!=b * a!=b * a->x * b->c * ListTmp(x, b) |- a->w' * ListLenTmp(w', c) + a->w' * ListTmp(w', c)" [(Rules.split_conform_predicate_summands defs)] in
-
+      *)
 
       print_endline("FINISH")
       

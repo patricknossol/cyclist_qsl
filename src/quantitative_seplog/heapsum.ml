@@ -88,15 +88,11 @@ let star ?(augment_deqs = true) f g =
 
 let subst theta hs = Blist.map (fun h -> Heap.subst theta h) hs
 
-let subst_existentials hs = Blist.map Heap.subst_existentials hs
-
 let univ s hs =
-  let v = (Term.Set.union s (vars hs)) in
-  let (res, _) = Blist.foldl (fun (res, v) h -> 
-    let h = Heap.univ v h in
-    (res @ [h], Term.Set.union v (Heap.vars h))
-  ) ([], v) hs in
-  res
+  let hsv = vars hs in
+  let v = (Term.Set.union s hsv) in
+  let theta = Subst.mk_free_subst v (Term.Set.filter Term.is_exist_var hsv) in
+  if Term.Map.is_empty theta then hs else subst theta hs
 
 let norm hs = Blist.map Heap.norm hs
 

@@ -41,9 +41,6 @@ val star : ?augment_deqs:bool -> t -> t -> t
 
 val subst : Subst.t -> t -> t
 
-val subst_existentials : t -> t
-(** Like [Heap.subst_existentials] applied to all disjuncts. *)
-
 val univ : Term.Set.t -> t -> t
 (** univ(avoid, repl) Replace all existential variables with fresh universal variables. *)
 

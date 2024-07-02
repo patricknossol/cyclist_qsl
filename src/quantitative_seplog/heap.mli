@@ -120,9 +120,6 @@ val subst : Subst.t -> t -> t
 val univ : Term.Set.t -> t -> t
 (** univ(avoid, repl) Replace all existential variables with fresh universal variables. *)
 
-val subst_existentials : t -> t
-(** For all equalities x'=t, remove the equality and do the substitution [t/x'] *)
-
 val copy_fresh_heap : Subst.var_container -> t -> t
 
 val unify_partial :

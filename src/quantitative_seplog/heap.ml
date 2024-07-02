@@ -271,23 +271,6 @@ let univ s f =
   in
   if Term.Map.is_empty theta then f else subst theta f
 
-let subst_existentials h =
-  let aux h =
-    try
-      let eqs = Uf.bindings h.eqs in
-      let ((x, y) as eq) =
-        Blist.find (fun eq -> Pair.disj (Pair.map Term.is_exist_var eq)) eqs
-      in
-      let eqs = Blist.filter (fun eq' -> eq' != eq) eqs in
-      let x, y = if Term.is_exist_var x then eq else (y, x) in
-      let h' =
-        {h with eqs= Uf.of_list eqs; _terms= None; _vars= None}
-      in
-      subst (Term.Map.singleton x y) h'
-    with Not_found -> h
-  in
-  fixpoint aux h
-
 let norm h =
   { h with
     deqs= Deqs.norm h.eqs h.deqs
