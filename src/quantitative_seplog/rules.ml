@@ -771,26 +771,20 @@ let split_conform_predicate_summands defs ((((tagl, _) as l_form), (tagr, _)) as
     let defs_list = Defs.to_list defs in
     if Blist.length ls <= 1 || Blist.length rs <= 1 then [] else
     let find_summand sum = Blist.find (fun h2 ->
-      Tpreds.exists (fun ((p2precise, ((p2_sym, p2args), p2conforms)) as p2) -> 
-        let g2 = Heap.del_ind h2 p2 in
-        Form.is_boolean defs_list (Form.mk_heap g2) && Form.is_boolean defs_list (Form.mk_heap (Heap.mk_ind p2)) &&
-          Blist.for_all (fun h1 ->
-            if h2 == h1 then true else
-            Tpreds.exists (fun ((p1precise, ((p1_sym, p1args), p1conforms)) as p1) ->
-              let p2_def = Defs.get_preddef (Tpred.predsym p2) defs in
-              let p1_args_p2 = (p2precise, ((Tpred.predsym p1, p2args), p2conforms)) in
-              let g2_p1 = Heap.add_ind g2 p1_args_p2 in
-              let free_vars = Term.Set.filter (fun t -> not (Term.is_exist_var t)) (Heap.vars h1) in
-              let free_vars' = Term.Set.filter (fun t -> not (Term.is_exist_var t)) (Heap.vars g2_p1) in
-              let upd_chk = Unify.Unidirectional.avoid_replacing_trms (Term.Set.union free_vars free_vars') in
-              let heaps_match1 = Option.is_some (Heap.classical_unify ~update_check:upd_chk h1 g2_p1 Unification.trivial_continuation Unify.Unidirectional.empty_state) in
-              let heaps_match2 = Option.is_some (Heap.classical_unify ~update_check:upd_chk g2_p1 h1 Unification.trivial_continuation Unify.Unidirectional.empty_state) in
-              (*print_endline ("\nheaps_match1: " ^ (string_of_bool heaps_match1) ^ " heaps_match2: " ^ (string_of_bool heaps_match2));
-              print_endline ("h: " ^ (Heap.to_string h) ^ "\ng2_p1: " ^ (Heap.to_string g2_p1));*)
-              heaps_match1 && heaps_match2 && Preddef.is_conform_with p2_def p1_sym
-            ) h1.Heap.inds
-          ) sum
-      ) h2.Heap.inds
+        Form.is_boolean defs_list (Form.mk_heap h2) &&
+        Blist.for_all (fun h1 ->
+          if h2 == h1 then true else
+          
+          let free_vars = Term.Set.filter (fun t -> not (Term.is_exist_var t)) (Heap.vars h1) in
+          let free_vars' = Term.Set.filter (fun t -> not (Term.is_exist_var t)) (Heap.vars h2) in
+          let upd_chk = Unify.Unidirectional.avoid_replacing_trms (Term.Set.union free_vars free_vars') in
+          let heaps_match1 = Option.is_some (Heap.classical_unify ~allow_conform:true ~update_check:upd_chk h1 h2 Unification.trivial_continuation Unify.Unidirectional.empty_state) in
+          let heaps_match2 = Option.is_some (Heap.classical_unify ~allow_conform:true ~update_check:upd_chk h2 h1 Unification.trivial_continuation Unify.Unidirectional.empty_state) in
+          
+          (*print_endline ("\nheaps_match1: " ^ (string_of_bool heaps_match1) ^ " heaps_match2: " ^ (string_of_bool heaps_match2));
+          print_endline ("h: " ^ (Heap.to_string h) ^ "\ng2_p1: " ^ (Heap.to_string g2_p1));*)
+          heaps_match1 && heaps_match2
+        ) sum
     ) sum in
 
     let l_summand = find_summand ls in
