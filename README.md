@@ -55,6 +55,6 @@ Atom -> emp | x | a=b | a!=b | a->b1,...,bn | P(c1,...,cm)
 where x is a non-negative rational number and a, b_i and c_i are variables or nil.
 If you want to play with the code and experiment with a specific proof and rule applications, you can use -test and look at prove.ml and change the lines starting from line 179.
 
-The syntax for recursive definitions can be seen in qsl.defs.
+The syntax for recursive definitions can be seen in qsl.defs. Please only use conform on definitions that evaluate to only 0 or 1.
 The definitions in qsl.defs are not all proven to express what they should express or be precise / conform with other definitions, so use them with care or as example starting points. The length of the Empty versions of definitions is one more than the length of the non empty versions (e.g. ListEmptyLen evaluates to 2 for a list a->b and ListLen evaluates to 1 for the same list).
 
