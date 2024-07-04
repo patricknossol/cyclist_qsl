@@ -50,9 +50,9 @@ Entailment -> Form |- Form
 Form -> Disjunct \/ Form | Disjunct
 Disjunct -> Summand + Disjunct | Summand
 Summand -> Atom * Summand | Atom
-Atom -> emp | x | a=b | a!=b | a->b | P(c1,...,cn)
+Atom -> emp | x | a=b | a!=b | a->b1,...,bn | P(c1,...,cm)
 ```
-where x is a non-negative rational number and a, b and c_i are variables or nil.
+where x is a non-negative rational number and a, b_i and c_i are variables or nil.
 If you want to play with the code and experiment with a specific proof and rule applications, you can use -test and look at prove.ml and change the lines starting from line 179.
 
 The syntax for recursive definitions can be seen in qsl.defs.
