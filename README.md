@@ -1,6 +1,6 @@
 # Cyclist for QSL
 
-*Cyclist* is a framework for building cyclic theorem provers based on a sequent calculus, an instantiation for Quantitative Separation Logic is located in the folder src/quantitative_seplog and recursive definition examples in examples/qsl.defs. The rest of the code is from the original *Cyclist* [Github repository](https://github.com/cyclist-org/cyclist) and additional information can be found on their website [www.cyclist-prover.org](http://www.cyclist-prover.org). The theory behind the QSL instantiation is in my thesis "Etailments in Quantitative Separation Logic with Recursive Definitions: Constructing Cyclic Proofs".
+*Cyclist* is a framework for building cyclic theorem provers based on a sequent calculus, an instantiation for Quantitative Separation Logic is located in the folder src/quantitative_seplog and recursive definition examples in examples/qsl.defs. The rest of the code is from the original *Cyclist* [Github repository](https://github.com/cyclist-org/cyclist) and additional information can be found on their website [www.cyclist-prover.org](http://www.cyclist-prover.org). The theory behind the QSL instantiation is in my thesis "Entailments in Quantitative Separation Logic with Recursive Definitions: Constructing Cyclic Proofs".
 
 ## Building
 
