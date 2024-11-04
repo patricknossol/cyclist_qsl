@@ -60,9 +60,6 @@ let () =
         ; ( "-S"
           , Arg.Set_string cl_sequent
           , ": prove the SL sequent provided in <string>" )
-        ; ( "-SumSplit"
-          , Arg.Set use_assignment_problem
-          , ": for checking subsumption of sums, use the General Assignment Problem instead of the standard implementation.")
         ; ( "-test"
           , Arg.Set do_testing
           , ": test qsl" ) ];;

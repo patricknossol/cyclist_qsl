@@ -63,8 +63,24 @@ let subsumed ?(total = true) hs hs' =
     Test_stats.unify_time := !Test_stats.unify_time +. (Stats.time_since time););
   res
 
-let equal hs hs' =
-  Blist.for_all2 Heap.equal hs hs'
+let rec equal hs hs' =
+  if Blist.length hs = 0 && Blist.length hs' = 0 then
+    true
+  else if Blist.length hs <> Blist.length hs' then
+    false
+  else
+    match hs with
+      | h::hs ->
+        let (hs', _) = Blist.foldl (fun (res, found) h' ->
+          if found then
+            (res @ [h'], true)
+          else if Heap.equal h h' then
+            (res, true)
+          else
+            (res @ [h'], false)
+        ) ([], false) hs' in
+        equal hs hs'
+      | _ -> false
 
 let parse ?(augment_deqs = true) st =
   (sep_by (Heap.parse ~augment_deqs) (parse_symb symb_plus)
