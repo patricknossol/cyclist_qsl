@@ -1219,7 +1219,7 @@ let apply_lemma defs ((((tagl, _), lemma_r) as lemma_seq), ((((l_cont_tag, _) as
     []
 
 let mk_backlink_rule_seq (trm_subst, tag_subst) ((mapped_src_lhs, mapped_src_rhs) as mapped_src_seq) 
-    (((_, (_, rest_src_lss)), _) as rest_src_seq) do_split (targ_idx, targ_seq) =
+    (((_, (_, rest_src_lss)), (_, (_, rest_src_rss))) as rest_src_seq) do_split (targ_idx, targ_seq) =
   let ((subst_lhs, subst_rhs) as subst_seq) =
     Seq.subst trm_subst (Seq.subst_tags tag_subst targ_seq)
   in
@@ -1288,7 +1288,7 @@ let mk_backlink_rule_seq (trm_subst, tag_subst) ((mapped_src_lhs, mapped_src_rhs
         (fun _ _ -> [targ_idx])
         (fun s s' -> [(Seq.tag_pairs s', "Backl")]) ]
   in
-  if do_split && Blist.length rest_src_lss > 0 && Blist.length (Blist.nth rest_src_lss 0) > 0 then
+  if do_split && (Blist.length rest_src_lss > 0 || Blist.length rest_src_rss > 0) then
     Rule.compose_pairwise split_rule [backl_seq; Rule.identity]
   else
     backl_seq
