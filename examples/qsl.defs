@@ -250,4 +250,8 @@ spTrue2 conform spTrue2Size {
 spTrue2Size {
 	emp => spTrue2Size() |
 	x'->y',z' * spTrue2Size() + x'->y',z' * spTrue2() => spTrue2Size()
-}
+};
+
+spInf {
+     spInf() + spTrue() => spInf()
+};
