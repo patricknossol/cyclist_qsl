@@ -1,0 +1,258 @@
+List conform ListLen { 
+	x->y => List(x,y) | 
+	x->x' * List(x',y) => List(x,y) 
+} ;
+
+ListLen { 
+	x->y => ListLen(x,y) | 
+	x->x' * ListLen(x',y) + x->x' * List(x',y) => ListLen(x,y)
+} ;
+
+ListPrec precise conform ListLenPrec { 
+	x!=y * x->y => ListPrec(x,y) | 
+	x!=y * x->x' * ListPrec(x',y) => ListPrec(x,y) 
+} ;
+
+ListLenPrec precise { 
+	x!=y * x->y => ListLenPrec(x,y) | 
+	x!=y * x->x' * ListLenPrec(x',y) + x!=y * x->x' * ListPrec(x',y) => ListLenPrec(x,y)
+} ;
+
+ListEmpty conform ListEmptyLen { 
+	x=y => ListEmpty(x,y) | 
+	x->x' * ListEmpty(x',y) => ListEmpty(x,y) 
+} ;
+
+ListEmptyLen { 
+	x=y => ListEmptyLen(x,y) | 
+	x->x' * ListEmptyLen(x',y) + x->x' * ListEmpty(x',y) => ListEmptyLen(x,y)
+} ;
+
+RList conform RListLen {
+	x->y => RList(x,y) |
+	RList(x,x') * x'->y => RList(x,y)
+} ;
+
+RListLen {
+	x->y => RListLen(x,y) |
+	RListLen(x,x') * x'->y + RList(x,x') * x'->y => RListLen(x,y)
+} ;
+
+RListStepPrec precise conform RListLenStepPrec { 
+	y!=z * x->y => RListStepPrec(x,y,z) | 
+	y!=z * RListStepPrec(x,x',z) * x'->y => RListStepPrec(x,y,z)
+} ;
+
+RListPrec precise conform RListLenPrec {
+	x!=y * x->y => RListPrec(x,y) |
+	x!=y * RListStepPrec(x,x',y) * x'->y => RListPrec(x,y)
+} ;
+
+RListLenStepPrec precise { 
+	y!=z * x->y => RListLenStepPrec(x,y,z) | 
+	y!=z * RListLenStepPrec(x,x',z) * x'->y + y!=z * RListStepPrec(x,x',z) * x'->y => RListLenStepPrec(x,y,z)
+} ;
+
+RListLenPrec precise {
+	x!=y * x->y => RListLenPrec(x,y) |
+	x!=y * RListLenStepPrec(x,x',y) * x'->y + RListStepPrec(x,x',y) * x'->y => RListLenPrec(x,y)
+} ;
+
+ListNil precise conform ListNilLen {
+	x->nil => ListNil(x) |
+	x->y' * ListNil(y') => ListNil(x)
+} ;
+
+ListNilLen precise {
+	x->nil => ListNilLen(x) |
+	x->y' * ListNilLen(y') + x->y' * ListNil(y') => ListNilLen(x)
+} ;
+
+ListNilEmpty precise conform ListNilEmptyLen {
+	x=nil => ListNilEmpty(x) |
+	x->y' * ListNil(y') => ListNilEmpty(x)
+} ;
+
+ListNilEmptyLen precise {
+	x=nil => ListNilEmptyLen(x) |
+	x->y' * ListNilLen(y') + x->y' * ListNil(y') => ListNilEmptyLen(x)
+} ;
+
+EvenList conform EvenListLen {
+	x->v' * v'->y => EvenList(x,y) |
+	x->v' * v'->w' * EvenList(w',y) => EvenList(x,y)
+} ;
+
+EvenListLen {
+	x->v' * v'->y => EvenListLen(x,y) |
+	x->v' * v'->w' * EvenListLen(w',y) + 2 * x->v' * v'->w' * EvenList(w',y) => EvenListLen(x,y)
+} ;
+
+ListO conform ListOLen { 
+	x->y => ListO(x,y) | 
+	x->x' * ListE(x',y) => ListO(x,y) 
+} ; 
+
+ListOLen { 
+	x->y => ListOLen(x,y) | 
+	x->x' * ListELen(x',y) + x->x' * ListE(x',y) => ListOLen(x,y) 
+} ; 
+
+ListE conform ListELen { 
+	x->x' * ListO(x',y) => ListE(x,y) 
+} ; 
+
+ListELen { 
+	x->x' * ListOLen(x',y) + x->x' * ListO(x',y) => ListELen(x,y) 
+} ;
+
+DLL conform DLLLen { 
+	x->y,w * z=x => DLL(x,y,z,w) | 
+	x->z',w * DLL(z',y,z,x) => DLL(x,y,z,w) 
+} ;
+
+DLLLen { 
+	x->y,w * z=x => DLLLen(x,y,z,w) | 
+	x->z',w * DLLLen(z',y,z,x) + x->z',w * DLL(z',y,z,x) => DLLLen(x,y,z,w) 
+} ; 
+
+DLLEmpty conform DLLEmptyLen { 
+	x=y * z=w => DLLEmpty(x,y,z,w) | 
+	x->z',w * DLLEmpty(z',y,z,x) => DLLEmpty(x,y,z,w) 
+} ;
+
+DLLEmptyLen { 
+	x=y * z=w => DLLEmptyLen(x,y,z,w) | 
+	x->z',w * DLLEmptyLen(z',y,z,x) + x->z',w * DLLEmpty(z',y,z,x) => DLLEmptyLen(x,y,z,w) 
+} ;
+
+SLL conform SLLLen { 
+	x->y,y' => SLL(x,y) | 
+	x->x',y' * SLL(x',y) => SLL(x,y) 
+} ;
+
+SLLLen { 
+	x->y,y' => SLLLen(x,y) | 
+	x->x',y' * SLLLen(x',y) + x->x',y' * SLL(x',y) => SLLLen(x,y) 
+} ;
+
+SLLEmpty conform SLLEmptyLen { 
+	x=y => SLLEmpty(x,y) | 
+	x->x',y' * SLLEmpty(x',y) => SLLEmpty(x,y) 
+} ;
+
+SLLEmptyLen { 
+	x=y => SLLEmptyLen(x,y) | 
+	x->x',y' * SLLEmptyLen(x',y) + x->x',y' * SLLEmpty(x',y) => SLLEmptyLen(x,y) 
+} ;
+
+BSLL conform BSLLLen { 
+	x->y',y => BSLL(x,y) | 
+	BSLL(x,x') * x'->y',y => BSLL(x,y) 
+} ;
+
+BSLLLen { 
+	x->y',y => BSLLLen(x,y) | 
+	BSLLLen(x,x') * x'->y',y + BSLL(x,x') * x'->y',y => BSLLLen(x,y) 
+} ;
+
+BSLLEmpty conform BSLLEmptyLen { 
+	x=y => BSLLEmpty(x,y) | 
+	BSLLEmpty(x,x') * x'->y',y => BSLLEmpty(x,y) 
+} ;
+
+BSLLEmptyLen { 
+	x=y => BSLLEmptyLen(x,y) | 
+	BSLLEmptyLen(x,x') * x'->y',y + BSLLEmpty(x,x') * x'->y',y => BSLLEmptyLen(x,y) 
+} ;
+
+BinPath conform BinPathMaxLen {
+	x=y => BinPath(x,y) |
+	x->x',y' * BinPath(x',y) => BinPath(x,y) |
+	x->x',y' * BinPath(y',y) => BinPath(x,y)
+} ;
+
+BinPathMaxLen {
+	x=y => BinPathMaxLen(x,y) |
+	x->x',y' * BinPathMaxLen(x',y) + x->x',y' * BinPath(x',y) => BinPathMaxLen(x,y) |
+	x->x',y' * BinPathMaxLen(y',y) + x->x',y' * BinPath(y',y) => BinPathMaxLen(x,y)
+} ;
+
+BinTree conform BinTreeHeight BinTreeSize { 
+	emp => BinTree(x) | 
+	x->y',x' * BinTree(y') * BinTree(x') => BinTree(x) 
+} ;
+
+BinTreeHeight { 
+	emp => BinTreeHeight(x) | 
+	x->y',x' * BinTreeHeight(y') * BinTree(x') + x->y',x' * BinTree(y') * BinTree(x') => BinTreeHeight(x) |
+	x->y',x' * BinTree(y') * BinTreeHeight(x') + x->y',x' * BinTree(y') * BinTree(x') => BinTreeHeight(x) 
+} ;
+
+BinTreeSize { 
+	emp => BinTreeSize(x) | 
+	x->y',x' * BinTreeSize(y') * BinTree(x') + x->y',x' * BinTree(y') * BinTreeSize(x') + x->y',x' * BinTree(y') * BinTree(x') => BinTreeSize(x)
+} ;
+
+BinTreeSeg conform BinTreeSegHeight {
+	x=y => BinTreeSeg(x,y) |
+	x->x',y' * BinTreeSeg(x',y) * BinTree(y') => BinTreeSeg(x,y) | 
+	x->x',y' * BinTree(x') * BinTreeSeg(y',y) => BinTreeSeg(x,y)
+} ;
+
+BinTreeSegHeight {
+	x=y => BinTreeSegHeight(x,y) |
+	x->x',y' * BinTreeSegHeight(x',y) * BinTree(y') + x->x',y' * BinTreeSeg(x',y) * BinTree(y') => BinTreeSegHeight(x,y) | 
+	x->x',y' * BinTree(x') * BinTreeSegHeight(y',y) + x->x',y' * BinTree(x') * BinTreeSeg(y',y) => BinTreeSegHeight(x,y)
+} ;
+
+BinTreeNil precise conform BinTreeNilHeight {
+	x->nil,nil => BinTreeNil(x) |
+	x->nil,x' * BinTree(x') => BinTreeNil(x) |
+	x->y',nil * BinTree(y') => BinTreeNil(x) |
+	x->y',x' * BinTreeNil(y') * BinTreeNil(x') => BinTreeNil(x)
+} ;
+
+BinTreeNilHeight precise {
+	x->nil,nil => BinTreeNilHeight(x) |
+	x->nil,x' * BinTreeNilHeight(x') + x->nil,x' * BinTreeNil(x') => BinTreeNilHeight(x) |
+	x->y',nil * BinTreeNilHeight(y') + x->y',nil * BinTreeNil(y') => BinTreeNilHeight(x) |
+	x->y',x' * BinTreeNilHeight(y') * BinTreeNil(x') + x->y',x' * BinTreeNil(y') * BinTreeNil(x') => BinTreeNilHeight(x) |
+	x->y',x' * BinTreeNil(y') * BinTreeNilHeight(x') + x->y',x' * BinTreeNil(y') * BinTreeNil(x') => BinTreeNilHeight(x)
+} ;
+
+BinTreeNilEmpty precise conform BinTreeNilEmptyHeight {
+	x=nil => BinTreeNilEmpty(x) |
+	x->y',x' * BinTreeNilEmpty(y') * BinTreeNilEmpty(x') => BinTreeNilEmpty(x)
+} ;
+
+BinTreeNilEmptyHeight precise {
+	x=nil => BinTreeNilEmptyHeight(x) |
+	x->y',x' * BinTreeNilEmptyHeight(y') * BinTreeNilEmpty(x') + x->y',x' * BinTreeNilEmpty(y') * BinTreeNilEmpty(x') => BinTreeNilEmptyHeight(x) |
+	x->y',x' * BinTreeNilEmpty(y') * BinTreeNilEmptyHeight(x') + x->y',x' * BinTreeNilEmpty(y') * BinTreeNilEmpty(x') => BinTreeNilEmptyHeight(x)
+} ;
+
+spTrue conform spTrueSize {
+	emp => spTrue() |
+	x'->y' * spTrue() => spTrue()
+};
+
+spTrueSize {
+	emp => spTrueSize() |
+	x'->y' * spTrueSize() + x'->y' * spTrue() => spTrueSize()
+};
+
+spInf {
+    spInf() + spTrue() => spInf()
+};
+
+spTrue2 conform spTrue2Size {
+	emp => spTrue2() |
+	x'->y',z' * spTrue2() => spTrue2()
+};
+
+spTrue2Size {
+	emp => spTrue2Size() |
+	x'->y',z' * spTrue2Size() + x'->y',z' * spTrue2() => spTrue2Size()
+}
+
