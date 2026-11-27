@@ -40,7 +40,10 @@ module Make (Prover : Prover.S) = struct
         ; ( "-t"
           , Arg.Set_int timeout
           , ": set timeout in seconds to <int>, 0 disables it, default is "
-            ^ string_of_int !timeout ) ] )
+            ^ string_of_int !timeout )
+        ; ( "-cputime"
+          , Arg.Set cpu_timeout
+          , ": measure the timeout in CPU time instead of wall-clock time" ) ] )
 
   let usage =
     ref ("usage: " ^ Sys.argv.(0) ^ " [-p/d/s] [-l <file>] [-t/m/M/L <int>]")

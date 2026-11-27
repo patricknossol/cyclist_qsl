@@ -103,14 +103,25 @@ exception Timeout
 
 let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
 
+let cpu_timeout = ref false
+
+let set_cpu_timer t =
+  ignore (Unix.setitimer Unix.ITIMER_PROF {Unix.it_interval= 0.0; it_value= t})
+
 let w_timeout f (timeout : int) =
-  let old_behavior = Sys.signal Sys.sigalrm sigalrm_handler in
-  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_behavior in
-  if Stdlib.( > ) timeout 0 then ignore (Unix.alarm timeout) ;
+  let signal = if !cpu_timeout then Sys.sigprof else Sys.sigalrm in
+  let old_behavior = Sys.signal signal sigalrm_handler in
+  let reset_signal () =
+    if !cpu_timeout then set_cpu_timer 0.0 ;
+    Sys.set_signal signal old_behavior
+  in
+  ( if Stdlib.( > ) timeout 0 then
+      if !cpu_timeout then set_cpu_timer (Stdlib.float_of_int timeout)
+      else ignore (Unix.alarm timeout) ) ;
   try
     let res = f () in
-    reset_sigalrm () ; Some res
-  with Timeout -> reset_sigalrm () ; None
+    reset_signal () ; Some res
+  with Timeout -> reset_signal () ; None
 
 open MParser
 
